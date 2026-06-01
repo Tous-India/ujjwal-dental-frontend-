@@ -1,0 +1,65 @@
+/**
+ * Admin Dashboard API
+ *
+ * API functions for fetching dashboard statistics and data.
+ * Uses existing backend endpoints to aggregate dashboard data.
+ *
+ * Backend endpoints used:
+ * - GET /patients - Get patients list (for count and recent)
+ * - GET /appointments - Get appointments list (for count and recent)
+ * - GET /appointments/today - Get today's appointments
+ * - GET /payments - Get payments (for pending count)
+ */
+import api from "../axios";
+
+/**
+ * Get dashboard statistics by aggregating multiple endpoints
+ * @returns {Promise} - { totalPatients, totalAppointments, pendingPayments, todayAppointments }
+ */
+export const getDashboardStats = async () => {
+  // Fetch data from multiple endpoints in parallel
+  const [patientsRes, appointmentsRes, todayRes, pendingPaymentsRes] = await Promise.all([
+    api.get("/patients?limit=1"),
+    api.get("/appointments?limit=1"),
+    api.get("/appointments/today"),
+    api.get("/payments?status=pending&limit=1").catch(() => ({ data: { pagination: { total: 0 } } })),
+  ]);
+
+  return {
+    data: {
+      totalPatients: patientsRes.data?.pagination?.total || 0,
+      totalAppointments: appointmentsRes.data?.pagination?.total || 0,
+      todayAppointments: todayRes.data?.data?.length || 0,
+      pendingPayments: pendingPaymentsRes.data?.pagination?.total || 0,
+    },
+  };
+};
+
+/**
+ * Get recent appointments for dashboard
+ * @param {number} limit - Number of appointments to fetch
+ * @returns {Promise} - Array of appointments
+ */
+export const getRecentAppointments = (limit = 5) =>
+  api.get(`/appointments?limit=${limit}`).then((res) => ({
+    data: res.data?.data || [],
+  }));
+
+/**
+ * Get recently added patients
+ * @param {number} limit - Number of patients to fetch
+ * @returns {Promise} - Array of patients
+ */
+export const getRecentPatients = (limit = 5) =>
+  api.get(`/patients?limit=${limit}`).then((res) => ({
+    data: res.data?.data || [],
+  }));
+
+/**
+ * Get today's appointments
+ * @returns {Promise} - Array of today's appointments
+ */
+export const getTodayAppointments = () =>
+  api.get("/appointments/today").then((res) => ({
+    data: res.data?.data || [],
+  }));

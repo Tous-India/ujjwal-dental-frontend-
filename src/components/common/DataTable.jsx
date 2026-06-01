@@ -1,0 +1,321 @@
+/**
+ * Reusable DataTable Component
+ *
+ * Features:
+ * - Search functionality
+ * - Column filters
+ * - Pagination (10 rows default)
+ * - Sortable columns
+ * - Loading state
+ * - Empty state
+ *
+ * Props:
+ * - columns: Array of column definitions
+ * - data: Array of row data
+ * - loading: Boolean for loading state
+ * - searchPlaceholder: Placeholder for search input
+ * - onSearch: Function called when search changes
+ * - filters: Array of filter definitions
+ * - onFilterChange: Function called when filter changes
+ * - pagination: { page, limit, total, onPageChange }
+ * - onRowClick: Function called when row is clicked
+ */
+import React, { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Paper,
+  TextField,
+  InputAdornment,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Box,
+  Typography,
+  Skeleton,
+  Chip,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import RefreshIcon from "@mui/icons-material/Refresh";
+
+/**
+ * DataTable Component
+ */
+const DataTable = ({
+  columns = [],
+  data = [],
+  loading = false,
+  searchPlaceholder = "Search...",
+  onSearch,
+  filters = [],
+  filterValues = {},
+  onFilterChange,
+  pagination = null,
+  onRowClick,
+  onRefresh,
+  emptyMessage = "No data found",
+  rowsPerPageOptions = [10, 25, 50],
+}) => {
+  // Local search state
+  const [searchTerm, setSearchTerm] = useState("");
+
+  /**
+   * Handle search input change
+   */
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (onSearch) {
+      onSearch(value);
+    }
+  };
+
+  /**
+   * Handle filter change
+   */
+  const handleFilterChange = (filterKey, value) => {
+    if (onFilterChange) {
+      onFilterChange(filterKey, value);
+    }
+  };
+
+  /**
+   * Handle page change
+   */
+  const handlePageChange = (event, newPage) => {
+    if (pagination?.onPageChange) {
+      pagination.onPageChange(newPage + 1); // MUI uses 0-based, convert to 1-based
+    }
+  };
+
+  /**
+   * Handle rows per page change
+   */
+  const handleRowsPerPageChange = (event) => {
+    if (pagination?.onLimitChange) {
+      pagination.onLimitChange(parseInt(event.target.value, 10));
+    }
+  };
+
+  /**
+   * Render loading skeleton
+   */
+  const renderLoadingSkeleton = () => (
+    <>
+      {[...Array(5)].map((_, index) => (
+        <TableRow key={index}>
+          {columns.map((col, colIndex) => (
+            <TableCell key={colIndex}>
+              <Skeleton animation="wave" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  );
+
+  /**
+   * Render empty state
+   */
+  const renderEmptyState = () => (
+    <TableRow>
+      <TableCell colSpan={columns.length} align="center" className="py-12">
+        <Typography variant="body1" className="text-gray-500">
+          {emptyMessage}
+        </Typography>
+      </TableCell>
+    </TableRow>
+  );
+
+  /**
+   * Render cell value based on column definition
+   */
+  const renderCell = (row, column) => {
+    // If column has a custom render function, use it
+    if (column.render) {
+      return column.render(row[column.field], row);
+    }
+
+    const value = row[column.field];
+
+    // Handle null/undefined
+    if (value === null || value === undefined) {
+      return <span className="text-gray-400">-</span>;
+    }
+
+    // Handle date fields
+    if (column.type === "date" && value) {
+      return new Date(value).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    }
+
+    // Handle datetime fields
+    if (column.type === "datetime" && value) {
+      return new Date(value).toLocaleString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    // Handle currency
+    if (column.type === "currency" && value) {
+      return `₹${value.toLocaleString("en-IN")}`;
+    }
+
+    // Handle status chips
+    if (column.type === "status" && value) {
+      const statusColors = {
+        active: "success",
+        inactive: "default",
+        pending: "warning",
+        completed: "success",
+        cancelled: "error",
+        scheduled: "info",
+        confirmed: "info",
+        paid: "success",
+        failed: "error",
+        refunded: "secondary",
+      };
+      return (
+        <Chip
+          label={value}
+          size="small"
+          color={statusColors[value.toLowerCase()] || "default"}
+        />
+      );
+    }
+
+    return value;
+  };
+
+  return (
+    <Paper className="w-full">
+      {/* Search and Filters Bar */}
+      <Box className="p-4 border-b border-gray-200">
+        <Box className="flex flex-wrap gap-4 items-center">
+          {/* Search Input */}
+          {onSearch && (
+            <TextField
+              size="small"
+              placeholder={searchPlaceholder}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="min-w-[250px]"
+              autoComplete="off"
+              inputProps={{ autoComplete: "off" }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon className="text-gray-400" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
+
+          {/* Filters */}
+          {filters.map((filter) => (
+            <FormControl key={filter.key} size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>{filter.label}</InputLabel>
+              <Select
+                value={filterValues[filter.key] || ""}
+                label={filter.label}
+                onChange={(e) => handleFilterChange(filter.key, e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                {filter.options.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          ))}
+
+          {/* Refresh Button */}
+          {onRefresh && (
+            <Tooltip title="Refresh">
+              <IconButton onClick={onRefresh} className="ml-auto">
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      </Box>
+
+      {/* Table */}
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow className="bg-gray-50">
+              {columns.map((column) => (
+                <TableCell
+                  key={column.field}
+                  className="font-semibold text-gray-700"
+                  style={{ minWidth: column.minWidth }}
+                  align={column.align || "left"}
+                >
+                  {column.headerName}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              renderLoadingSkeleton()
+            ) : data.length === 0 ? (
+              renderEmptyState()
+            ) : (
+              data.map((row, index) => (
+                <TableRow
+                  key={row._id || index}
+                  hover
+                  onClick={() => onRowClick && onRowClick(row)}
+                  className={onRowClick ? "cursor-pointer" : ""}
+                >
+                  {columns.map((column) => (
+                    <TableCell key={column.field} align={column.align || "left"}>
+                      {renderCell(row, column)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Pagination */}
+      {pagination && (
+        <TablePagination
+          component="div"
+          count={pagination.total || 0}
+          page={(pagination.page || 1) - 1} // Convert 1-based to 0-based
+          onPageChange={handlePageChange}
+          rowsPerPage={pagination.limit || 10}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          rowsPerPageOptions={rowsPerPageOptions}
+          labelRowsPerPage="Rows per page:"
+          className="border-t border-gray-200"
+        />
+      )}
+    </Paper>
+  );
+};
+
+export default DataTable;

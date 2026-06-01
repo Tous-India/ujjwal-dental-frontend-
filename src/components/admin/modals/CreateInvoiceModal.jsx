@@ -1,0 +1,585 @@
+/**
+ * Create Invoice Modal
+ *
+ * Modal for creating a new draft invoice with dynamic line items.
+ */
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Box,
+  Typography,
+  TextField,
+  MenuItem,
+  IconButton,
+  CircularProgress,
+  Autocomplete,
+  Divider,
+  Paper,
+} from "@mui/material";
+import { toast } from "react-toastify";
+import Grid from "@mui/material/Grid";
+import CloseIcon from "@mui/icons-material/Close";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { searchPatients } from "../../../api/admin/patients.api";
+import { useClinics } from "../../../hooks/admin/useClinics";
+import { useBillingMutations } from "../../../hooks/admin/useBilling";
+
+/**
+ * Item type options
+ */
+const itemTypeOptions = [
+  { value: "treatment", label: "Treatment" },
+  { value: "test", label: "Test" },
+  { value: "opd_fee", label: "OPD Fee" },
+  { value: "membership", label: "Membership" },
+  { value: "other", label: "Other" },
+];
+
+/**
+ * Blank item template
+ */
+const blankItem = {
+  itemType: "other",
+  description: "",
+  quantity: 1,
+  unitPrice: "",
+  discountPercent: 0,
+  taxRate: 0,
+};
+
+/**
+ * Calculate line item total
+ */
+const calcItemTotal = (item) => {
+  const qty = Number(item.quantity) || 0;
+  const price = Number(item.unitPrice) || 0;
+  const discPct = Number(item.discountPercent) || 0;
+  const taxRate = Number(item.taxRate) || 0;
+
+  let amount = qty * price;
+  amount -= (amount * discPct) / 100;
+  amount = Math.max(0, amount);
+  const tax = (amount * taxRate) / 100;
+  return { amount, tax, total: amount + tax };
+};
+
+const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    patient: null,
+    clinic: "",
+    items: [{ ...blankItem }],
+    discountPercent: 0,
+    notes: "",
+    terms: "",
+  });
+  const [patientSearch, setPatientSearch] = useState("");
+  const [patientOptions, setPatientOptions] = useState([]);
+  const [patientLoading, setPatientLoading] = useState(false);
+
+  const { data: clinicsData } = useClinics();
+  const clinics = clinicsData?.data || [];
+  const { createInvoiceAsync, isCreating } = useBillingMutations();
+
+  // Set default clinic
+  useEffect(() => {
+    if (clinics.length > 0 && !formData.clinic) {
+      setFormData((prev) => ({ ...prev, clinic: clinics[0]._id }));
+    }
+  }, [clinics, formData.clinic]);
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        patient: null,
+        clinic: clinics[0]?._id || "",
+        items: [{ ...blankItem }],
+        discountPercent: 0,
+        notes: "",
+        terms: "",
+      });
+      setPatientSearch("");
+      setPatientOptions([]);
+    }
+  }, [open, clinics]);
+
+  // Search patients with debounce
+  useEffect(() => {
+    const searchAsync = async () => {
+      if (patientSearch.length < 2) {
+        setPatientOptions([]);
+        return;
+      }
+      setPatientLoading(true);
+      try {
+        const res = await searchPatients(patientSearch);
+        setPatientOptions(res.data?.patients || []);
+      } catch {
+        setPatientOptions([]);
+      } finally {
+        setPatientLoading(false);
+      }
+    };
+    const timer = setTimeout(searchAsync, 300);
+    return () => clearTimeout(timer);
+  }, [patientSearch]);
+
+  // Item handlers
+  const handleItemChange = (index, field, value) => {
+    setFormData((prev) => {
+      const items = [...prev.items];
+      items[index] = { ...items[index], [field]: value };
+      return { ...prev, items };
+    });
+  };
+
+  const addItem = () => {
+    setFormData((prev) => ({
+      ...prev,
+      items: [...prev.items, { ...blankItem }],
+    }));
+  };
+
+  const removeItem = (index) => {
+    if (formData.items.length <= 1) {
+      toast.error("At least one item is required");
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Calculate totals
+  const itemTotals = formData.items.map(calcItemTotal);
+  const subtotal = itemTotals.reduce((sum, t) => sum + t.amount, 0);
+  const totalTax = itemTotals.reduce((sum, t) => sum + t.tax, 0);
+  const discountAmount = (subtotal * (Number(formData.discountPercent) || 0)) / 100;
+  const grandTotal = subtotal - discountAmount + totalTax;
+
+  // Submit
+  const handleSubmit = async () => {
+    if (!formData.patient) return toast.error("Please select a patient");
+    if (!formData.clinic) return toast.error("Please select a clinic");
+    if (formData.items.length === 0) return toast.error("Add at least one item");
+
+    const invalidItem = formData.items.find((item) => {
+      const qty = Number(item.quantity);
+      const price = Number(item.unitPrice);
+      const disc = Number(item.discountPercent) || 0;
+      const tax = Number(item.taxRate) || 0;
+      return (
+        !item.description.trim() ||
+        !price || price <= 0 ||
+        !qty || qty <= 0 ||
+        disc < 0 || disc > 100 ||
+        tax < 0 || tax > 100
+      );
+    });
+    if (invalidItem)
+      return toast.error("Each item needs description, price > 0, qty > 0, and valid discount/tax (0-100%)");
+
+    const overallDiscount = Number(formData.discountPercent) || 0;
+    if (overallDiscount < 0 || overallDiscount > 100)
+      return toast.error("Overall discount must be between 0% and 100%");
+
+    try {
+      const data = {
+        patient: formData.patient._id,
+        clinic: formData.clinic,
+        items: formData.items.map((item) => ({
+          itemType: item.itemType,
+          description: item.description.trim(),
+          quantity: Number(item.quantity) || 1,
+          unitPrice: Number(item.unitPrice),
+          discount: { percentage: Number(item.discountPercent) || 0 },
+          taxRate: Number(item.taxRate) || 0,
+        })),
+        discount: {
+          percentage: Number(formData.discountPercent) || 0,
+        },
+        notes: formData.notes || undefined,
+        terms: formData.terms || undefined,
+      };
+
+      await createInvoiceAsync(data);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to create invoice");
+    }
+  };
+
+  const handleClose = () => {
+    if (!isCreating) onClose();
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{ className: "rounded-xl" }}
+    >
+      {/* Header */}
+      <DialogTitle className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white">
+        <Box className="flex items-center justify-between">
+          <Box className="flex items-center gap-2">
+            <ReceiptLongIcon />
+            <Typography variant="h6" className="font-bold">
+              Create Invoice
+            </Typography>
+          </Box>
+          <IconButton onClick={handleClose} disabled={isCreating}>
+            <CloseIcon className="text-white" />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      {/* Content */}
+      <DialogContent className="p-6 mt-4">
+        <Grid container spacing={3}>
+          {/* Patient Search */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Autocomplete
+              options={patientOptions}
+              getOptionLabel={(option) =>
+                option ? `${option.name} - ${option.phone}` : ""
+              }
+              value={formData.patient}
+              onChange={(_, newValue) =>
+                setFormData((prev) => ({ ...prev, patient: newValue }))
+              }
+              onInputChange={(_, newInput) => setPatientSearch(newInput)}
+              loading={patientLoading}
+              isOptionEqualToValue={(option, value) => option._id === value?._id}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Patient *"
+                  placeholder="Search by name or phone..."
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {patientLoading ? <CircularProgress size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box component="li" {...props} key={option._id}>
+                  <Box>
+                    <Typography variant="body2" className="font-medium">
+                      {option.name}
+                    </Typography>
+                    <Typography variant="caption" className="text-gray-500">
+                      {option.phone}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+              noOptionsText={
+                patientSearch.length < 2
+                  ? "Type at least 2 characters to search"
+                  : "No patients found"
+              }
+            />
+          </Grid>
+
+          {/* Clinic */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              select
+              fullWidth
+              label="Clinic *"
+              value={formData.clinic}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, clinic: e.target.value }))
+              }
+              size="small"
+            >
+              {clinics.map((clinic) => (
+                <MenuItem key={clinic._id} value={clinic._id}>
+                  {clinic.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          {/* Items Section */}
+          <Grid size={{ xs: 12 }}>
+            <Divider className="my-2" />
+            <Box className="flex items-center justify-between mb-3">
+              <Typography variant="subtitle1" className="font-semibold">
+                Line Items
+              </Typography>
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={addItem}
+                variant="outlined"
+              >
+                Add Item
+              </Button>
+            </Box>
+
+            {formData.items.map((item, index) => (
+              <Paper
+                key={index}
+                variant="outlined"
+                className="p-3 mb-3"
+              >
+                <Grid container spacing={2} alignItems="center">
+                  {/* Type */}
+                  <Grid size={{ xs: 12, sm: 2 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Type"
+                      value={item.itemType}
+                      onChange={(e) =>
+                        handleItemChange(index, "itemType", e.target.value)
+                      }
+                      size="small"
+                    >
+                      {itemTypeOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+
+                  {/* Description */}
+                  <Grid size={{ xs: 12, sm: 3 }}>
+                    <TextField
+                      fullWidth
+                      label="Description *"
+                      value={item.description}
+                      onChange={(e) =>
+                        handleItemChange(index, "description", e.target.value)
+                      }
+                      size="small"
+                      placeholder="e.g., Root Canal Treatment"
+                    />
+                  </Grid>
+
+                  {/* Qty */}
+                  <Grid size={{ xs: 6, sm: 1 }}>
+                    <TextField
+                      fullWidth
+                      label="Qty"
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(index, "quantity", e.target.value)
+                      }
+                      size="small"
+                      inputProps={{ min: 1 }}
+                    />
+                  </Grid>
+
+                  {/* Unit Price */}
+                  <Grid size={{ xs: 6, sm: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="Price (₹) *"
+                      type="number"
+                      value={item.unitPrice}
+                      onChange={(e) =>
+                        handleItemChange(index, "unitPrice", e.target.value)
+                      }
+                      size="small"
+                      inputProps={{ min: 0 }}
+                    />
+                  </Grid>
+
+                  {/* Discount */}
+                  <Grid size={{ xs: 6, sm: 1.5 }}>
+                    <TextField
+                      fullWidth
+                      label="Disc %"
+                      type="number"
+                      value={item.discountPercent}
+                      onChange={(e) =>
+                        handleItemChange(index, "discountPercent", e.target.value)
+                      }
+                      size="small"
+                      inputProps={{ min: 0, max: 100 }}
+                    />
+                  </Grid>
+
+                  {/* Tax */}
+                  <Grid size={{ xs: 6, sm: 1.5 }}>
+                    <TextField
+                      fullWidth
+                      label="Tax %"
+                      type="number"
+                      value={item.taxRate}
+                      onChange={(e) =>
+                        handleItemChange(index, "taxRate", e.target.value)
+                      }
+                      size="small"
+                      inputProps={{ min: 0, max: 100 }}
+                    />
+                  </Grid>
+
+                  {/* Line Total + Delete */}
+                  <Grid size={{ xs: 12, sm: 1 }}>
+                    <Box className="flex items-center justify-between">
+                      <Typography
+                        variant="body2"
+                        className="font-semibold text-green-600"
+                      >
+                        ₹{itemTotals[index]?.total.toLocaleString("en-IN", { maximumFractionDigits: 2 }) || "0"}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => removeItem(index)}
+                        disabled={formData.items.length <= 1}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Paper>
+            ))}
+          </Grid>
+
+          {/* Totals Preview */}
+          <Grid size={{ xs: 12 }}>
+            <Box className="flex justify-end">
+              <Paper variant="outlined" className="p-4 min-w-[280px]">
+                <Box className="flex justify-between mb-1">
+                  <Typography variant="body2" className="text-gray-600">
+                    Subtotal:
+                  </Typography>
+                  <Typography variant="body2">
+                    ₹{subtotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                  </Typography>
+                </Box>
+                {Number(formData.discountPercent) > 0 && (
+                  <Box className="flex justify-between mb-1">
+                    <Typography variant="body2" className="text-gray-600">
+                      Discount ({formData.discountPercent}%):
+                    </Typography>
+                    <Typography variant="body2" className="text-red-500">
+                      -₹{discountAmount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                    </Typography>
+                  </Box>
+                )}
+                {totalTax > 0 && (
+                  <Box className="flex justify-between mb-1">
+                    <Typography variant="body2" className="text-gray-600">
+                      Tax:
+                    </Typography>
+                    <Typography variant="body2">
+                      ₹{totalTax.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                    </Typography>
+                  </Box>
+                )}
+                <Divider className="my-2" />
+                <Box className="flex justify-between">
+                  <Typography variant="subtitle2" className="font-bold">
+                    Grand Total:
+                  </Typography>
+                  <Typography
+                    variant="subtitle2"
+                    className="font-bold text-green-600"
+                  >
+                    ₹{grandTotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                  </Typography>
+                </Box>
+              </Paper>
+            </Box>
+          </Grid>
+
+          {/* Overall Discount */}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              fullWidth
+              label="Overall Discount %"
+              type="number"
+              value={formData.discountPercent}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  discountPercent: e.target.value,
+                }))
+              }
+              size="small"
+              inputProps={{ min: 0, max: 100 }}
+              helperText="Applied on subtotal"
+            />
+          </Grid>
+
+          {/* Notes */}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              fullWidth
+              label="Notes"
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, notes: e.target.value }))
+              }
+              size="small"
+              multiline
+              rows={2}
+              placeholder="Internal notes..."
+            />
+          </Grid>
+
+          {/* Terms */}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              fullWidth
+              label="Terms & Conditions"
+              value={formData.terms}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, terms: e.target.value }))
+              }
+              size="small"
+              multiline
+              rows={2}
+              placeholder="Payment terms..."
+            />
+          </Grid>
+        </Grid>
+      </DialogContent>
+
+      {/* Actions */}
+      <DialogActions className="p-4 bg-gray-50">
+        <Button onClick={handleClose} color="inherit" disabled={isCreating}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={isCreating}
+          className="bg-indigo-600 hover:bg-indigo-700"
+          startIcon={
+            isCreating ? <CircularProgress size={16} /> : <ReceiptLongIcon />
+          }
+        >
+          {isCreating ? "Creating..." : "Create Draft Invoice"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default CreateInvoiceModal;
