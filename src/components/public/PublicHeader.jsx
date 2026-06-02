@@ -89,8 +89,8 @@ const PublicHeader = () => {
   return (
     <>
       {/* Top Bar */}
-      <div className="bg-[#003366] text-white py-2 text-sm">
-        <div className="max-w-5xl mx-auto px-4">
+      <div className="bg-[#0D1B4A] text-white py-2 text-sm">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <div className="flex justify-between items-center flex-wrap gap-2">
             <div className="flex items-center gap-4">
               <NavLink
@@ -98,7 +98,7 @@ const PublicHeader = () => {
                 className="flex items-center gap-1 text-white no-underline cursor-pointer hover:text-gray-200 transition-colors"
               >
                 <PhoneIcon className="text-[16px]!" />
-                <span className="text-[12px]!">
+                <span className="text-[13px]!">
                   +91 8708362763
                 </span>
               </NavLink>
@@ -107,7 +107,7 @@ const PublicHeader = () => {
                 className="flex items-center gap-1 text-white no-underline cursor-pointer hover:text-gray-200 transition-colors"
               >
                 <EmailIcon className="text-[16px]!" />
-                <span className="text-[12px]!">
+                <span className="text-[13px]!">
                   ujjwaldentalplanet.in@gmail.com
                 </span>
               </NavLink>
@@ -136,8 +136,8 @@ const PublicHeader = () => {
       </div>
 
       {/* Main Navigation */}
-      <nav className={`sticky top-0 z-50 bg-white shadow-md `}>
-        <div className="max-w-5xl mx-auto px-4">
+      <nav className={`sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100`}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <div className="flex items-center justify-between min-h-17.5">
             {/* Logo */}
             <NavLink
@@ -151,7 +151,7 @@ const PublicHeader = () => {
               />
               <div className="hidden sm:block ml-2">
                 <span
-                  className="block font-bold text-[#003366] leading-tight text-[1rem]!"
+                  className="block font-bold text-[#0D1B4A] leading-tight text-[1rem]!"
                   style={{ fontWeight: 800 }}
                 >
                   UJJWAL DENTAL
@@ -336,7 +336,7 @@ const PublicHeader = () => {
             {/* Book Appointment CTA */}
             <NavLink
               to="/book-appointment"
-              className="hidden md:inline-flex items-center bg-[#003366] text-white rounded-full uppercase font-bold text-xs tracking-wide px-6 py-2.5 no-underline cursor-pointer shrink-0 hover:bg-[#004080] transition-colors duration-200"
+              className="hidden md:inline-flex items-center bg-[#F57C00] text-white rounded-full uppercase font-bold text-xs tracking-wide px-6 py-2.5 no-underline cursor-pointer shrink-0 shadow-sm hover:bg-[#E06C00] hover:shadow-md transition-all duration-200"
             >
               Book Appointment
             </NavLink>

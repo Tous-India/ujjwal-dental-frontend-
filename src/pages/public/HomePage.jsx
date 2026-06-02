@@ -231,8 +231,8 @@ const HomePage = () => {
         </Swiper>
       </section>
 
-      {/* Marquee Strip */}
-      <div className="w-full bg-[#003366] overflow-hidden">
+      {/* Stats Ticker */}
+      <div className="w-full bg-orange-50 border-y border-orange-100 overflow-hidden">
         <div className="animate-marquee flex w-max">
           {[
             ...marqueeItems,
@@ -242,71 +242,69 @@ const HomePage = () => {
           ].map((item, i) => (
             <div
               key={i}
-              className="flex items-center gap-3 px-10 py-3.5 shrink-0"
+              className="flex items-center gap-3 px-10 py-4 shrink-0"
             >
-              <span className="text-[#fcb900] text-[22px]!">{item.icon}</span>
+              <span className="text-[#F57C00] text-[22px]!">{item.icon}</span>
               <span
-                className="text-[#fcb900] whitespace-nowrap"
-                style={{ fontSize: "1rem", fontWeight: 800 }}
+                className="text-[#0D1B4A] whitespace-nowrap text-[1.05rem]!"
+                style={{ fontWeight: 800 }}
               >
                 {item.value}
               </span>
               <span
-                className="text-[#fcb900]/80 whitespace-nowrap"
-                style={{ fontSize: "0.875rem", fontWeight: 400 }}
+                className="text-gray-500 whitespace-nowrap text-[0.9rem]!"
+                style={{ fontWeight: 400 }}
               >
                 {item.label}
               </span>
-              <span className="text-[#fcb900]/30 ml-6">●</span>
+              <span className="text-[#F57C00]/30 ml-6">●</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Services Section */}
-      <section className="py-16 bg-white overflow-x-hidden">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2
-            className="text-[#003366] text-center mb-3"
-            style={{ fontSize: "2rem", fontWeight: 800 }}
-          >
+      <section className="py-20 md:py-24 bg-white overflow-x-hidden">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+          <h2 className="text-[#0D1B4A] text-center mb-3 text-3xl! md:text-4xl! font-bold!">
             Comprehensive Dental Care for All Your Needs
           </h2>
-          <p
-            className="text-center text-gray-500 mb-12 max-w-3xl mx-auto w-[100%] md:w-[45%]"
-            style={{ fontSize: "1rem" }}
-          >
+          <p className="text-center text-gray-500 mb-12 max-w-3xl mx-auto w-[100%] md:w-[55%] text-base! leading-relaxed">
             We take pride in providing a comprehensive range of dental services.
             Our state-of-the-art facilities and experienced professionals
             demonstrate our dedication to excellence.
           </p>
 
           <div className="flex justify-center items-center md:flex-row gap-5 md:gap-8 flex-col">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 lg:max-w-[65%]">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 lg:max-w-[65%]">
               {treatments.map((t) => (
                 <Link
                   key={t.slug || "view-more"}
                   to={t.slug ? `/treatments/${t.slug}` : "/treatments"}
-                  className="group flex flex-col items-center text-center px-1 py-4 rounded-sm border border-gray-200 no-underline cursor-pointer transition-all duration-300 hover:shadow-lg  hover:-translate-y-1"
+                  className="group flex flex-col items-center text-center px-2 py-5 rounded-xl bg-white border border-gray-100 shadow-sm no-underline cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1"
                 >
-                  <div className="w-20 h-20 rounded-full bg-[#e8f4fd] flex items-center justify-center mb-2 overflow-hidden   transition-colors duration-300">
+                  <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center mb-3 overflow-hidden transition-colors duration-300">
                     <img
                       src={t.img}
                       alt={t.title}
                       className="w-12 h-12 object-contain rounded-[30px]"
                     />
                   </div>
-                  <span
-                    className="text-[#003366] group-hover:text-[#006694] transition-colors duration-200"
-                    style={{ fontSize: "0.9rem", fontWeight: 600 }}
-                  >
+                  <span className="text-[#0D1B4A] group-hover:text-[#F57C00] transition-colors duration-200 text-sm! font-semibold!">
                     {t.title}
                   </span>
                 </Link>
               ))}
             </div>
             <div className="lg:max-w-[20.5%]">
-              <img src={docter} alt="" className="w-100 rounded-sm" />
+              <img
+                src={docter}
+                alt=""
+                className="w-100 rounded-xl"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
             </div>
           </div>
         </div>

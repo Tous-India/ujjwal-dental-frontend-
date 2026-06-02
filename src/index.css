@@ -2,6 +2,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
+/* Site-wide design tokens (warm navy + warm orange accent) */
+@theme {
+  --color-navy: #0d1b4a;
+  --color-accent: #f57c00;
+  --color-accent-dark: #e06c00;
+}
+
 .css-1f0zdka-MuiList-root {
   padding-top: 30px !important;
 }
@@ -121,7 +128,7 @@ button {
 }
 
 .active-nav {
-  color: #0098da !important;
+  color: #f57c00 !important;
 }
 
 .main-navbar {
@@ -147,7 +154,7 @@ button {
         }
         &:hover {
           > a {
-            color: #0098da;
+            color: #f57c00;
           }
         }
       }
@@ -169,7 +176,7 @@ button {
           transition: 0.3s;
           transform: translateX(10px);
           border-radius: 10px;
-          border-bottom: 3px solid #0153a1;
+          border-bottom: 3px solid #f57c00;
           li {
             transition: 0.3s;
             border-radius: 2px;
@@ -247,7 +254,7 @@ button {
           &:hover {
             > a,
             > .navItems {
-              color: #0098da;
+              color: #f57c00;
             }
           }
         }
