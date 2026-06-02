@@ -25,7 +25,6 @@ import SchoolIcon from "@mui/icons-material/School";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import docter from "../../../public/docter.webp";
 import Patient1 from "../../../public/patient-1.webp";
 import Patient2 from "../../../public/patient-2.webp";
 import Patient3 from "../../../public/patient-3.webp";
@@ -269,37 +268,34 @@ const HomePage = () => {
             demonstrate our dedication to excellence.
           </p>
 
-          <div className="flex justify-center items-center md:flex-row gap-5 md:gap-8 flex-col">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 lg:max-w-[65%]">
-              {treatments.map((t) => (
-                <Link
-                  key={t.slug || "view-more"}
-                  to={t.slug ? `/treatments/${t.slug}` : "/treatments"}
-                  className="group flex flex-col items-center text-center px-2 py-5 rounded-xl bg-white border border-gray-100 shadow-sm no-underline cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1"
-                >
-                  <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center mb-3 overflow-hidden transition-colors duration-300">
-                    <img
-                      src={t.img}
-                      alt={t.title}
-                      className="w-12 h-12 object-contain rounded-[30px]"
-                    />
-                  </div>
-                  <span className="text-[#0D1B4A] group-hover:text-[#F57C00] transition-colors duration-200 text-[15px] font-semibold">
-                    {t.title}
-                  </span>
-                </Link>
-              ))}
-            </div>
-            <div className="lg:max-w-[20.5%]">
-              <img
-                src={docter}
-                alt=""
-                className="w-100 rounded-xl"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-            </div>
+          <div className="text-center mb-6">
+            <Link
+              to="/treatments"
+              className="text-accent text-[14px] font-medium no-underline hover:text-accent-dark transition-colors duration-200"
+            >
+              Explore now
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+            {treatments.map((t) => (
+              <Link
+                key={t.slug || "view-more"}
+                to={t.slug ? `/treatments/${t.slug}` : "/treatments"}
+                className="flex flex-col items-center text-center py-8 px-4 rounded-2xl bg-white border border-gray-100 shadow-xs no-underline cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.02]"
+              >
+                <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+                  <img
+                    src={t.img}
+                    alt={t.title}
+                    className="w-9 h-9 object-contain"
+                  />
+                </div>
+                <span className="text-gray-700 text-[15px] font-medium">
+                  {t.title}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
