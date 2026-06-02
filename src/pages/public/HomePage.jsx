@@ -229,6 +229,26 @@ const HomePage = () => {
             </SwiperSlide>
           ))}
         </Swiper>
+
+        {/* Text overlay (sits on top of the banner images) */}
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center bg-gradient-to-r from-black/60 via-black/30 to-transparent">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 w-full">
+            <div className="max-w-xl text-center md:text-left">
+              <h1 className="text-white font-bold leading-tight mb-3 text-[28px] md:text-[44px]">
+                Your Smile, Our Priority
+              </h1>
+              <p className="text-white/90 font-normal mb-6 text-[18px] md:text-[20px]">
+                Advanced Dental Care in Sonipat
+              </p>
+              <Link
+                to="/book-appointment"
+                className="pointer-events-auto inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[15px] tracking-wide px-7 py-3 no-underline shadow-md hover:bg-[#E06C00] transition-all duration-200"
+              >
+                Book Appointment
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Stats Ticker */}
@@ -244,17 +264,11 @@ const HomePage = () => {
               key={i}
               className="flex items-center gap-3 px-10 py-4 shrink-0"
             >
-              <span className="text-[#F57C00] text-[22px]!">{item.icon}</span>
-              <span
-                className="text-[#0D1B4A] whitespace-nowrap text-[1.05rem]!"
-                style={{ fontWeight: 800 }}
-              >
+              <span className="text-[#F57C00] text-[26px]">{item.icon}</span>
+              <span className="text-[#0D1B4A] whitespace-nowrap text-2xl font-bold">
                 {item.value}
               </span>
-              <span
-                className="text-gray-500 whitespace-nowrap text-[0.9rem]!"
-                style={{ fontWeight: 400 }}
-              >
+              <span className="text-gray-500 whitespace-nowrap text-sm font-medium">
                 {item.label}
               </span>
               <span className="text-[#F57C00]/30 ml-6">●</span>
@@ -266,10 +280,10 @@ const HomePage = () => {
       {/* Services Section */}
       <section className="py-20 md:py-24 bg-white overflow-x-hidden">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
-          <h2 className="text-[#0D1B4A] text-center mb-3 text-3xl! md:text-4xl! font-bold!">
+          <h2 className="text-[#0D1B4A] text-center mb-3 text-3xl md:text-4xl font-bold">
             Comprehensive Dental Care for All Your Needs
           </h2>
-          <p className="text-center text-gray-500 mb-12 max-w-3xl mx-auto w-[100%] md:w-[55%] text-base! leading-relaxed">
+          <p className="text-center text-gray-500 mb-12 max-w-3xl mx-auto w-[100%] md:w-[55%] text-base md:text-lg leading-relaxed">
             We take pride in providing a comprehensive range of dental services.
             Our state-of-the-art facilities and experienced professionals
             demonstrate our dedication to excellence.
@@ -290,7 +304,7 @@ const HomePage = () => {
                       className="w-12 h-12 object-contain rounded-[30px]"
                     />
                   </div>
-                  <span className="text-[#0D1B4A] group-hover:text-[#F57C00] transition-colors duration-200 text-sm! font-semibold!">
+                  <span className="text-[#0D1B4A] group-hover:text-[#F57C00] transition-colors duration-200 text-[15px] font-semibold">
                     {t.title}
                   </span>
                 </Link>

@@ -151,16 +151,16 @@ const PublicHeader = () => {
               />
               <div className="hidden sm:block ml-2">
                 <span
-                  className="block font-bold text-[#0D1B4A] leading-tight text-[1rem]!"
+                  className="block font-extrabold text-[#0D1B4A] leading-tight text-[20px]"
                   style={{ fontWeight: 800 }}
                 >
                   UJJWAL DENTAL
                 </span>
                 <span
-                  className="block text-gray-500 text-[0.5rem]!"
+                  className="block text-gray-400 text-[11px]"
                   style={{
-                    fontWeight: 500,
-                    letterSpacing: "0.05em",
+                    fontWeight: 400,
+                    letterSpacing: "0.08em",
                   }}
                 >
                   CARING FOR YOUR SMILE
@@ -174,7 +174,7 @@ const PublicHeader = () => {
             >
               <nav className="navdiv ">
                 <img src={"/public/ujjwal-dental-logo.png"} alt="logo" />
-                <ul className="md:flex justify-evenly items-center">
+                <ul className="md:flex items-center gap-8">
                   <li>
                     {" "}
                     <NavLink
@@ -336,7 +336,7 @@ const PublicHeader = () => {
             {/* Book Appointment CTA */}
             <NavLink
               to="/book-appointment"
-              className="hidden md:inline-flex items-center bg-[#F57C00] text-white rounded-full uppercase font-bold text-xs tracking-wide px-6 py-2.5 no-underline cursor-pointer shrink-0 shadow-sm hover:bg-[#E06C00] hover:shadow-md transition-all duration-200"
+              className="hidden md:inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[15px] tracking-wide px-6 py-2.5 no-underline cursor-pointer shrink-0 shadow-sm hover:bg-[#E06C00] hover:shadow-md transition-all duration-200"
             >
               Book Appointment
             </NavLink>
