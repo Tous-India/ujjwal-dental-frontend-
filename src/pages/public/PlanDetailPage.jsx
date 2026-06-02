@@ -128,7 +128,7 @@ const PlanDetailPage = () => {
       }
 
       const orderRes = await api.post("/payments/razorpay/create-order", {
-        amount: plan.price,
+        planId: plan._id,
         type: "membership",
         isOnlineBooking: true,
       });

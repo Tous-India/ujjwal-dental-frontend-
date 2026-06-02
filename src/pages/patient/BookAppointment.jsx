@@ -269,12 +269,18 @@ const BookAppointment = () => {
       }
 
       const opdFee = getOpdFee();
+      const isEmergency =
+        appointmentReasons.find((r) => r.value === formData.reason)?.type ===
+        "emergency";
 
-      // Create Razorpay order (isOnlineBooking allows creating order without patient)
+      // Create Razorpay order (isOnlineBooking allows creating order without patient).
+      // The server prices the order authoritatively from settings; isEmergency tells
+      // it which OPD fee to use. The amount below is informational only.
       const orderResponse = await createPaymentOrder({
         amount: opdFee,
         clinic: formData.clinic,
         type: "opd_fee",
+        isEmergency,
         isOnlineBooking: true,
       });
 

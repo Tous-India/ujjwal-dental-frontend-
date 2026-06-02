@@ -246,7 +246,7 @@ const MembershipPlans = () => {
 
       // Create Razorpay order
       const orderResponse = await createMembershipPaymentOrder({
-        amount: plan.price,
+        planId: plan._id,
         clinic: defaultClinic || patient?.preferredClinic,
         type: "membership",
         patient: patient._id,

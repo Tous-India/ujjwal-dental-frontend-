@@ -87,7 +87,7 @@ const PlansPage = () => {
     try {
       // Create Razorpay order
       const orderRes = await api.post("/payments/razorpay/create-order", {
-        amount: buyDialog.price,
+        planId: buyDialog._id,
         type: "membership",
         isOnlineBooking: true,
       });
