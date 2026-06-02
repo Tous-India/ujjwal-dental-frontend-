@@ -510,7 +510,7 @@ const HomePage = () => {
       </section>
 
       {/* Patient Speaks */}
-      <section className="py-[48px] md:py-[64px] bg-gray-50">
+      <section className="py-[48px] md:py-[64px] bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2
             className="text-[#003366] text-center mb-2"
@@ -545,8 +545,8 @@ const HomePage = () => {
               modules={[Navigation, Autoplay]}
               speed={600}
               loop
-              spaceBetween={24}
-              slidesPerView={1}
+              spaceBetween={16}
+              slidesPerView={1.2}
               autoplay={{
                 delay: 4000,
                 disableOnInteraction: false,
@@ -561,9 +561,8 @@ const HomePage = () => {
                 swiper.params.navigation.nextEl = reviewsNextRef.current;
               }}
               breakpoints={{
-                768: { slidesPerView: 2 },
-                1024: { slidesPerView: 3 },
-                1280: { slidesPerView: 4 },
+                768: { slidesPerView: 2.5 },
+                1024: { slidesPerView: 4 },
               }}
               className="px-1 py-2"
             >
@@ -575,8 +574,8 @@ const HomePage = () => {
                       p.videoUrl ? "cursor-pointer" : ""
                     }`}
                   >
-                    {/* Thumbnail / gradient placeholder (16:9) */}
-                    <div className="relative w-full aspect-video bg-gradient-to-br from-[#0D1B4A] to-[#1e3a8a]">
+                    {/* Thumbnail / gradient placeholder (portrait 9:16) */}
+                    <div className="relative w-full aspect-[9/16] bg-gradient-to-br from-[#0D1B4A] to-[#1e3a8a]">
                       {p.img && (
                         <img
                           src={p.img}
@@ -594,13 +593,12 @@ const HomePage = () => {
                       </div>
                     </div>
 
-                    {/* Card body */}
-                    <div className="p-4">
+                    {/* Card body — name + badge on one line */}
+                    <div className="p-4 flex items-center justify-between gap-2">
                       <p className="text-[#1a1a1a] text-base font-semibold leading-tight">
                         {p.name}
                       </p>
-                      <p className="text-gray-500 text-sm mb-3">{p.city}</p>
-                      <span className="inline-block bg-orange-50 text-[#F57C00] rounded-full px-3 py-1 text-[12px] font-semibold">
+                      <span className="inline-block bg-orange-50 text-[#F57C00] rounded-full px-3 py-1 text-[12px] font-semibold whitespace-nowrap">
                         {p.treatment}
                       </span>
                     </div>

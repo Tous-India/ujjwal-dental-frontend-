@@ -11,6 +11,18 @@
   --color-accent-dark: #e06c00;
 }
 
+/* Override Tailwind defaults: bump w-9/h-9 up one step (spacing * 12 = 3rem). */
+.w-9 {
+  width: calc(var(--spacing) * 12) !important;
+}
+.h-9 {
+  height: calc(var(--spacing) * 12) !important;
+}
+
+.bg-gray-50 {
+  background-color: oklch(0.97 0 0) !important;
+}
+
 .css-1f0zdka-MuiList-root {
   padding-top: 30px !important;
 }
