@@ -29,6 +29,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
+import CheckIcon from "@mui/icons-material/Check";
 import Patient1 from "../../../public/patient-1.webp";
 import Patient2 from "../../../public/patient-2.webp";
 import Patient3 from "../../../public/patient-3.webp";
@@ -659,87 +660,75 @@ const HomePage = () => {
       </section>
 
       {/* Dental Health Plans */}
-      <section className="py-[48px] md:py-[64px]" style={{ backgroundColor: "#e8f4fd" }}>
+      <section className="py-[48px] md:py-[64px] bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2
-            className="text-[#003366] text-center mb-10"
+            className="text-[#003366] text-center mb-2"
             style={{ fontSize: "2rem", fontWeight: 800 }}
           >
             Dental Health Plans for All
           </h2>
-          <Swiper
-            modules={[Navigation, FreeMode]}
-            navigation
-            freeMode
-            spaceBetween={20}
-            slidesPerView={1.25}
-            breakpoints={{
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-            }}
-            style={{ alignItems: "stretch" }}
-            className="!items-stretch"
-          >
-            {dentalPlans.map((plan, i) => (
-              <SwiperSlide key={i} style={{ height: "auto" }}>
-                <div className="bg-white rounded-[10px] border border-gray-200 p-6 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex justify-center mb-4">
-                      <img
-                        src={plan.img}
-                        alt={plan.title}
-                        className="h-28 object-contain"
-                      />
-                    </div>
-                    <h3
-                      className="text-[#003366] mb-3"
-                      style={{ fontSize: "1.15rem", fontWeight: 700 }}
-                    >
+          <p className="text-center text-gray-500 mb-10 max-w-2xl mx-auto text-base">
+            Save more with our annual membership plans
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto items-stretch">
+            {dentalPlans.map((plan, i) => {
+              const featured = i === 1;
+              return (
+                <div
+                  key={i}
+                  className={`relative bg-white rounded-2xl py-8 px-6 flex flex-col border ${
+                    featured
+                      ? "border-accent md:scale-[1.03]"
+                      : "border-gray-200"
+                  }`}
+                >
+                  {featured && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-[12px] font-semibold rounded-full px-3 py-1">
+                      Most Popular
+                    </span>
+                  )}
+
+                  {/* Plan name + price */}
+                  <div className="text-center">
+                    <h3 className="text-[#003366] text-[21px] font-bold leading-tight">
                       {plan.title}
                     </h3>
-                    <ul className="list-disc ml-5 mb-6">
-                      {plan.features.map((f, j) => (
-                        <li
-                          key={j}
-                          className="text-gray-600 mb-2"
-                          style={{ fontSize: "0.9rem", lineHeight: 1.6 }}
-                        >
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-                    <div>
-                      <span
-                        className="text-[#e88a1a]"
-                        style={{ fontSize: "0.8rem", fontWeight: 600 }}
-                      >
-                        Special Offer
+                    <p className="mt-3">
+                      <span className="text-accent text-[38px] font-extrabold">
+                        ₹{getPrice(plan.title, plan.price)}
                       </span>
-                      <p
-                        className="text-[#003366]"
-                        style={{ fontSize: "1.5rem", fontWeight: 800 }}
-                      >
-                        ₹ {getPrice(plan.title, plan.price)}
-                      </p>
-                    </div>
-                    <Link
-                      to="/membership-plans"
-                      className="inline-block no-underline text-white rounded-[5px] px-6 py-2.5 transition-colors duration-200 hover:opacity-90"
-                      style={{
-                        backgroundColor: "#e88a1a",
-                        fontSize: "0.9rem",
-                        fontWeight: 700,
-                      }}
-                    >
-                      Buy Now
-                    </Link>
+                      <span className="text-gray-500 text-sm">/year</span>
+                    </p>
                   </div>
+
+                  <div className="border-t border-gray-100 my-5" />
+
+                  {/* Benefits */}
+                  <ul className="flex-grow">
+                    {plan.features.map((f, j) => (
+                      <li
+                        key={j}
+                        className="flex items-start gap-2 py-1.5 text-gray-700 text-[15px] leading-snug"
+                      >
+                        <CheckIcon className="text-accent text-[18px]! mt-0.5 shrink-0" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA */}
+                  <Link
+                    to="/membership-plans"
+                    className="mt-6 block w-full text-center no-underline bg-accent hover:bg-accent-dark text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200"
+                  >
+                    Buy Now
+                  </Link>
                 </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+              );
+            })}
+          </div>
         </div>
       </section>
 
