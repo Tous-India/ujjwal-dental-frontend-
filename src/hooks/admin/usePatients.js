@@ -15,6 +15,7 @@ import {
   createPatient,
   updatePatient,
   deletePatient,
+  reactivatePatient,
 } from "../../api/admin/patients.api";
 
 /**
@@ -70,6 +71,12 @@ export const usePatientMutations = () => {
     onSettled: () => invalidatePatients(),
   });
 
+  const reactivateMutation = useMutation({
+    mutationFn: reactivatePatient,
+    onSuccess: () => invalidatePatients(),
+    onSettled: () => invalidatePatients(),
+  });
+
   return {
     createPatient: createMutation.mutate,
     createPatientAsync: createMutation.mutateAsync,
@@ -80,6 +87,9 @@ export const usePatientMutations = () => {
     deletePatient: deleteMutation.mutate,
     deletePatientAsync: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
+    reactivatePatient: reactivateMutation.mutate,
+    reactivatePatientAsync: reactivateMutation.mutateAsync,
+    isReactivating: reactivateMutation.isPending,
   };
 };
 

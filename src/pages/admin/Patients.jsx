@@ -11,6 +11,7 @@
 import React, { useState } from "react";
 import { Box, Typography, Button, Avatar, Chip } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { toast } from "react-toastify";
 import DataTable from "../../components/common/DataTable";
 import { usePatients, usePatientMutations } from "../../hooks/admin/usePatients";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
@@ -150,7 +151,7 @@ const Patients = () => {
   });
 
   // Mutations
-  const { deletePatient, isDeleting } = usePatientMutations();
+  const { deletePatient, isDeleting, reactivatePatient } = usePatientMutations();
 
   // Extract data from response
   const patients = data?.data || [];
@@ -237,6 +238,27 @@ const Patients = () => {
   };
 
   /**
+   * Reactivate a deactivated patient (flip isActive back to true)
+   */
+  const handleReactivatePatient = (patient) => {
+    if (!patient) return;
+
+    reactivatePatient(patient._id, {
+      onSuccess: () => {
+        toast.success("Patient reactivated");
+        setDetailModalOpen(false);
+        setSelectedPatient(null);
+        refetch();
+      },
+      onError: (error) => {
+        toast.error(
+          error.response?.data?.message || "Failed to reactivate patient"
+        );
+      },
+    });
+  };
+
+  /**
    * Handle patient updated successfully
    */
   const handlePatientUpdated = () => {
@@ -297,6 +319,7 @@ const Patients = () => {
         patient={selectedPatient}
         onEdit={handleEditPatient}
         onDelete={handleDeletePatient}
+        onReactivate={handleReactivatePatient}
       />
 
       {/* Add Patient Modal */}

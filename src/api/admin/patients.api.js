@@ -62,6 +62,14 @@ export const deletePatient = (id) =>
   api.delete(`/patients/${id}`).then((res) => res.data);
 
 /**
+ * Reactivate (un-deactivate) patient
+ * @param {string} id - Patient ID
+ * @returns {Promise}
+ */
+export const reactivatePatient = (id) =>
+  api.patch(`/patients/${id}/reactivate`).then((res) => res.data);
+
+/**
  * Get patient profile with summary
  * @param {string} id - Patient ID
  * @returns {Promise}
