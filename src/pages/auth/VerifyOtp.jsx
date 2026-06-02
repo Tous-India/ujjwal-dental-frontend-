@@ -2,18 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
 import { verifyOtp, resendOtp } from "../../api/auth.api";
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  CircularProgress,
-  Link,
-} from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { toast } from "react-toastify";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+
+const trustPoints = [
+  "Book appointments online",
+  "View treatment history",
+  "Manage your dental health",
+];
 
 /**
  * OTP Verification Page
@@ -153,110 +151,108 @@ const VerifyOtp = () => {
   if (!pendingEmail) return null;
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "#f5f5f5",
-        p: 2,
-      }}
-    >
-      <Card sx={{ maxWidth: 400, width: "100%" }}>
-        <CardContent sx={{ p: 4 }}>
-          {/* Back button */}
-          <Button
-            startIcon={<ArrowBackIcon />}
+    <div className="min-h-screen flex">
+      <title>Verify OTP | Ujjwal Dental Clinic</title>
+
+      {/* Left branding panel (desktop only) */}
+      <div className="hidden lg:flex lg:w-[55%] bg-gradient-to-br from-[#0D1B4A] to-[#060c28] flex-col items-center justify-center text-center px-12">
+        <div>
+          <p className="text-white text-[28px] font-bold leading-tight">
+            UJJWAL DENTAL
+          </p>
+          <p className="text-gray-300 text-[13px] tracking-wide">
+            CARING FOR YOUR SMILE
+          </p>
+          <div className="mt-8 space-y-3 text-left inline-block">
+            {trustPoints.map((point) => (
+              <p
+                key={point}
+                className="text-gray-300 text-[14px] flex items-center gap-2"
+              >
+                <span className="text-accent">✓</span>
+                {point}
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right form panel */}
+      <div className="w-full lg:w-[45%] bg-white flex items-center justify-center px-[40px] py-10">
+        <div className="w-full max-w-sm">
+          {/* Back link */}
+          <button
+            type="button"
             onClick={handleBack}
-            sx={{ mb: 2 }}
-            color="inherit"
+            className="inline-flex items-center gap-1 text-[14px] text-gray-500 hover:text-[#003366] transition-colors cursor-pointer mb-6"
           >
+            <ArrowBackIcon className="text-[18px]!" />
             Back
-          </Button>
+          </button>
 
-          {/* Title */}
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Verify OTP
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Enter the 6-digit OTP sent to {pendingEmail}
-          </Typography>
+          {/* Security icon */}
+          <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-4">
+            <LockOutlinedIcon className="text-accent!" />
+          </div>
 
-          {/* OTP Input Boxes */}
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1,
-              justifyContent: "center",
-              mb: 3,
-            }}
-          >
+          <h1 className="text-[#003366] text-2xl font-bold">Verify OTP</h1>
+          <p className="text-gray-500 text-[15px] mt-1 mb-6">
+            Enter the 6-digit OTP sent to{" "}
+            <span className="text-[#003366] font-semibold">{pendingEmail}</span>
+          </p>
+
+          {/* OTP input boxes */}
+          <div className="flex justify-center gap-3 mb-6">
             {otp.map((digit, index) => (
-              <TextField
+              <input
                 key={index}
-                inputRef={(el) => (inputRefs.current[index] = el)}
+                ref={(el) => (inputRefs.current[index] = el)}
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={index === 0 ? handlePaste : undefined}
-                inputProps={{
-                  maxLength: 1,
-                  style: {
-                    textAlign: "center",
-                    fontSize: "1.5rem",
-                    fontWeight: "bold",
-                    padding: "12px",
-                  },
-                }}
-                sx={{
-                  width: 48,
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": {
-                      borderWidth: 2,
-                    },
-                  },
-                }}
+                maxLength={1}
+                inputMode="numeric"
+                autoFocus={index === 0}
                 disabled={loading}
+                className="w-[52px] h-[52px] rounded-xl border border-gray-200 text-center text-[20px] font-semibold text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200 disabled:opacity-60"
               />
             ))}
-          </Box>
+          </div>
 
-          {/* Verify Button */}
-          <Button
-            variant="contained"
-            fullWidth
-            size="large"
+          {/* Verify button */}
+          <button
+            type="button"
             onClick={() => handleVerify(otp.join(""))}
             disabled={loading || otp.some((d) => !d)}
-            sx={{ py: 1.5, mb: 2 }}
+            className="w-full flex items-center justify-center bg-accent hover:bg-accent-dark disabled:opacity-50 text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
           >
             {loading ? (
-              <CircularProgress size={24} color="inherit" />
+              <CircularProgress size={22} sx={{ color: "#fff" }} />
             ) : (
               "Verify OTP"
             )}
-          </Button>
+          </button>
 
-          {/* Resend OTP */}
-          <Box sx={{ textAlign: "center" }}>
+          {/* Resend */}
+          <div className="text-center mt-4">
             {canResend ? (
-              <Link
-                component="button"
+              <button
+                type="button"
                 onClick={handleResend}
-                sx={{ cursor: "pointer" }}
+                className="text-accent text-[14px] font-semibold hover:text-accent-dark cursor-pointer"
               >
                 Resend OTP
-              </Link>
+              </button>
             ) : (
-              <Typography variant="body2" color="text.secondary">
+              <p className="text-[14px] text-gray-400">
                 Resend OTP in {resendTimer}s
-              </Typography>
+              </p>
             )}
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
