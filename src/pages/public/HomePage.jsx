@@ -678,14 +678,14 @@ const HomePage = () => {
               return (
                 <div
                   key={i}
-                  className={`relative bg-white rounded-2xl py-8 px-6 flex flex-col border ${
+                  className={`relative rounded-2xl py-8 px-6 flex flex-col border ${
                     featured
-                      ? "border-accent md:scale-[1.03]"
-                      : "border-gray-200"
+                      ? "bg-white border-[#003366] md:scale-[1.03]"
+                      : "bg-gray-50 border-gray-100"
                   }`}
                 >
                   {featured && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-[12px] font-semibold rounded-full px-3 py-1">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#003366] text-white text-[12px] font-semibold rounded-full px-3 py-1">
                       Most Popular
                     </span>
                   )}
@@ -696,7 +696,7 @@ const HomePage = () => {
                       {plan.title}
                     </h3>
                     <p className="mt-3">
-                      <span className="text-accent text-[38px] font-extrabold">
+                      <span className="price-num text-[#003366] text-[38px] font-extrabold">
                         ₹{getPrice(plan.title, plan.price)}
                       </span>
                       <span className="text-gray-500 text-sm">/year</span>
@@ -712,7 +712,7 @@ const HomePage = () => {
                         key={j}
                         className="flex items-start gap-2 py-1.5 text-gray-700 text-[15px] leading-snug"
                       >
-                        <CheckIcon className="text-accent text-[18px]! mt-0.5 shrink-0" />
+                        <CheckIcon className="text-accent text-[16px]! mt-0.5 shrink-0" />
                         <span>{f}</span>
                       </li>
                     ))}
@@ -721,7 +721,7 @@ const HomePage = () => {
                   {/* CTA */}
                   <Link
                     to="/membership-plans"
-                    className="mt-6 block w-full text-center no-underline bg-accent hover:bg-accent-dark text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200"
+                    className="mt-6 block w-full text-center no-underline border-2 border-accent text-accent bg-transparent hover:bg-accent hover:text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200"
                   >
                     Buy Now
                   </Link>
