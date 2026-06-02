@@ -474,41 +474,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Treatments at Ujjwal Dental */}
-      <section className="py-[48px] md:py-[64px] bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
-          <h2
-            className="text-[#003366] text-center mb-10"
-            style={{ fontSize: "2rem", fontWeight: 800 }}
-          >
-            Treatments at Ujjwal Dental
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {treatmentCards.map((t) => (
-              <Link
-                key={t.slug}
-                to={`/treatments/${t.slug}`}
-                className="group flex flex-col items-center text-center p-4 rounded-[5px] bg-[#f0f8fb] no-underline cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1"
-              >
-                <div className="w-16 h-16 flex items-center justify-center mb-3">
-                  <img
-                    src={t.img}
-                    alt={t.title}
-                    className="w-12 h-12 object-contain"
-                  />
-                </div>
-                <span
-                  className="text-[#333] group-hover:text-[#003366] transition-colors duration-200"
-                  style={{ fontSize: "0.85rem", fontWeight: 600 }}
-                >
-                  {t.title}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Patient Speaks */}
       <section className="py-[48px] md:py-[64px] bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
