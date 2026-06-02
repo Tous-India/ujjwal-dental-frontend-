@@ -549,13 +549,36 @@ const BookAppointment = () => {
                 </Typography>
               </Alert>
 
-              <Box className="flex justify-center gap-3">
+              {formData.email && (
+                <Alert
+                  severity="success"
+                  className="mb-4 text-left max-w-md mx-auto"
+                >
+                  <Typography variant="body2">
+                    Your patient portal is ready. Go to{" "}
+                    <strong>Login → "Login with OTP"</strong> and enter{" "}
+                    <strong>{formData.email}</strong> to view your appointments
+                    and payments — we'll email you a one-time code, no password
+                    needed.
+                  </Typography>
+                </Alert>
+              )}
+
+              <Box className="flex justify-center gap-3 flex-wrap">
                 <Button
                   variant="contained"
                   onClick={resetForm}
                   className="bg-teal-600 hover:bg-teal-700"
                 >
                   Book Another
+                </Button>
+                <Button
+                  component={Link}
+                  to="/login"
+                  variant="contained"
+                  color="primary"
+                >
+                  Login to Portal
                 </Button>
                 <Button
                   variant="outlined"
