@@ -843,10 +843,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
               <Button
                 variant="outlined"
                 color="success"
-                onClick={() => {
-                  if (onReactivate) onReactivate(patient);
-                  else onDelete(patient); // fallback: toggle
-                }}
+                onClick={() => onReactivate?.(patient)}
               >
                 Activate
               </Button>
