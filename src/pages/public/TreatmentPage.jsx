@@ -195,7 +195,7 @@ const TreatmentPage = () => {
                   className="bg-white rounded-xl border border-gray-100 shadow-xs p-4 text-center"
                 >
                   <Icon className="text-accent text-[28px]! mb-1" />
-                  <p className="text-[#003366] text-lg font-extrabold leading-tight">
+                  <p className="font-numbers text-[#003366] text-lg font-extrabold leading-tight">
                     {h.stat}
                   </p>
                   <p className="text-gray-500 text-[13px]">{h.label}</p>

@@ -292,7 +292,8 @@ const PlanDetailPage = () => {
                 </Typography>
 
                 <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
-                  <span style={{ fontWeight: 400 }}>Fees→</span> ₹{plan.price?.toLocaleString("en-IN")}
+                  <span style={{ fontWeight: 400 }}>Fees→</span>{" "}
+                  <span className="font-numbers">₹{plan.price?.toLocaleString("en-IN")}</span>
                 </Typography>
 
                 {/* Description */}
@@ -388,7 +389,7 @@ const PlanDetailPage = () => {
         <DialogTitle sx={{ fontWeight: 700, color: "#003366" }}>
           Purchase {plan?.name}
           <Typography variant="body2" color="text.secondary">
-            ₹{plan?.price?.toLocaleString("en-IN")} — {plan?.tier} plan
+            <span className="font-numbers">₹{plan?.price?.toLocaleString("en-IN")}</span> — {plan?.tier} plan
           </Typography>
         </DialogTitle>
         <DialogContent>

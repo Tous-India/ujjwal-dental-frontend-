@@ -24,9 +24,9 @@
   background-color: oklch(0.97 0 0) !important;
 }
 
-/* Pricing numbers: Inter renders sharp, tabular figures (overrides the global
-   DM Sans !important rule). */
-.price-num {
+/* Numbers/prices: Inter renders sharp, tabular figures (font-family uses
+   !important to override the global DM Sans !important rule). */
+.font-numbers {
   font-family: "Inter", sans-serif !important;
   font-variant-numeric: tabular-nums;
 }

@@ -877,7 +877,7 @@ const BookAppointment = () => {
                           : "Regular Appointment"}
                       </p>
                     </div>
-                    <div className="text-2xl font-extrabold text-accent">
+                    <div className="font-numbers text-2xl font-extrabold text-accent">
                       {feeLoading ? (
                         <CircularProgress size={24} sx={{ color: "#f57c00" }} />
                       ) : (

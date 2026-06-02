@@ -318,11 +318,6 @@ const PublicHeader = () => {
                       Contacts
                     </NavLink>
                   </li>
-                  <li>
-                    <NavLink hrf="" className="navItems">
-                      Blogs
-                    </NavLink>
-                  </li>
                 </ul>
               </nav>
               <div>

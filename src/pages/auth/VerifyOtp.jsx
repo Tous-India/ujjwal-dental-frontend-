@@ -219,7 +219,7 @@ const VerifyOtp = () => {
                 inputMode="numeric"
                 autoFocus={index === 0}
                 disabled={loading}
-                className="w-[52px] h-[52px] rounded-xl border border-gray-200 text-center text-[20px] font-semibold text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200 disabled:opacity-60"
+                className="font-numbers w-[52px] h-[52px] rounded-xl border border-gray-200 text-center text-[20px] font-semibold text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200 disabled:opacity-60"
               />
             ))}
           </div>

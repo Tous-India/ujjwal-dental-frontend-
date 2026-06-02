@@ -209,7 +209,7 @@ const PlansPage = () => {
 
                     {/* Price */}
                     <p className="text-center mt-4">
-                      <span className="text-[#003366] text-4xl font-extrabold">
+                      <span className="font-numbers text-[#003366] text-4xl font-extrabold">
                         {formatPrice(plan.price)}
                       </span>
                       <span className="text-gray-500 text-sm">/year</span>
@@ -262,7 +262,7 @@ const PlansPage = () => {
                   {buyDialog.name}
                 </h3>
                 <p className="mt-1">
-                  <span className="text-[#003366] text-3xl font-extrabold">
+                  <span className="font-numbers text-[#003366] text-3xl font-extrabold">
                     {formatPrice(buyDialog.price)}
                   </span>
                   <span className="text-gray-500 text-sm">/year</span>

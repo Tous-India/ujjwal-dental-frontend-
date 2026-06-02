@@ -282,7 +282,7 @@ const HomePage = () => {
               className="flex items-center gap-3 px-10 py-4 shrink-0"
             >
               <span className="text-[#F57C00] text-[26px]">{item.icon}</span>
-              <span className="text-[#0D1B4A] whitespace-nowrap text-2xl font-bold">
+              <span className="font-numbers text-[#0D1B4A] whitespace-nowrap text-2xl font-bold">
                 {item.value}
               </span>
               <span className="text-gray-500 whitespace-nowrap text-sm font-medium">
@@ -649,7 +649,7 @@ const HomePage = () => {
               </span>
               <div>
                 <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                  <span className="text-[#e88a1a]">2</span> Specialists
+                  <span className="font-numbers text-[#e88a1a]">2</span> Specialists
                 </p>
                 <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
                   Expert dental care across multiple specializations.
@@ -662,7 +662,7 @@ const HomePage = () => {
               </span>
               <div>
                 <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                  <span className="text-[#e88a1a]">20+</span> Years Avg. Experience
+                  <span className="font-numbers text-[#e88a1a]">20+</span> Years Avg. Experience
                 </p>
                 <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
                   Two decades of combined clinical expertise.
@@ -702,7 +702,7 @@ const HomePage = () => {
                   <p className="text-[#003366] text-base font-semibold leading-tight">
                     {doc.name}
                   </p>
-                  <p className="text-gray-500 text-sm mt-1">{doc.experience}</p>
+                  <p className="font-numbers text-gray-500 text-sm mt-1">{doc.experience}</p>
                 </div>
               </div>
             ))}
@@ -747,7 +747,7 @@ const HomePage = () => {
                       {plan.title}
                     </h3>
                     <p className="mt-3">
-                      <span className="price-num text-[#003366] text-[38px] font-extrabold">
+                      <span className="font-numbers text-[#003366] text-[38px] font-extrabold">
                         ₹{getPrice(plan.title, plan.price)}
                       </span>
                       <span className="text-gray-500 text-sm">/year</span>
