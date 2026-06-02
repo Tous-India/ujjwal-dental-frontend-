@@ -17,7 +17,7 @@ import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import GroupsIcon from "@mui/icons-material/Groups";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import StarIcon from "@mui/icons-material/Star";
+import AddIcon from "@mui/icons-material/Add";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -175,9 +175,45 @@ const treatments = [
   { title: "View More", slug: "", img: "/images/view-more.png" },
 ];
 
+const faqs = [
+  {
+    q: "What dental treatments does Ujjwal Dental Clinic in Sonipat offer?",
+    a: "We offer 15+ treatments including dental implants, root canal (RCT), braces, clear aligners, teeth whitening, laser dentistry, kids dentistry, crowns & bridges, gum treatment, dentures, cosmetic bonding, wisdom teeth extraction, dental fillings, smile makeover, and mouth ulcer treatment. All treatments use modern equipment with painless laser options.",
+  },
+  {
+    q: "How do I book an appointment at Ujjwal Dental?",
+    a: "You can book online through our website 24/7 — select your preferred clinic, date, and time slot. You can also call us at +91 8708362763. Walk-in appointments are available during clinic hours.",
+  },
+  {
+    q: "What are the clinic timings?",
+    a: "We're open Monday to Saturday, 9:00 AM to 8:00 PM. Sunday consultations are available by appointment only. Emergency dental care is available — call us anytime.",
+  },
+  {
+    q: "Do you offer painless dental treatment?",
+    a: "Yes. We specialize in laser dentistry — no cuts, no stitches, minimal bleeding, and faster recovery. Most procedures including gum treatments and cavity fillings can be done painlessly with our advanced laser equipment.",
+  },
+  {
+    q: "What are the dental membership plans and pricing?",
+    a: "We offer three annual plans: Individuals Plan (₹2,000), Implant Post Care (₹4,500), and Cosmodentofacial Family Dental Plan (₹4,999). Plans include free consultations, X-rays, and discounts on treatments. Buy online or at the clinic.",
+  },
+  {
+    q: "Is Ujjwal Dental Clinic good for kids?",
+    a: "Yes. We have a dedicated kids dentistry program for children from infancy through teens. Our doctors are experienced with pediatric patients and make dental visits comfortable and anxiety-free.",
+  },
+  {
+    q: "Where is Ujjwal Dental Clinic located?",
+    a: "We have two clinics in Sonipat, Haryana: Ujjwal Dental – Delhi Road (Shop No. 5, Near Bus Stand, Sonipat 131001) and Ujjwal Dental – Parsavnath (Parsavnath City Center, Shop No. 12, Sonepat 131001).",
+  },
+  {
+    q: "Do you accept online payments?",
+    a: "Yes. We accept online payments via Razorpay (cards, UPI, netbanking, wallets) for appointment bookings and membership plans. Cash and card payments are also accepted at the clinic.",
+  },
+];
+
 const HomePage = () => {
   const [planPrices, setPlanPrices] = useState(null);
   const [activeVideo, setActiveVideo] = useState(null);
+  const [openFaqs, setOpenFaqs] = useState({ 0: true });
   const reviewsPrevRef = useRef(null);
   const reviewsNextRef = useRef(null);
 
@@ -732,227 +768,80 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="bg-white py-[48px] md:py-[64px]">
+      {/* FAQ */}
+      <section className="py-[48px] md:py-[64px] bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Title card */}
-            <div className="flex flex-col justify-center items-start p-6 md:p-10">
-              <img
-                src="/ujjwal-dental-logo.png"
-                alt="Ujjwal Dental"
-                className="w-20 h-20 object-contain mb-5"
-              />
-              <h2
-                className="text-[#003366] text-left"
-                style={{
-                  fontSize: "2.5rem",
-                  fontWeight: 800,
-                  lineHeight: 1.15,
-                }}
-              >
-                Smiles
-                <br />
-                Made Here
-              </h2>
-            </div>
-
-            {/* Card 1 */}
-            <div
-              className="rounded-sm p-8 flex flex-col justify-between"
-              style={{ backgroundColor: "#d6d2cc" }}
-            >
-              <div>
-                <div className="flex items-center gap-0.5 mb-4">
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                </div>
-                <p
-                  className="text-[#1a1a1a]/80 leading-relaxed"
-                  style={{ fontSize: "0.85rem" }}
-                >
-                  &ldquo;Amazing experience! The doctor was very gentle and
-                  professional. My dental implant looks completely natural.
-                  Highly recommend Ujjwal Dental.&rdquo;
-                </p>
-              </div>
-              <p
-                className="mt-5 text-[#1a1a1a]"
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  fontFamily: "monospace",
-                }}
-              >
-                — Priya S.
-              </p>
-            </div>
-
-            {/* Card 2 */}
-            <div
-              className="rounded-sm p-8 flex flex-col justify-between md:rounded-tr-[15px]"
-              style={{ backgroundColor: "#c8c3b8" }}
-            >
-              <div>
-                <div className="flex items-center gap-0.5 mb-4">
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                </div>
-                <p
-                  className="text-[#1a1a1a]/80 leading-relaxed"
-                  style={{ fontSize: "0.85rem" }}
-                >
-                  &ldquo;Best dental clinic in the area. The staff is friendly,
-                  and the clinic is very clean and modern. Got my root canal
-                  done painlessly!&rdquo;
-                </p>
-              </div>
-              <p
-                className="mt-5 text-[#1a1a1a]"
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  fontFamily: "monospace",
-                }}
-              >
-                — Rajesh K.
-              </p>
-            </div>
-
-            {/* Card 3 */}
-            <div
-              className="rounded-sm p-8 flex flex-col justify-between md:rounded-bl-[15px]"
-              style={{ backgroundColor: "#d6d2cc" }}
-            >
-              <div>
-                <div className="flex items-center gap-0.5 mb-4">
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                </div>
-                <p
-                  className="text-[#1a1a1a]/80 leading-relaxed"
-                  style={{ fontSize: "0.85rem" }}
-                >
-                  &ldquo;My kids love coming here! The doctors are so patient
-                  with children. The entire family trusts Ujjwal Dental for all
-                  our dental needs.&rdquo;
-                </p>
-              </div>
-              <p
-                className="mt-5 text-[#1a1a1a]"
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  fontFamily: "monospace",
-                }}
-              >
-                — Anita V.
-              </p>
-            </div>
-
-            {/* Card 4 */}
-            <div
-              className="rounded-sm p-8 flex flex-col justify-between"
-              style={{ backgroundColor: "#c8c3b8" }}
-            >
-              <div>
-                <div className="flex items-center gap-0.5 mb-4">
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[18px]! text-black/20" />
-                </div>
-                <p
-                  className="text-[#1a1a1a]/80 leading-relaxed"
-                  style={{ fontSize: "0.85rem" }}
-                >
-                  &ldquo;Got my teeth whitening done here. The results were
-                  fantastic! The process was quick and the staff explained
-                  everything clearly.&rdquo;
-                </p>
-              </div>
-              <p
-                className="mt-5 text-[#1a1a1a]"
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  fontFamily: "monospace",
-                }}
-              >
-                — Sunil M.
-              </p>
-            </div>
-
-            {/* Card 5 */}
-            <div
-              className="rounded-sm p-8 flex flex-col justify-between md:rounded-br-[15px]"
-              style={{ backgroundColor: "#bdd4de" }}
-            >
-              <div>
-                <div className="flex items-center gap-0.5 mb-4">
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                  <StarIcon className="text-[20px]! text-[#1a1a1a]" />
-                </div>
-                <p
-                  className="text-[#1a1a1a]/80 leading-relaxed"
-                  style={{ fontSize: "0.85rem" }}
-                >
-                  &ldquo;I was very scared of dentists, but the team here made
-                  me feel so comfortable. My smile makeover turned out
-                  beautiful. Thank you!&rdquo;
-                </p>
-              </div>
-              <p
-                className="mt-5 text-[#1a1a1a]"
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  fontFamily: "monospace",
-                }}
-              >
-                — Kavita S.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-[48px] md:py-[64px]">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 text-center bg-[#e8f4fd] py-16 rounded-2xl">
           <h2
-            className="text-[#003366] mb-4"
+            className="text-[#003366] text-center mb-2"
             style={{ fontSize: "2rem", fontWeight: 800 }}
           >
-            Ready to Transform Your Smile?
+            Frequently Asked Questions
           </h2>
-          <p
-            className="text-[#003366]/60 mb-8 max-w-xl mx-auto"
-            style={{ fontSize: "1rem" }}
-          >
-            Schedule your appointment today and take the first step towards a
-            healthier, more beautiful smile.
+          <p className="text-center text-gray-500 mb-10 max-w-2xl mx-auto text-base">
+            Everything you need to know about our dental care
           </p>
-          <Link
-            to="/contact"
-            className="inline-block bg-[#003366] text-white rounded-full no-underline cursor-pointer px-8 py-3 hover:bg-[#004080] transition-colors duration-200"
-            style={{ fontSize: "0.95rem", fontWeight: 700 }}
-          >
-            Contact Us
-          </Link>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto items-start">
+            {faqs.map((item, i) => {
+              const open = !!openFaqs[i];
+              return (
+                <div
+                  key={i}
+                  className="bg-white rounded-xl border border-gray-100 px-6 py-4"
+                >
+                  <button
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() =>
+                      setOpenFaqs((prev) => ({ ...prev, [i]: !prev[i] }))
+                    }
+                    className="w-full flex items-center justify-between gap-4 text-left cursor-pointer"
+                  >
+                    <span className="text-[#003366] text-[15px] md:text-base font-semibold leading-snug">
+                      {item.q}
+                    </span>
+                    <AddIcon
+                      className={`text-[#003366] shrink-0 transition-transform duration-300 ${
+                        open ? "rotate-45" : ""
+                      }`}
+                    />
+                  </button>
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      open
+                        ? "grid-rows-[1fr] opacity-100 mt-3"
+                        : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <p
+                        className="text-gray-600 text-[15px]"
+                        style={{ lineHeight: 1.7 }}
+                      >
+                        {item.a}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* FAQ structured data (JSON-LD) for SEO rich results */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                mainEntity: faqs.map((f) => ({
+                  "@type": "Question",
+                  name: f.q,
+                  acceptedAnswer: { "@type": "Answer", text: f.a },
+                })),
+              }),
+            }}
+          />
         </div>
       </section>
     </div>
