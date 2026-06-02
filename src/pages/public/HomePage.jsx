@@ -27,6 +27,8 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import PersonIcon from "@mui/icons-material/Person";
+import SchoolIcon from "@mui/icons-material/School";
 import Patient1 from "../../../public/patient-1.webp";
 import Patient2 from "../../../public/patient-2.webp";
 import Patient3 from "../../../public/patient-3.webp";
@@ -47,42 +49,9 @@ const treatmentCards = [
 ];
 
 const doctors = [
-  {
-    name: "Dr. Ajay Sangwan",
-    slug: "dr-ajay-sangwan",
-    experience: "15",
-    specialization: "Orthodontist",
-    img: "/images/doctor-ajay.jpg",
-    bio: "Dr. Ajay Sangwan is a highly skilled orthodontist with over 15 years of experience in teeth alignment, braces, and smile correction treatments. He is dedicated to providing personalized care using the latest orthodontic techniques.",
-    qualifications: "BDS, MDS (Orthodontics)",
-  },
-  {
-    name: "Dr. Supriya Kumar Roy",
-    slug: "dr-supriya-kumar-roy",
-    experience: "41",
-    specialization: "Prosthodontist",
-    img: "/images/doctor-supriya.jpg",
-    bio: "Dr. Supriya Kumar Roy brings over 41 years of clinical expertise in prosthodontics, dental implants, and full-mouth rehabilitation. His vast experience and compassionate approach make him one of the most trusted dental professionals.",
-    qualifications: "BDS, MDS (Prosthodontics)",
-  },
-  {
-    name: "Dr. Adrita Nag",
-    slug: "dr-adrita-nag",
-    experience: "23",
-    specialization: "Oral Surgeon",
-    img: "/images/doctor-adrita.jpg",
-    bio: "Dr. Adrita Nag is an experienced oral surgeon specializing in wisdom teeth extractions, dental implants, and advanced surgical procedures. With 23 years of experience, she is known for her precision and patient comfort.",
-    qualifications: "BDS, MDS (Oral Surgery)",
-  },
-  {
-    name: "Dr. Arpita Nag",
-    slug: "dr-arpita-nag",
-    experience: "9",
-    specialization: "Cosmetic Dentist",
-    img: "/images/doctor-arpita.jpg",
-    bio: "Dr. Arpita Nag specializes in cosmetic dentistry, smile makeovers, and teeth whitening. With 9 years of experience, she combines aesthetic expertise with clinical excellence to deliver stunning results.",
-    qualifications: "BDS, MDS (Conservative Dentistry)",
-  },
+  { name: "Dr. Ujjwal", experience: "20 Yrs Experience", lead: true },
+  { name: "Dr. Alisha", experience: "5 Yrs Experience", lead: false },
+  { name: "New Specialist", experience: "Joining Soon", lead: false },
 ];
 
 const dentalPlans = [
@@ -604,6 +573,91 @@ const HomePage = () => {
         )}
       </section>
 
+      {/* Meet Our Doctors */}
+      <section className="py-[48px] md:py-[64px] bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+          <h2
+            className="text-[#003366] text-center mb-2"
+            style={{ fontSize: "2rem", fontWeight: 800 }}
+          >
+            Our Team of Dental Experts
+          </h2>
+          <p
+            className="text-center text-gray-500 mb-10 max-w-2xl mx-auto"
+            style={{ fontSize: "1rem" }}
+          >
+            Skilled. Certified. Compassionate. Our expert team is what makes
+            Ujjwal Dental trusted by thousands.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
+            <div className="flex items-center gap-4 bg-white rounded-[8px] border border-gray-200 p-4">
+              <span className="w-12 h-12 rounded-full bg-[#e8f4fd] flex items-center justify-center shrink-0">
+                <GroupsIcon className="text-[#006694]" />
+              </span>
+              <div>
+                <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                  <span className="text-[#e88a1a]">2</span> Specialists
+                </p>
+                <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
+                  Expert dental care across multiple specializations.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 bg-white rounded-[8px] border border-gray-200 p-4">
+              <span className="w-12 h-12 rounded-full bg-[#e8f4fd] flex items-center justify-center shrink-0">
+                <WorkspacePremiumIcon className="text-[#006694]" />
+              </span>
+              <div>
+                <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                  <span className="text-[#e88a1a]">20+</span> Years Avg. Experience
+                </p>
+                <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
+                  Two decades of combined clinical expertise.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 bg-white rounded-[8px] border border-gray-200 p-4">
+              <span className="w-12 h-12 rounded-full bg-[#e8f4fd] flex items-center justify-center shrink-0">
+                <SchoolIcon className="text-[#006694]" />
+              </span>
+              <div>
+                <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                  <span className="text-[#e88a1a]">MDS</span> Doctors
+                </p>
+                <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
+                  Advanced care in oral surgery, orthodontics & more.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
+            {doctors.map((doc) => (
+              <div
+                key={doc.name}
+                className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
+                  doc.lead ? "border-t-4 border-[#e88a1a]" : ""
+                }`}
+              >
+                {/* Photo placeholder (navy gradient + silhouette, 4:5) */}
+                <div className="relative w-full aspect-[4/5] bg-gradient-to-br from-[#0D1B4A] to-[#1e3a8a]">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <PersonIcon className="text-white/80 text-[64px]!" />
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-[#003366] text-base font-semibold leading-tight">
+                    {doc.name}
+                  </p>
+                  <p className="text-gray-500 text-sm mt-1">{doc.experience}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Dental Health Plans */}
       <section className="py-[48px] md:py-[64px]" style={{ backgroundColor: "#e8f4fd" }}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
@@ -686,112 +740,6 @@ const HomePage = () => {
               </SwiperSlide>
             ))}
           </Swiper>
-        </div>
-      </section>
-
-      {/* Meet Our Doctors */}
-      <section className="py-[48px] md:py-[64px] bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
-          <h2
-            className="text-[#003366] text-center mb-2"
-            style={{ fontSize: "2rem", fontWeight: 800 }}
-          >
-            Our Team of Dental Experts
-          </h2>
-          <p
-            className="text-center text-gray-500 mb-10 max-w-2xl mx-auto"
-            style={{ fontSize: "1rem" }}
-          >
-            Skilled. Certified. Compassionate. Our expert team is what makes
-            Ujjwal Dental trusted by thousands.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
-            <div className="flex items-center gap-4 bg-white rounded-[8px] border border-gray-200 p-4">
-              <img src="/images/icon-orthodontist.png" alt="" className="w-12 h-12 object-contain" />
-              <div>
-                <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                  <span className="text-[#e88a1a]">4+</span> Specialists
-                </p>
-                <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
-                  Expert dental care across multiple specializations.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 bg-white rounded-[8px] border border-gray-200 p-4">
-              <img src="/images/icon-women.png" alt="" className="w-12 h-12 object-contain" />
-              <div>
-                <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                  <span className="text-[#e88a1a]">10+</span> Years Avg. Experience
-                </p>
-                <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
-                  Decades of combined clinical expertise.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 bg-white rounded-[8px] border border-gray-200 p-4">
-              <img src="/images/icon-mds.png" alt="" className="w-12 h-12 object-contain" />
-              <div>
-                <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                  <span className="text-[#e88a1a]">MDS</span> Doctors
-                </p>
-                <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
-                  Advanced care in oral surgery, orthodontics & more.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-5">
-            {doctors.map((doc) => (
-              <div key={doc.slug} className="flex flex-col">
-                <div className="rounded-[10px] overflow-hidden bg-gray-200 aspect-[3/4] mb-3">
-                  <img
-                    src={doc.img}
-                    alt={doc.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p
-                      className="text-[#003366]"
-                      style={{ fontSize: "0.95rem", fontWeight: 700 }}
-                    >
-                      {doc.name}
-                    </p>
-                    <p
-                      className="text-gray-400"
-                      style={{ fontSize: "0.8rem" }}
-                    >
-                      {doc.experience} Exp.
-                    </p>
-                  </div>
-                  <Link
-                    to={`/doctors/${doc.slug}`}
-                    className="text-[#e88a1a] no-underline shrink-0"
-                    style={{ fontSize: "0.8rem", fontWeight: 600 }}
-                  >
-                    View Bio
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link
-              to="/doctors"
-              className="inline-block no-underline text-white rounded-full px-8 py-3 transition-colors duration-200 hover:opacity-90"
-              style={{
-                backgroundColor: "#e88a1a",
-                fontSize: "0.95rem",
-                fontWeight: 700,
-              }}
-            >
-              Meet Our Doctors
-            </Link>
-          </div>
         </div>
       </section>
 
