@@ -253,7 +253,7 @@ const HomePage = () => {
       </div>
 
       {/* Services Section */}
-      <section className="py-20 md:py-24 bg-white overflow-x-hidden">
+      <section className="py-[48px] md:py-[64px] bg-white overflow-x-hidden">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2 className="text-[#0D1B4A] text-center mb-3 text-3xl md:text-4xl font-bold">
             Comprehensive Dental Care for All Your Needs
@@ -297,8 +297,8 @@ const HomePage = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4">
+      <section className="py-[48px] md:py-[64px] bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2
             className="text-[#003366] text-center mb-3"
             style={{ fontSize: "2rem", fontWeight: 800 }}
@@ -418,8 +418,8 @@ const HomePage = () => {
       </section>
 
       {/* Treatments at Ujjwal Dental */}
-      <section className="py-16 bg-white">
-        <div className="max-w-5xl mx-auto px-4">
+      <section className="py-[48px] md:py-[64px] bg-white">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2
             className="text-[#003366] text-center mb-10"
             style={{ fontSize: "2rem", fontWeight: 800 }}
@@ -453,8 +453,8 @@ const HomePage = () => {
       </section>
 
       {/* Patient Speaks */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4">
+      <section className="py-[48px] md:py-[64px] bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2
             className="text-[#003366] text-center mb-2"
             style={{ fontSize: "2rem", fontWeight: 800 }}
@@ -526,8 +526,8 @@ const HomePage = () => {
       </section>
 
       {/* Dental Health Plans */}
-      <section className="py-16" style={{ backgroundColor: "#e8f4fd" }}>
-        <div className="max-w-5xl mx-auto px-4">
+      <section className="py-[48px] md:py-[64px]" style={{ backgroundColor: "#e8f4fd" }}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2
             className="text-[#003366] text-center mb-10"
             style={{ fontSize: "2rem", fontWeight: 800 }}
@@ -611,8 +611,8 @@ const HomePage = () => {
       </section>
 
       {/* Meet Our Doctors */}
-      <section className="py-16 bg-white">
-        <div className="max-w-5xl mx-auto px-4">
+      <section className="py-[48px] md:py-[64px] bg-white">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2
             className="text-[#003366] text-center mb-2"
             style={{ fontSize: "2rem", fontWeight: 800 }}
@@ -717,8 +717,8 @@ const HomePage = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="bg-white py-16">
-        <div className="max-w-5xl mx-auto px-4">
+      <section className="bg-white py-[48px] md:py-[64px]">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Title card */}
             <div className="flex flex-col justify-center items-start p-6 md:p-10">
@@ -915,8 +915,8 @@ const HomePage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="md:mb-16">
-        <div className="max-w-5xl mx-auto px-4 text-center bg-[#e8f4fd] py-16 rounded-2xl">
+      <section className="py-[48px] md:py-[64px]">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 text-center bg-[#e8f4fd] py-16 rounded-2xl">
           <h2
             className="text-[#003366] mb-4"
             style={{ fontSize: "2rem", fontWeight: 800 }}
