@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import {
   Autoplay,
-  Pagination,
   EffectFade,
   Navigation,
   FreeMode,
@@ -18,16 +17,13 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import StarIcon from "@mui/icons-material/Star";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import InfoIcon from "@mui/icons-material/Info";
 import RateReviewIcon from "@mui/icons-material/RateReview";
-import SchoolIcon from "@mui/icons-material/School";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import BoltIcon from "@mui/icons-material/Bolt";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import Patient1 from "../../../public/patient-1.webp";
-import Patient2 from "../../../public/patient-2.webp";
-import Patient3 from "../../../public/patient-3.webp";
 
 const treatmentCards = [
   { title: "Teeth Braces", slug: "braces", img: "/images/braces.png" },
@@ -317,116 +313,83 @@ const HomePage = () => {
             technology and compassionate care
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Convenience */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Painless Laser Dentistry */}
             <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
                   <span className="text-[24px]! text-[#006694]">
-                    <CalendarMonthIcon />
+                    <BoltIcon />
                   </span>
                 </div>
                 <h3
                   className="text-[#003366] mb-2"
                   style={{ fontSize: "1.25rem", fontWeight: 700 }}
                 >
-                  Convenience
+                  Painless Laser Dentistry
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
                   style={{ fontSize: "0.95rem" }}
                 >
-                  Patients can easily book appointments online without the
-                  hassle of calling or waiting.
+                  Advanced laser treatments — no cuts, no stitches, minimal
+                  bleeding. Faster recovery with precision procedures that most
+                  clinics don&apos;t offer.
                 </p>
               </div>
             </div>
 
-            {/* Comprehensive Information */}
+            {/* 20+ Years of Expertise */}
             <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
                   <span className="text-[24px]! text-[#006694]">
-                    <InfoIcon />
+                    <WorkspacePremiumIcon />
                   </span>
                 </div>
                 <h3
                   className="text-[#003366] mb-2"
                   style={{ fontSize: "1.25rem", fontWeight: 700 }}
                 >
-                  Comprehensive Information
+                  20+ Years of Expertise
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
                   style={{ fontSize: "0.95rem" }}
                 >
-                  The website provides detailed information about services,
-                  treatments, and dental care tips.
+                  Two decades of clinical experience across dental implants,
+                  orthodontics, and oral surgery. Over 10,000 patients treated
+                  with trusted, evidence-based care.
                 </p>
               </div>
             </div>
 
-            {/* Patient Reviews (highlighted) */}
-            <div className="rounded-[10px]! overflow-hidden transition-all duration-300 text-white md:row-span-2 whychooseus-swiper shadow border p-1">
-              <Swiper
-                modules={[Autoplay, Pagination, FreeMode]}
-                autoplay={{ delay: 2500, disableOnInteraction: false }}
-                pagination={{ clickable: true }}
-                loop
-                breakpoints={{
-                  640: {
-                    slidesPerView: 1,
-                    spaceBetween: 20,
-                  },
-                  768: {
-                    slidesPerView: 1,
-                    spaceBetween: 20,
-                  },
-                  1024: {
-                    slidesPerView: 1,
-                    spaceBetween: 20,
-                  },
-                }}
-                speed={1500}
-                className="h-full whychoouse-swiper-wrapper"
-              >
-                <SwiperSlide>
-                  <img src={Patient1} alt="Patient Review 1" />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img src={Patient2} alt="Patient Review 2" />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img src={Patient3} alt="Patient Review 3" />
-                </SwiperSlide>
-              </Swiper>
-            </div>
-
-            {/* Expert Guidance */}
+            {/* Complete Family Dental Care */}
             <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
                   <span className="text-[24px]! text-[#006694]">
-                    <SchoolIcon />
+                    <FamilyRestroomIcon />
                   </span>
                 </div>
                 <h3
                   className="text-[#003366] mb-2"
                   style={{ fontSize: "1.25rem", fontWeight: 700 }}
                 >
-                  Expert Guidance
+                  Complete Family Dental Care
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
                   style={{ fontSize: "0.95rem" }}
                 >
-                  Information from certified dental professionals ensures
-                  accurate and reliable dental advice.
+                  From kids&apos; first dental visit to senior dentures — one
+                  clinic for the whole family. Preventive, cosmetic, and
+                  restorative treatments all under one roof.
                 </p>
               </div>
             </div>
 
-            {/* 24/7 Accessibility */}
+            {/* 24/7 Emergency & Online Booking */}
             <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
@@ -438,14 +401,15 @@ const HomePage = () => {
                   className="text-[#003366] mb-2"
                   style={{ fontSize: "1.25rem", fontWeight: 700 }}
                 >
-                  24/7 Accessibility
+                  24/7 Emergency &amp; Online Booking
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
                   style={{ fontSize: "0.95rem" }}
                 >
-                  Access to information and appointments at any time, from
-                  anywhere, on any device.
+                  Dental emergencies don&apos;t wait — neither do we. Book
+                  appointments online anytime, or call for same-day emergency
+                  consultations.
                 </p>
               </div>
             </div>

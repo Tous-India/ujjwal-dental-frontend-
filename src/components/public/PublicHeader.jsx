@@ -174,7 +174,7 @@ const PublicHeader = () => {
             >
               <nav className="navdiv ">
                 <img src={"/public/ujjwal-dental-logo.png"} alt="logo" />
-                <ul className="md:flex items-center gap-[6px]">
+                <ul className="md:flex items-center gap-1.5">
                   <li>
                     {" "}
                     <NavLink

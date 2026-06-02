@@ -3,6 +3,9 @@
 
 /* Site-wide design tokens (warm navy + warm orange accent) */
 @theme {
+  /* Pinned to the Tailwind v4 default so the spacing scale stays correct
+     (spacing-1 = 0.25rem → gap-8 = 2rem, mb-12 = 3rem, w-9 = 2.25rem, ...). */
+  --spacing: 0.25rem;
   --color-navy: #0d1b4a;
   --color-accent: #f57c00;
   --color-accent-dark: #e06c00;
