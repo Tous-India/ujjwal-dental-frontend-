@@ -38,21 +38,6 @@ const HomePage = lazy(() => import("./pages/public/HomePage"));
 const ContactPage = lazy(() => import("./pages/public/ContactPage"));
 const TreatmentsPage = lazy(() => import("./pages/public/TreatmentsPage"));
 const TreatmentPage = lazy(() => import("./pages/public/TreatmentPage"));
-const DentalImplantPage = lazy(() => import("./pages/public/treatments/DentalImplantPage"));
-const RootCanalPage = lazy(() => import("./pages/public/treatments/RootCanalPage"));
-const WisdomTeethPage = lazy(() => import("./pages/public/treatments/WisdomTeethPage"));
-const ClearAlignersPage = lazy(() => import("./pages/public/treatments/ClearAlignersPage"));
-const CosmeticDentalBondingPage = lazy(() => import("./pages/public/treatments/CosmeticDentalBondingPage"));
-const LaserDentistryPage = lazy(() => import("./pages/public/treatments/LaserDentistryPage"));
-const KidsDentistryPage = lazy(() => import("./pages/public/treatments/KidsDentistryPage"));
-const DentalCrownsAndBridgesPage = lazy(() => import("./pages/public/treatments/DentalCrownsAndBridgesPage"));
-const GumDiseaseTreatmentPage = lazy(() => import("./pages/public/treatments/GumDiseaseTreatmentPage"));
-const DentalFillingPage = lazy(() => import("./pages/public/treatments/DentalFillingPage"));
-const DenturesPage = lazy(() => import("./pages/public/treatments/DenturesPage"));
-const TeethWhiteningPage = lazy(() => import("./pages/public/treatments/TeethWhiteningPage"));
-const MouthUlcersPage = lazy(() => import("./pages/public/treatments/MouthUlcersPage"));
-const BracesPage = lazy(() => import("./pages/public/treatments/BracesPage"));
-const SmileMakeoverPage = lazy(() => import("./pages/public/treatments/SmileMakeoverPage"));
 const PlansPage = lazy(() => import("./pages/public/PlansPage"));
 const PlanDetailPage = lazy(() => import("./pages/public/PlanDetailPage"));
 const BookAppointmentPage = lazy(() => import("./pages/public/BookAppointmentPage"));
@@ -120,21 +105,6 @@ const App = () => {
           <Route path="/" index element={<HomePage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/treatments" element={<TreatmentsPage />} />
-          <Route path="/treatments/dental-implant" element={<DentalImplantPage />} />
-          <Route path="/treatments/root-canal-treatment-rct" element={<RootCanalPage />} />
-          <Route path="/treatments/wisdom-teeth" element={<WisdomTeethPage />} />
-          <Route path="/treatments/clear-aligners" element={<ClearAlignersPage />} />
-          <Route path="/treatments/cosmatic-dental-bonding" element={<CosmeticDentalBondingPage />} />
-          <Route path="/treatments/laser-dentistry" element={<LaserDentistryPage />} />
-          <Route path="/treatments/kids-dentistry" element={<KidsDentistryPage />} />
-          <Route path="/treatments/dental-crowns-and-bridges" element={<DentalCrownsAndBridgesPage />} />
-          <Route path="/treatments/gum-disease-treatment" element={<GumDiseaseTreatmentPage />} />
-          <Route path="/treatments/dental-filling" element={<DentalFillingPage />} />
-          <Route path="/treatments/dentures" element={<DenturesPage />} />
-          <Route path="/treatments/teeth-whitening" element={<TeethWhiteningPage />} />
-          <Route path="/treatments/mouth-ulcers" element={<MouthUlcersPage />} />
-          <Route path="/treatments/braces" element={<BracesPage />} />
-          <Route path="/treatments/smile-makeover" element={<SmileMakeoverPage />} />
           <Route path="/treatments/:slug" element={<TreatmentPage />} />
           <Route path="/book-appointment" element={<BookAppointmentPage />} />
           <Route path="/membership-plans" element={<PlansPage />} />

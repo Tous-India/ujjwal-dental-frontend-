@@ -4,6 +4,12 @@ const treatmentsData = {
     img: "/images/dental-implant.png",
     content:
       "Dental implants are the gold standard for replacing missing teeth. They are titanium posts surgically placed into the jawbone, providing a strong foundation for fixed or removable replacement teeth that are made to match your natural teeth.",
+    highlights: [
+      { icon: "success", stat: "98%", label: "Success Rate" },
+      { icon: "time", stat: "20+ Yrs", label: "Implant Lifespan" },
+      { icon: "bolt", stat: "Same-Day", label: "Possible" },
+      { icon: "shield", stat: "Painless", label: "With Laser" },
+    ],
     sections: [
       {
         title: "What is a Dental Implant?",
@@ -15,17 +21,32 @@ const treatmentsData = {
         content:
           "Dental implants offer numerous advantages: they look and feel like natural teeth, improve speech and comfort, make eating easier, boost self-esteem, improve oral health by not requiring alteration of adjacent teeth, and are highly durable — lasting many years or even a lifetime with proper care.",
       },
+      {
+        title: "Dental Implants vs Bridges",
+        content:
+          "Both implants and bridges replace missing teeth, but they differ significantly in how they protect your long-term oral health.",
+        table: {
+          headers: ["Bridges", "Implants"],
+          rows: [
+            ["May compromise the adjacent natural tooth", "Does not compromise with an adjacent tooth"],
+            ["A bridge may need replacement as bone loss continues at the site of the missing tooth", "An implant causes no bone loss as it attaches with the bone and promotes healthy bone"],
+            ["Teeth may be prone to plaque, decay or gum disease, with a risk of future root canal", "With no free spaces in between, implants won't attract bacteria for plaque accumulation"],
+          ],
+        },
+      },
     ],
     procedureSteps: [
       { step: "Initial Consultation", description: "Comprehensive oral examination, X-rays, and 3D imaging to assess bone density and plan implant placement." },
       { step: "Implant Placement", description: "The titanium implant post is surgically placed into the jawbone under local anesthesia." },
-      { step: "Healing & Osseointegration", description: "A healing period of 3-6 months allows the implant to fuse with the jawbone." },
+      { step: "Healing & Osseointegration", description: "A healing period of 3-6 months allows the implant to fuse with the jawbone. With good bone structure, this can sometimes be completed in a single day." },
       { step: "Abutment & Crown", description: "An abutment is attached to the implant, and a custom-made crown is placed on top for a natural look." },
     ],
     faqs: [
-      { question: "How long do dental implants last?", answer: "With proper care and regular dental check-ups, dental implants can last 25 years or more, and many last a lifetime." },
-      { question: "Is the implant procedure painful?", answer: "The procedure is performed under local anesthesia, so you won't feel pain during surgery. Mild discomfort after the procedure can be managed with prescribed medications." },
-      { question: "Am I a good candidate for implants?", answer: "Most adults with good general health and adequate jawbone density are suitable candidates. A consultation with our team will determine the best approach for you." },
+      { question: "How much does a dental implant cost in Sonipat?", answer: "While implants may seem costly upfront due to their multiple components, they are a long-term investment. Leaving a missing tooth unreplaced causes adjacent teeth to shift and the jawbone to deteriorate — which becomes far more expensive to manage than a single implant. Contact us at +91 8708362763 for a personalized cost estimate." },
+      { question: "Is the dental implant procedure painful?", answer: "No. The procedure is performed under local anesthesia and modern techniques make it comfortable and pain-free. Sedation is available for anxious patients, and mild post-operative discomfort is easily managed with prescribed medication." },
+      { question: "How long does a dental implant last?", answer: "With good oral hygiene and regular check-ups, dental implants can last 20+ years and often a lifetime, making them the most durable tooth-replacement option available." },
+      { question: "Can I get a dental implant in one day?", answer: "In many cases, yes. When you have good bone structure, the procedure can be completed in a single day. Otherwise, healing (osseointegration) takes 3-6 months before the permanent crown is placed." },
+      { question: "What care is needed after a dental implant?", answer: "Brush twice daily with a soft-bristled brush, floss daily, use a mouth rinse, avoid sticky foods and tobacco, and visit the clinic regularly. Proper care helps your implant last a lifetime." },
     ],
     keywords: ["dental implant", "tooth replacement", "titanium implant", "missing teeth", "jawbone", "osseointegration", "permanent teeth"],
   },
