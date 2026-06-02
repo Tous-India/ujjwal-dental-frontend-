@@ -44,7 +44,13 @@ import {
   bookAppointmentWithPayment,
   getAvailableSlots,
 } from "../../api/patient/appointments.api";
-import { MAX_DATE, dateGuards } from "../../utils/dateInput";
+import {
+  MAX_DATE,
+  dateGuards,
+  todayStr,
+  isPastDate,
+  isPastSlotForDate,
+} from "../../utils/dateInput";
 
 /**
  * Generate time slots (9 AM to 6 PM, 30 min intervals)
@@ -120,6 +126,8 @@ const BookAppointment = () => {
 
   // Slot availability: null = not fetched yet; otherwise array of open "HH:MM"
   const [availableSlots, setAvailableSlots] = useState(null);
+  // Transient validation message for the date field (e.g. past date reset)
+  const [dateError, setDateError] = useState("");
 
   // Form data
   const [formData, setFormData] = useState({
@@ -218,7 +226,7 @@ const BookAppointment = () => {
 
   const getMinDate = () => {
     // Allow booking from today onwards (past time slots are filtered out below).
-    return new Date().toISOString().split("T")[0];
+    return todayStr();
   };
 
   const getMaxDate = () => {
@@ -229,6 +237,18 @@ const BookAppointment = () => {
 
   const handleChange = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  // Date field: reject past dates (manual typing / picker), reset to today.
+  const handleDateChange = (e) => {
+    const value = e.target.value;
+    if (isPastDate(value)) {
+      setDateError("Date cannot be in the past");
+      setFormData((prev) => ({ ...prev, date: todayStr(), time: "" }));
+      return;
+    }
+    setDateError("");
+    setFormData((prev) => ({ ...prev, date: value }));
   };
 
   const validateStep1 = () => {
@@ -673,7 +693,9 @@ const BookAppointment = () => {
                           type="date"
                           label="Select Date"
                           value={formData.date}
-                          onChange={handleChange("date")}
+                          onChange={handleDateChange}
+                          error={!!dateError}
+                          helperText={dateError}
                           slotProps={{
                             inputLabel: { shrink: true },
                             htmlInput: {
@@ -700,9 +722,12 @@ const BookAppointment = () => {
                           }
                         >
                           {timeSlots.map((slot) => {
+                            // Disable if the slot is in the past today (client
+                            // clock = IST) or full/unavailable per the backend.
                             const disabled =
-                              Array.isArray(availableSlots) &&
-                              !availableSlots.includes(slot);
+                              isPastSlotForDate(formData.date, slot) ||
+                              (Array.isArray(availableSlots) &&
+                                !availableSlots.includes(slot));
                             return (
                               <MenuItem
                                 key={slot}

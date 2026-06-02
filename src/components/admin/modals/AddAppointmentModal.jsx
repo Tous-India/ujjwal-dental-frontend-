@@ -30,7 +30,13 @@ import { searchPatients } from "../../../api/admin/patients.api";
 import { getClinics } from "../../../api/admin/clinics.api";
 import { getFeeSettings } from "../../../api/admin/settings.api";
 import { getAvailableSlots } from "../../../api/admin/appointments.api";
-import { MAX_DATE, todayStr, dateGuards } from "../../../utils/dateInput";
+import {
+  MAX_DATE,
+  todayStr,
+  dateGuards,
+  isPastDate,
+  isPastSlotForDate,
+} from "../../../utils/dateInput";
 /**
  * Appointment type options
  */
@@ -224,6 +230,18 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, clinicId }) => {
     }
   };
 
+  // Date field: reject past dates (manual typing / picker), reset to today.
+  const handleDateChange = (e) => {
+    const value = e.target.value;
+    if (isPastDate(value)) {
+      setErrors((prev) => ({ ...prev, date: "Date cannot be in the past" }));
+      setFormData((prev) => ({ ...prev, date: todayStr(), timeSlot: "" }));
+      return;
+    }
+    setErrors((prev) => ({ ...prev, date: "" }));
+    setFormData((prev) => ({ ...prev, date: value }));
+  };
+
   /**
    * Validate form
    */
@@ -389,7 +407,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, clinicId }) => {
               name="date"
               type="date"
               value={formData.date}
-              onChange={handleChange}
+              onChange={handleDateChange}
               error={!!errors.date}
               helperText={errors.date}
               required
@@ -420,9 +438,12 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, clinicId }) => {
             >
               <MenuItem value="">Select Time</MenuItem>
               {timeSlots.map((slot) => {
+                // Disable if the slot is in the past today (client clock = IST)
+                // or full/unavailable per the backend.
                 const disabled =
-                  Array.isArray(availableSlots) &&
-                  !availableSlots.includes(slot);
+                  isPastSlotForDate(formData.date, slot) ||
+                  (Array.isArray(availableSlots) &&
+                    !availableSlots.includes(slot));
                 return (
                   <MenuItem key={slot} value={slot} disabled={disabled}>
                     {slot}
