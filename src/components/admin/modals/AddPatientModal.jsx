@@ -234,32 +234,33 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
       }}
     >
       {/* Header */}
-      <DialogTitle className="bg-linear-to-r from-green-600 to-green-700 text-whit">
+      <DialogTitle className="py-3 px-6 border-b border-gray-200">
         <Box className="flex items-center justify-between">
           <Box className="flex items-center gap-2">
-            <PersonAddIcon className="text-white" />
-            <Typography variant="h6" className="font-bold text-white">
+            <PersonAddIcon className="text-gray-500" fontSize="small" />
+            <Typography variant="subtitle1" className="text-gray-800">
               Add New Patient
             </Typography>
           </Box>
           <IconButton
             onClick={handleClose}
-            className="text-white"
+            size="small"
+            className="text-gray-500"
             disabled={isCreating}
           >
-            <CloseIcon className="text-white" />
+            <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
       </DialogTitle>
 
       {/* Content */}
-      <DialogContent className="p-6">
-        <Grid container spacing={3} className="mt-10">
+      <DialogContent className="px-5 py-3">
+        <Grid container spacing={1.5} className="mt-0">
           {/* Basic Info */}
           <Grid size={{ xs: 12 }}>
             <Typography
               variant="subtitle2"
-              className="font-semibold text-gray-700 mb-2"
+              className="font-semibold text-gray-600 mb-0"
             >
               Basic Information
             </Typography>
@@ -367,7 +368,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
           <Grid size={{ xs: 12 }}>
             <Typography
               variant="subtitle2"
-              className="font-semibold text-gray-700 mb-2 mt-2"
+              className="font-semibold text-gray-600 mb-0 mt-1"
             >
               Address
             </Typography>
@@ -421,7 +422,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
           <Grid size={{ xs: 12 }}>
             <Typography
               variant="subtitle2"
-              className="font-semibold text-gray-700 mb-2 mt-2"
+              className="font-semibold text-gray-600 mb-0 mt-1"
             >
               Emergency Contact
             </Typography>
@@ -465,7 +466,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
           <Grid size={{ xs: 12 }}>
             <Typography
               variant="subtitle2"
-              className="font-semibold text-gray-700 mb-2 mt-2"
+              className="font-semibold text-gray-600 mb-0 mt-1"
             >
               Medical Information
             </Typography>
@@ -492,7 +493,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
                 ),
               }}
             />
-            <Box className="flex flex-wrap gap-1 mt-2">
+            <Box className="flex flex-wrap gap-1 mt-1">
               {formData.allergies.map((allergy, idx) => (
                 <Chip
                   key={idx}
@@ -527,7 +528,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
                 ),
               }}
             />
-            <Box className="flex flex-wrap gap-1 mt-2">
+            <Box className="flex flex-wrap gap-1 mt-1">
               {formData.medicalHistory.map((item, idx) => (
                 <Chip
                   key={idx}
@@ -558,7 +559,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
       </DialogContent>
 
       {/* Actions */}
-      <DialogActions className="p-4 bg-gray-50">
+      <DialogActions className="px-4 py-2 bg-gray-50 border-t border-gray-200">
         <Button onClick={handleClose} color="inherit" disabled={isCreating}>
           Cancel
         </Button>
