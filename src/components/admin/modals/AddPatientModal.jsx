@@ -25,6 +25,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import AddIcon from "@mui/icons-material/Add";
 import { usePatientMutations } from "../../../hooks/admin/usePatients";
+import { todayStr, dateGuards } from "../../../utils/dateInput";
 
 /**
  * Gender options
@@ -342,6 +343,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
               onChange={handleChange}
               size="small"
               InputLabelProps={{ shrink: true }}
+              inputProps={{ max: todayStr(), ...dateGuards }}
             />
           </Grid>
 

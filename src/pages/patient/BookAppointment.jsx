@@ -42,7 +42,9 @@ import {
   createPaymentOrder,
   verifyPayment,
   bookAppointmentWithPayment,
+  getAvailableSlots,
 } from "../../api/patient/appointments.api";
+import { MAX_DATE, dateGuards } from "../../utils/dateInput";
 
 /**
  * Generate time slots (9 AM to 6 PM, 30 min intervals)
@@ -116,6 +118,9 @@ const BookAppointment = () => {
   });
   const [feeLoading, setFeeLoading] = useState(true);
 
+  // Slot availability: null = not fetched yet; otherwise array of open "HH:MM"
+  const [availableSlots, setAvailableSlots] = useState(null);
+
   // Form data
   const [formData, setFormData] = useState({
     clinic: "",
@@ -174,6 +179,34 @@ const BookAppointment = () => {
     }
   }, [clinics, formData.clinic]);
 
+  // Fetch slot availability when clinic + date are chosen, so full and past
+  // slots can be disabled in the time dropdown.
+  useEffect(() => {
+    if (!formData.clinic || !formData.date) {
+      setAvailableSlots(null);
+      return;
+    }
+    let active = true;
+    getAvailableSlots(formData.clinic, formData.date)
+      .then((res) => {
+        if (!active) return;
+        const slots = res?.data?.availableSlots || [];
+        setAvailableSlots(slots);
+        // Clear the chosen time if it is no longer available
+        setFormData((prev) =>
+          prev.time && !slots.includes(prev.time)
+            ? { ...prev, time: "" }
+            : prev,
+        );
+      })
+      .catch(() => {
+        if (active) setAvailableSlots([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [formData.clinic, formData.date]);
+
   // Get OPD fee based on appointment type
   const getOpdFee = () => {
     const reason = appointmentReasons.find((r) => r.value === formData.reason);
@@ -184,9 +217,8 @@ const BookAppointment = () => {
   };
 
   const getMinDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split("T")[0];
+    // Allow booking from today onwards (past time slots are filtered out below).
+    return new Date().toISOString().split("T")[0];
   };
 
   const getMaxDate = () => {
@@ -621,7 +653,11 @@ const BookAppointment = () => {
                           onChange={handleChange("date")}
                           slotProps={{
                             inputLabel: { shrink: true },
-                            htmlInput: { min: getMinDate(), max: getMaxDate() },
+                            htmlInput: {
+                              min: getMinDate(),
+                              max: getMaxDate() || MAX_DATE,
+                              ...dateGuards,
+                            },
                           }}
                         />
                       </Grid>
@@ -635,20 +671,32 @@ const BookAppointment = () => {
                           onChange={handleChange("time")}
                           disabled={!formData.date}
                           helperText={
-                            !formData.date ? "Select a date first" : ""
+                            !formData.date
+                              ? "Select a date first"
+                              : "Full or past slots are disabled"
                           }
                         >
-                          {timeSlots.map((slot) => (
-                            <MenuItem key={slot} value={slot}>
-                              <Box className="flex items-center gap-2">
-                                <AccessTimeIcon
-                                  fontSize="small"
-                                  className="text-gray-400"
-                                />
-                                {formatTime(slot)}
-                              </Box>
-                            </MenuItem>
-                          ))}
+                          {timeSlots.map((slot) => {
+                            const disabled =
+                              Array.isArray(availableSlots) &&
+                              !availableSlots.includes(slot);
+                            return (
+                              <MenuItem
+                                key={slot}
+                                value={slot}
+                                disabled={disabled}
+                              >
+                                <Box className="flex items-center gap-2">
+                                  <AccessTimeIcon
+                                    fontSize="small"
+                                    className="text-gray-400"
+                                  />
+                                  {formatTime(slot)}
+                                  {disabled ? " — unavailable" : ""}
+                                </Box>
+                              </MenuItem>
+                            );
+                          })}
                         </TextField>
                       </Grid>
 

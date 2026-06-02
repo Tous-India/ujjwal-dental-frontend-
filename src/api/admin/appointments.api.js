@@ -27,7 +27,9 @@ export const getTodayAppointments = () =>
  * Get available slots for a date
  */
 export const getAvailableSlots = (clinicId, date) =>
-  api.get(`/appointments/slots/${clinicId}?date=${date}`).then((res) => res.data);
+  api
+    .get(`/appointments/available-slots`, { params: { clinic: clinicId, date } })
+    .then((res) => res.data);
 
 /**
  * Create new appointment

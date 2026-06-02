@@ -29,6 +29,8 @@ import { useAppointmentMutations } from "../../../hooks/admin/useAppointments";
 import { searchPatients } from "../../../api/admin/patients.api";
 import { getClinics } from "../../../api/admin/clinics.api";
 import { getFeeSettings } from "../../../api/admin/settings.api";
+import { getAvailableSlots } from "../../../api/admin/appointments.api";
+import { MAX_DATE, todayStr, dateGuards } from "../../../utils/dateInput";
 /**
  * Appointment type options
  */
@@ -102,7 +104,38 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, clinicId }) => {
     consultationFee: 500,
   });
   const [feeLoading, setFeeLoading] = useState(false);
+  // null = not fetched yet (no clinic+date); otherwise array of open "HH:MM" slots
+  const [availableSlots, setAvailableSlots] = useState(null);
   const { createAppointment, isCreating } = useAppointmentMutations();
+
+  // Fetch slot availability whenever clinic + date are both chosen, so full and
+  // past slots can be disabled in the dropdown.
+  useEffect(() => {
+    const clinicId = formData.clinic?._id;
+    if (!open || !clinicId || !formData.date) {
+      setAvailableSlots(null);
+      return;
+    }
+    let active = true;
+    getAvailableSlots(clinicId, formData.date)
+      .then((res) => {
+        if (!active) return;
+        const slots = res?.data?.availableSlots || [];
+        setAvailableSlots(slots);
+        // Clear the selected slot if it is no longer available
+        setFormData((prev) =>
+          prev.timeSlot && !slots.includes(prev.timeSlot)
+            ? { ...prev, timeSlot: "" }
+            : prev,
+        );
+      })
+      .catch(() => {
+        if (active) setAvailableSlots([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [open, formData.clinic, formData.date]);
 
   // Fetch clinics and fee settings when modal opens
   useEffect(() => {
@@ -362,7 +395,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, clinicId }) => {
               required
               size="small"
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: new Date().toISOString().split("T")[0] }}
+              inputProps={{ min: todayStr(), max: MAX_DATE, ...dateGuards }}
             />
           </Grid>
 
@@ -375,17 +408,28 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, clinicId }) => {
               value={formData.timeSlot}
               onChange={handleChange}
               error={!!errors.timeSlot}
-              helperText={errors.timeSlot}
+              helperText={
+                errors.timeSlot ||
+                (Array.isArray(availableSlots)
+                  ? "Full or past slots are disabled"
+                  : "Select clinic and date first")
+              }
               required
               select
               size="small"
             >
               <MenuItem value="">Select Time</MenuItem>
-              {timeSlots.map((slot) => (
-                <MenuItem key={slot} value={slot}>
-                  {slot}
-                </MenuItem>
-              ))}
+              {timeSlots.map((slot) => {
+                const disabled =
+                  Array.isArray(availableSlots) &&
+                  !availableSlots.includes(slot);
+                return (
+                  <MenuItem key={slot} value={slot} disabled={disabled}>
+                    {slot}
+                    {disabled ? " — unavailable" : ""}
+                  </MenuItem>
+                );
+              })}
             </TextField>
           </Grid>
 
