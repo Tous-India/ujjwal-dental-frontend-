@@ -40,6 +40,8 @@ const TreatmentsPage = lazy(() => import("./pages/public/TreatmentsPage"));
 const TreatmentPage = lazy(() => import("./pages/public/TreatmentPage"));
 const PlansPage = lazy(() => import("./pages/public/PlansPage"));
 const PlanDetailPage = lazy(() => import("./pages/public/PlanDetailPage"));
+const TermsPage = lazy(() => import("./pages/public/TermsPage"));
+const PrivacyPolicyPage = lazy(() => import("./pages/public/PrivacyPolicyPage"));
 const BookAppointmentPage = lazy(() => import("./pages/public/BookAppointmentPage"));
 const DoctorProfilePage = lazy(() => import("./pages/public/DoctorProfilePage"));
 
@@ -110,6 +112,8 @@ const App = () => {
           <Route path="/membership-plans" element={<PlansPage />} />
           <Route path="/membership-plans/:id" element={<PlanDetailPage />} />
           <Route path="/doctors/:slug" element={<DoctorProfilePage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         </Route>
 
         {/* ======================== */}

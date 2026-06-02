@@ -15,6 +15,8 @@ const quickLinks = [
   { label: "Book Appointment", to: "/book-appointment" },
   { label: "Membership Plans", to: "/membership-plans" },
   { label: "Contact Us", to: "/contact" },
+  { label: "Terms & Conditions", to: "/terms" },
+  { label: "Privacy Policy", to: "/privacy-policy" },
 ];
 
 const treatmentLinks = [

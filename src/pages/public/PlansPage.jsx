@@ -5,57 +5,23 @@
  * Allows purchase via Razorpay (requires patient login).
  */
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Container,
-  Card,
-  CardContent,
-  Button,
-  CircularProgress,
-  Chip,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
-import Grid from "@mui/material/Grid";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import StarIcon from "@mui/icons-material/Star";
+import { CircularProgress } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
+import { useAuthStore } from "../../store/auth.store";
 import api from "../../api/axios";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
-
-// Tier colors
-const tierColors = {
-  silver: { bg: "#e3f2fd", border: "#1976d2", accent: "#1565c0", badge: "#1976d2" },
-  gold: { bg: "#fff8e1", border: "#ffc107", accent: "#f57f17", badge: "#ffc107" },
-  platinum: { bg: "#e8eaf6", border: "#3f51b5", accent: "#1a237e", badge: "#3f51b5" },
-};
-
-// Plan images from public folder
-const planImages = {
-  "individual silver": "/student-dental-plan.jpg",
-  "individual gold": "/women-dental-plan.jpeg",
-  "individual platinum": "/implant-post-care.webp",
-  "family silver": "/oral-hygiene-kids.jpg",
-  "family gold": "/oral-hygiene-adults.jpg",
-  "family platinum": "/family-dental-plan.jpg",
-};
-
-const getPlanImage = (plan) => {
-  const key = plan?.name?.toLowerCase();
-  return planImages[key] || "/implant-post-care.webp";
-};
 
 const PlansPage = () => {
   const [buyDialog, setBuyDialog] = useState(null);
   const [buyForm, setBuyForm] = useState({ name: "", phone: "", email: "" });
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const patient = useAuthStore((state) => state.patient);
+  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
 
   // Fetch plans from API
   const { data, isLoading } = useQuery({
@@ -65,11 +31,18 @@ const PlansPage = () => {
   });
 
   const plans = data?.data?.plans || data?.data || [];
+  // The middle plan is highlighted as the recommended ("Most Popular") option.
+  const featuredIndex = plans.length ? Math.floor(plans.length / 2) : -1;
 
-  // Handle Buy Now click
+  // Handle Buy Now click — opens the checkout modal, prefilling the
+  // logged-in patient's details for the payment step.
   const handleBuyClick = (plan) => {
     setBuyDialog(plan);
-    setBuyForm({ name: "", phone: "", email: "" });
+    setBuyForm({
+      name: patient?.name || "",
+      phone: patient?.phone || "",
+      email: patient?.email || "",
+    });
   };
 
   // Handle purchase with Razorpay
@@ -148,6 +121,8 @@ const PlansPage = () => {
     }
   };
 
+  const formatPrice = (p) => `₹${(p || 0).toLocaleString("en-IN")}`;
+
   return (
     <>
       <title>Dental Membership Plans | Ujjwal Dental Clinic Sonipat</title>
@@ -168,210 +143,199 @@ const PlansPage = () => {
         breadcrumbs={[{ label: "Home", path: "/" }, { label: "Plans" }]}
       />
 
-      <Container maxWidth="lg" sx={{ py: 6 }}>
-        {/* Page Intro */}
-        <Box sx={{ textAlign: "center", mb: 5 }}>
-          <Typography variant="h4" fontWeight={800} color="#003366" gutterBottom>
-            Membership Plans
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: "auto" }}>
-            Choose the perfect plan for you and your family. Enjoy exclusive discounts and priority care.
-          </Typography>
-        </Box>
-
-        {/* Plans Grid */}
-        {isLoading ? (
-          <Box sx={{ textAlign: "center", py: 10 }}>
-            <CircularProgress />
-          </Box>
-        ) : plans.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 10 }}>
-            <Typography variant="h6" color="text.secondary">
-              No plans available at the moment
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Contact us for membership information
-            </Typography>
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {plans.map((plan) => {
-              const colors = tierColors[plan.tier] || tierColors.silver;
-              const image = getPlanImage(plan);
-
-              return (
-                <Grid key={plan._id} size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      borderRadius: 3,
-                      border: `2px solid ${colors.border}`,
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                      "&:hover": {
-                        transform: "translateY(-6px)",
-                        boxShadow: 8,
-                      },
-                      overflow: "hidden",
-                    }}
-                  >
-                    {/* Plan Image */}
-                    <Box
-                      sx={{
-                        height: 200,
-                        backgroundImage: `url(${image})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        position: "relative",
-                      }}
-                    >
-                      <Chip
-                        icon={<StarIcon sx={{ fontSize: 14, color: "#fff !important" }} />}
-                        label={plan.tier?.toUpperCase()}
-                        size="small"
-                        sx={{
-                          position: "absolute",
-                          top: 12,
-                          right: 12,
-                          bgcolor: colors.badge,
-                          color: "#fff",
-                          fontWeight: 700,
-                          fontSize: "0.7rem",
-                        }}
-                      />
-                    </Box>
-
-                    {/* Plan Details */}
-                    <CardContent sx={{ flexGrow: 1, textAlign: "center", p: 3 }}>
-                      <Typography
-                        variant="h6"
-                        fontWeight={800}
-                        color={colors.accent}
-                        sx={{ textTransform: "uppercase", mb: 1, fontSize: "0.95rem" }}
-                      >
-                        {plan.name}
-                      </Typography>
-
-                      {plan.description && (
-                        <ul style={{ margin: 0, paddingLeft: "18px", marginBottom: "12px" }}>
-                          {plan.description.split("\n").filter(Boolean).map((line, i) => (
-                            <li key={i} style={{ fontSize: "0.8rem", color: "#666", marginBottom: "4px", lineHeight: 1.5 }}>
-                              {line.trim()}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-
-                      {/* Price */}
-                      <Typography
-                        variant="h4"
-                        fontWeight={900}
-                        color="#003366"
-                        sx={{ mb: 2 }}
-                      >
-                        ₹{plan.price?.toLocaleString("en-IN")}
-                      </Typography>
-
-                      {/* Features */}
-                      {plan.features?.length > 0 && (
-                        <Box sx={{ textAlign: "left", mb: 2 }}>
-                          {plan.features.slice(0, 4).map((feature, i) => (
-                            <Box key={i} className="flex items-center gap-1 mb-1">
-                              <CheckCircleIcon sx={{ fontSize: 16, color: colors.badge }} />
-                              <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                                {feature}
-                              </Typography>
-                            </Box>
-                          ))}
-                        </Box>
-                      )}
-
-                      {/* Buy Button — goes to detail page */}
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        component={Link}
-                        to={`/membership-plans/${plan.name?.toLowerCase().replace(/\s+/g, "-")}`}
-                        state={{ planId: plan._id }}
-                        startIcon={<ShoppingCartIcon />}
-                        sx={{
-                          bgcolor: "#006694",
-                          borderRadius: 5,
-                          py: 1.2,
-                          fontWeight: 700,
-                          fontSize: "0.95rem",
-                          textDecoration: "none",
-                          "&:hover": { bgcolor: "#005580" },
-                        }}
-                      >
-                        BUY NOW
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
-        )}
-      </Container>
-
-      {/* Buy Dialog */}
-      <Dialog
-        open={!!buyDialog}
-        onClose={() => !isProcessing && setBuyDialog(null)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, color: "#003366" }}>
-          Purchase {buyDialog?.name}
-          <Typography variant="body2" color="text.secondary">
-            ₹{buyDialog?.price?.toLocaleString("en-IN")} — {buyDialog?.tier} plan
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Full Name *"
-              value={buyForm.name}
-              onChange={(e) => setBuyForm((p) => ({ ...p, name: e.target.value }))}
-            />
-            <TextField
-              fullWidth
-              size="small"
-              label="Phone Number *"
-              value={buyForm.phone}
-              onChange={(e) => setBuyForm((p) => ({ ...p, phone: e.target.value }))}
-            />
-            <TextField
-              fullWidth
-              size="small"
-              label="Email *"
-              type="email"
-              value={buyForm.email}
-              onChange={(e) => setBuyForm((p) => ({ ...p, email: e.target.value }))}
-              helperText="Login credentials will be sent to this email"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setBuyDialog(null)} disabled={isProcessing} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handlePurchase}
-            disabled={isProcessing}
-            sx={{ bgcolor: "#006694", borderRadius: 5, px: 4, "&:hover": { bgcolor: "#005580" } }}
-            startIcon={isProcessing ? <CircularProgress size={16} color="inherit" /> : <ShoppingCartIcon />}
+      <section className="py-[48px] md:py-[64px] bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+          <h1
+            className="text-[#003366] text-center mb-2"
+            style={{ fontSize: "2rem", fontWeight: 800 }}
           >
-            {isProcessing ? "Processing..." : `Pay ₹${buyDialog?.price?.toLocaleString("en-IN")}`}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            Dental Membership Plans
+          </h1>
+          <p className="text-center text-gray-500 mb-10 max-w-2xl mx-auto text-base">
+            Choose the perfect plan for you and your family. Enjoy exclusive
+            discounts and priority care.
+          </p>
+
+          {isLoading ? (
+            <div className="text-center py-16">
+              <CircularProgress sx={{ color: "#f57c00" }} />
+            </div>
+          ) : plans.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-gray-600 text-lg font-semibold">
+                No plans available at the moment
+              </p>
+              <p className="text-gray-500 text-sm mt-1">
+                Contact us for membership information
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto items-stretch">
+              {plans.map((plan, i) => {
+                const featured = i === featuredIndex;
+                return (
+                  <div
+                    key={plan._id}
+                    className={`relative rounded-2xl py-8 px-6 flex flex-col bg-white border ${
+                      featured
+                        ? "border-accent md:scale-[1.03]"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    {featured && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-[12px] font-semibold rounded-full px-3 py-1">
+                        Most Popular
+                      </span>
+                    )}
+
+                    {/* Tier badge */}
+                    {plan.tier && (
+                      <span className="absolute top-4 right-4 bg-[#003366] text-white text-[12px] font-semibold rounded-full px-3 py-0.5 capitalize">
+                        {plan.tier}
+                      </span>
+                    )}
+
+                    {/* Name + description */}
+                    <div className="text-center">
+                      <h3 className="text-[#003366] text-xl font-bold leading-tight capitalize">
+                        {plan.name}
+                      </h3>
+                      {plan.description && (
+                        <p className="text-gray-500 text-sm mt-2 line-clamp-2">
+                          {plan.description.replace(/\n/g, " ")}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Price */}
+                    <p className="text-center mt-4">
+                      <span className="text-[#003366] text-4xl font-extrabold">
+                        {formatPrice(plan.price)}
+                      </span>
+                      <span className="text-gray-500 text-sm">/year</span>
+                    </p>
+
+                    <div className="border-t border-gray-100 my-5" />
+
+                    {/* Benefits */}
+                    <ul className="flex-grow space-y-1">
+                      {(plan.features || []).map((feature, j) => (
+                        <li
+                          key={j}
+                          className="flex items-start gap-2 py-1.5 text-gray-700 text-[14px] leading-snug"
+                        >
+                          <CheckIcon className="text-accent text-[16px]! mt-0.5 shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Buy Now */}
+                    <button
+                      type="button"
+                      onClick={() => handleBuyClick(plan)}
+                      className="mt-6 block w-full text-center border-2 border-accent text-accent bg-transparent hover:bg-accent hover:text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer"
+                    >
+                      Buy Now
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Checkout modal */}
+      {buyDialog && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => !isProcessing && setBuyDialog(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-lg w-full p-6 md:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-[#003366] text-xl font-bold capitalize">
+                  {buyDialog.name}
+                </h3>
+                <p className="mt-1">
+                  <span className="text-[#003366] text-3xl font-extrabold">
+                    {formatPrice(buyDialog.price)}
+                  </span>
+                  <span className="text-gray-500 text-sm">/year</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => !isProcessing && setBuyDialog(null)}
+                aria-label="Close"
+                className="text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            {/* Benefits summary */}
+            {buyDialog.features?.length > 0 && (
+              <ul className="mt-5 space-y-1.5 max-h-48 overflow-y-auto">
+                {buyDialog.features.map((feature, j) => (
+                  <li
+                    key={j}
+                    className="flex items-start gap-2 text-gray-700 text-[14px] leading-snug"
+                  >
+                    <CheckIcon className="text-accent text-[16px]! mt-0.5 shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Terms snippet */}
+            <p className="mt-5 text-[13px] text-gray-400 leading-relaxed">
+              Membership is valid for 1 year from purchase, non-transferable, and
+              valid at all Ujjwal Dental locations. By proceeding you agree to our{" "}
+              <Link to="/terms" className="text-accent no-underline hover:underline">
+                Terms &amp; Conditions
+              </Link>
+              .
+            </p>
+
+            {/* Action */}
+            <div className="mt-6">
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={handlePurchase}
+                  disabled={isProcessing}
+                  className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark disabled:opacity-60 text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {isProcessing && (
+                    <CircularProgress size={18} sx={{ color: "#fff" }} />
+                  )}
+                  {isProcessing
+                    ? "Processing..."
+                    : `Proceed to Payment — ${formatPrice(buyDialog.price)}`}
+                </button>
+              ) : (
+                <div className="text-center">
+                  <Link
+                    to="/login"
+                    className="w-full inline-block bg-accent hover:bg-accent-dark text-white rounded-xl py-3 text-[15px] font-semibold no-underline transition-colors duration-200"
+                  >
+                    Login to purchase
+                  </Link>
+                  <p className="text-[13px] text-gray-400 mt-2">
+                    Please log in to your patient account to buy a membership.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Load Razorpay Script */}
       <script src="https://checkout.razorpay.com/v1/checkout.js" />
