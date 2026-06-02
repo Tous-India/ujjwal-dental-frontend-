@@ -529,10 +529,10 @@ const HomePage = () => {
                 768: { slidesPerView: 2.5 },
                 1024: { slidesPerView: 4 },
               }}
-              className="px-1 py-2"
+              className="px-1 pt-2 pb-4 overflow-visible"
             >
               {patientSpeaks.map((p, i) => (
-                <SwiperSlide key={i} className="h-auto">
+                <SwiperSlide key={i} className="h-auto overflow-visible">
                   <div
                     onClick={() => p.videoUrl && setActiveVideo(p.videoUrl)}
                     className={`group bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md ${
