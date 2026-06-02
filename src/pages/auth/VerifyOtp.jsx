@@ -23,7 +23,8 @@ const trustPoints = [
  */
 const VerifyOtp = () => {
   const navigate = useNavigate();
-  const { pendingEmail, login, setPendingEmail } = useAuthStore();
+  const { pendingEmail, isAuthenticated, login, setPendingEmail } =
+    useAuthStore();
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -32,12 +33,15 @@ const VerifyOtp = () => {
 
   const inputRefs = useRef([]);
 
-  // Redirect if no pending email
+  // Redirect to login only if there's no pending email AND the user hasn't
+  // just authenticated. (login() clears pendingEmail; without the
+  // isAuthenticated guard this effect would race the post-verify navigation
+  // to /dashboard and bounce the user back to /login.)
   useEffect(() => {
-    if (!pendingEmail) {
+    if (!pendingEmail && !isAuthenticated) {
       navigate("/login", { replace: true });
     }
-  }, [pendingEmail, navigate]);
+  }, [pendingEmail, isAuthenticated, navigate]);
 
   // Countdown timer for resend
   useEffect(() => {
