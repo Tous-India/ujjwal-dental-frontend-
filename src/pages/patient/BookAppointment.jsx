@@ -7,31 +7,14 @@
  */
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../../store/auth.store";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Button,
-  MenuItem,
-  Stepper,
-  Step,
-  StepLabel,
-  Alert,
-  CircularProgress,
-  Chip,
-  Divider,
-  Container,
-} from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { toast } from "react-toastify";
 import ReCAPTCHA from "react-google-recaptcha";
-import Grid from "@mui/material/Grid";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PersonIcon from "@mui/icons-material/Person";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CheckIcon from "@mui/icons-material/Check";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PaymentIcon from "@mui/icons-material/Payment";
@@ -107,6 +90,11 @@ const loadRazorpayScript = () => {
     document.body.appendChild(script);
   });
 };
+
+// Shared field styling so every input/select looks identical.
+const fieldCls =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[15px] text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200";
+const labelCls = "block text-[15px] font-medium text-gray-600 mb-1.5";
 
 const BookAppointment = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -469,258 +457,219 @@ const BookAppointment = () => {
   };
 
   return (
-    <Box sx={{ bgcolor: "#f5f5f5", pb: 4 }} className="book-appointment-card">
-      <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
+    <div className="bg-gray-50 py-8 md:py-12">
+      <div className="max-w-3xl mx-auto px-4">
         {/* Success Screen */}
         {success && bookedAppointment ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <CheckCircleIcon
-                sx={{ fontSize: 80, color: "success.main", mb: 2 }}
-              />
-              <Typography
-                variant="h4"
-                className="font-bold text-green-600 mb-2"
+          <div className="bg-white rounded-2xl shadow-sm px-[40px] py-[32px] text-center">
+            <CheckCircleIcon className="text-accent! text-[80px]! mb-2" />
+            <h2 className="text-[#003366] text-2xl md:text-3xl font-bold mb-2">
+              Appointment Booked!
+            </h2>
+            <p className="text-gray-500 mb-6">
+              Your appointment has been successfully scheduled and payment
+              received
+            </p>
+
+            <div className="bg-gray-50 rounded-xl border border-gray-100 max-w-md mx-auto p-5 mb-6 text-left">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[13px] text-gray-500">Date</p>
+                  <p className="text-[15px] font-semibold text-gray-800">
+                    {formatDate(formData.date)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[13px] text-gray-500">Time</p>
+                  <p className="text-[15px] font-semibold text-gray-800">
+                    {formatTime(formData.time)}
+                  </p>
+                </div>
+                <div className="col-span-2 border-t border-gray-200" />
+                <div>
+                  <p className="text-[13px] text-gray-500">Clinic</p>
+                  <p className="text-[15px] font-semibold text-gray-800">
+                    {bookedAppointment.clinicName}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[13px] text-gray-500">Token #</p>
+                  <p className="text-[15px] font-mono font-semibold text-gray-800">
+                    {bookedAppointment.tokenNumber || "-"}
+                  </p>
+                </div>
+                <div className="col-span-2 border-t border-gray-200" />
+                <div>
+                  <p className="text-[13px] text-gray-500">OPD Fee Paid</p>
+                  <p className="text-[15px] font-semibold text-accent">
+                    {formatCurrency(bookedAppointment.opdFee)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[13px] text-gray-500">Status</p>
+                  <span className="inline-block bg-green-100 text-green-700 rounded-full px-3 py-0.5 text-[12px] font-semibold">
+                    Paid
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 text-blue-800 text-[14px] rounded-lg px-4 py-3 mb-4 text-left max-w-md mx-auto">
+              A confirmation SMS will be sent to{" "}
+              <strong>{formData.phone}</strong>. Please arrive 10 minutes before
+              your scheduled time.
+            </div>
+
+            {formData.email && (
+              <div className="bg-green-50 text-green-800 text-[14px] rounded-lg px-4 py-3 mb-4 text-left max-w-md mx-auto">
+                Your patient portal is ready. Go to{" "}
+                <strong>Login → "Login with OTP"</strong> and enter{" "}
+                <strong>{formData.email}</strong> to view your appointments and
+                payments — we'll email you a one-time code, no password needed.
+              </div>
+            )}
+
+            <div className="flex justify-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="bg-accent hover:bg-accent-dark text-white rounded-xl px-6 py-2.5 text-[15px] font-semibold transition-colors duration-200 cursor-pointer"
               >
-                Appointment Booked!
-              </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                className="mb-6"
+                Book Another
+              </button>
+              <Link
+                to="/login"
+                className="bg-[#003366] hover:bg-[#004080] text-white rounded-xl px-6 py-2.5 text-[15px] font-semibold no-underline transition-colors duration-200"
               >
-                Your appointment has been successfully scheduled and payment
-                received
-              </Typography>
-
-              <Card className="bg-gray-50 mb-6 max-w-md mx-auto">
-                <CardContent>
-                  <Grid container spacing={2} className="text-left">
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Date
-                      </Typography>
-                      <Typography variant="body1" className="font-semibold">
-                        {formatDate(formData.date)}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Time
-                      </Typography>
-                      <Typography variant="body1" className="font-semibold">
-                        {formatTime(formData.time)}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Divider />
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Clinic
-                      </Typography>
-                      <Typography variant="body1" className="font-semibold">
-                        {bookedAppointment.clinicName}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Token #
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        className="font-mono font-semibold"
-                      >
-                        {bookedAppointment.tokenNumber || "-"}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Divider />
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        OPD Fee Paid
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        className="font-semibold text-green-600"
-                      >
-                        {formatCurrency(bookedAppointment.opdFee)}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Status
-                      </Typography>
-                      <Chip size="small" label="Paid" color="success" />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-
-              <Alert
-                severity="info"
-                className="mb-4 text-left max-w-md mx-auto"
+                Login to Portal
+              </Link>
+              <a
+                href="https://ujjwaldentalplanet.com/"
+                className="border-2 border-gray-300 text-gray-600 hover:border-gray-400 rounded-xl px-6 py-2.5 text-[15px] font-semibold no-underline transition-colors duration-200"
               >
-                <Typography variant="body2">
-                  A confirmation SMS will be sent to{" "}
-                  <strong>{formData.phone}</strong>. Please arrive 10 minutes
-                  before your scheduled time.
-                </Typography>
-              </Alert>
-
-              {formData.email && (
-                <Alert
-                  severity="success"
-                  className="mb-4 text-left max-w-md mx-auto"
-                >
-                  <Typography variant="body2">
-                    Your patient portal is ready. Go to{" "}
-                    <strong>Login → "Login with OTP"</strong> and enter{" "}
-                    <strong>{formData.email}</strong> to view your appointments
-                    and payments — we'll email you a one-time code, no password
-                    needed.
-                  </Typography>
-                </Alert>
-              )}
-
-              <Box className="flex justify-center gap-3 flex-wrap">
-                <Button
-                  variant="contained"
-                  onClick={resetForm}
-                  className="bg-teal-600 hover:bg-teal-700"
-                >
-                  Book Another
-                </Button>
-                <Button
-                  component={Link}
-                  to="/login"
-                  variant="contained"
-                  color="primary"
-                >
-                  Login to Portal
-                </Button>
-                <Button
-                  variant="outlined"
-                  href="https://ujjwaldentalplanet.com/"
-                >
-                  Back to Website
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
+                Back to Website
+              </a>
+            </div>
+          </div>
         ) : (
           <>
             {/* Page Header */}
-            <Box sx={{ mb: 4, textAlign: "center" }}>
-              <Typography variant="h4" fontWeight="bold" gutterBottom>
+            <div className="text-center mb-6">
+              <h1 className="text-[#003366] text-[28px] md:text-3xl font-bold">
                 Book Your Appointment
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
+              </h1>
+              <p className="text-gray-500 text-[15px] mt-1">
                 Schedule your visit at Ujjwal Dental Clinic
-              </Typography>
-            </Box>
+              </p>
+            </div>
 
-            {/* Stepper */}
-            <Stepper
-              activeStep={activeStep}
-              className="mb-6"
-              sx={{
-                overflowX: "auto",
-                "& .MuiStepLabel-label": {
-                  fontSize: { xs: "0.7rem", sm: "0.875rem" },
-                },
-              }}
-              alternativeLabel
-            >
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+            {/* Step indicator */}
+            <div className="flex items-start max-w-xl mx-auto mb-3">
+              {steps.map((label, i) => {
+                const completed = i < activeStep;
+                const current = i === activeStep;
+                return (
+                  <div key={label} className="flex items-start flex-1 last:flex-none">
+                    <div className="flex flex-col items-center shrink-0 w-12">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${
+                          completed || current
+                            ? "bg-accent text-white"
+                            : "bg-gray-200 text-gray-400"
+                        }`}
+                      >
+                        {completed ? <CheckIcon className="text-[18px]!" /> : i + 1}
+                      </div>
+                      <span
+                        className={`mt-1.5 text-[13px] text-center leading-tight ${
+                          current
+                            ? "text-[#003366] font-bold"
+                            : "text-gray-400 font-medium"
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </div>
+                    {i < steps.length - 1 && (
+                      <div
+                        className={`flex-1 h-0.5 mt-4 ${
+                          i < activeStep ? "bg-accent" : "bg-gray-200"
+                        }`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
-            <Card>
-              <CardContent className="p-6">
-                {/* Step 1: Clinic & Date */}
-                {activeStep === 0 && (
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      className="font-semibol mb-5! flex items-center gap-2"
-                    >
-                      <CalendarMonthIcon className="text-teal-600" />
-                      Select Clinic, Date & Time
-                    </Typography>
+            {/* Trust signals */}
+            <p className="text-center text-[13px] text-gray-400 mb-6">
+              <span className="text-accent">✓</span> Confirmed instantly{" "}
+              <span className="mx-1">·</span>
+              <span className="text-accent">✓</span> Free cancellation{" "}
+              <span className="mx-1">·</span>
+              <span className="text-accent">✓</span> Secure payment
+            </p>
 
-                    <Grid container spacing={3}>
-                      <Grid size={{ xs: 12 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          label="Select Clinic"
-                          value={formData.clinic}
-                          onChange={handleChange("clinic")}
-                          disabled={clinicsLoading}
-                        >
-                          {clinics.map((clinic) => (
-                            <MenuItem
-                              key={clinic._id}
-                              value={clinic._id}
-                            >
-                              <Box className="flex items-center gap-2">
-                                <LocationOnIcon
-                                  fontSize="small"
-                                  className="text-gray-400"
-                                />
-                                {clinic.name}
-                                {clinic.address?.city && (
-                                  <Chip
-                                    size="small"
-                                    label={clinic.address.city}
-                                    variant="outlined"
-                                  />
-                                )}
-                              </Box>
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
+            {/* Form card */}
+            <div className="bg-white rounded-2xl shadow-sm px-[40px] py-[32px]">
+              {/* Step 1: Clinic & Date */}
+              {activeStep === 0 && (
+                <div>
+                  <h2 className="text-[#003366] text-lg font-semibold mb-5 flex items-center gap-2">
+                    <CalendarMonthIcon className="text-accent" />
+                    Select Clinic, Date &amp; Time
+                  </h2>
 
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          type="date"
-                          label="Select Date"
-                          value={formData.date}
-                          onChange={handleDateChange}
-                          error={!!dateError}
-                          helperText={dateError}
-                          slotProps={{
-                            inputLabel: { shrink: true },
-                            htmlInput: {
-                              min: getMinDate(),
-                              max: getMaxDate() || MAX_DATE,
-                              ...dateGuards,
-                            },
-                          }}
-                        />
-                      </Grid>
+                  <div className="space-y-5">
+                    <div>
+                      <label className={labelCls}>Select Clinic</label>
+                      <select
+                        className={fieldCls}
+                        value={formData.clinic}
+                        onChange={handleChange("clinic")}
+                        disabled={clinicsLoading}
+                      >
+                        {clinics.map((clinic) => (
+                          <option key={clinic._id} value={clinic._id}>
+                            {clinic.name}
+                            {clinic.address?.city
+                              ? ` — ${clinic.address.city}`
+                              : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          label="Select Time"
-                          value={formData.time}
-                          onChange={handleChange("time")}
-                          disabled={!formData.date}
-                          helperText={
-                            !formData.date
-                              ? "Select a date first"
-                              : "Full or past slots are disabled"
-                          }
-                        >
+                    <div>
+                      <label className={labelCls}>Select Date</label>
+                      <input
+                        type="date"
+                        className={fieldCls}
+                        value={formData.date}
+                        onChange={handleDateChange}
+                        min={getMinDate()}
+                        max={getMaxDate() || MAX_DATE}
+                        {...dateGuards}
+                      />
+                      {dateError && (
+                        <p className="text-red-500 text-[13px] mt-1">
+                          {dateError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className={`${labelCls} flex items-center gap-1`}>
+                        <AccessTimeIcon className="text-gray-400 text-[18px]!" />
+                        Select Time
+                      </label>
+                      {!formData.date ? (
+                        <p className="text-gray-400 text-[14px]">
+                          Select a date first
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {timeSlots.map((slot) => {
                             // Disable if the slot is in the past today (client
                             // clock = IST) or full/unavailable per the backend.
@@ -728,362 +677,281 @@ const BookAppointment = () => {
                               isPastSlotForDate(formData.date, slot) ||
                               (Array.isArray(availableSlots) &&
                                 !availableSlots.includes(slot));
+                            const selected = formData.time === slot;
                             return (
-                              <MenuItem
+                              <button
                                 key={slot}
-                                value={slot}
+                                type="button"
                                 disabled={disabled}
+                                onClick={() =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    time: slot,
+                                  }))
+                                }
+                                className={`rounded-full px-2 py-2 text-[13px] font-medium transition-colors ${
+                                  disabled
+                                    ? "bg-gray-200 text-gray-400 line-through cursor-not-allowed"
+                                    : selected
+                                      ? "bg-accent text-white"
+                                      : "bg-gray-100 text-gray-700 hover:bg-orange-100 cursor-pointer"
+                                }`}
                               >
-                                <Box className="flex items-center gap-2">
-                                  <AccessTimeIcon
-                                    fontSize="small"
-                                    className="text-gray-400"
-                                  />
-                                  {formatTime(slot)}
-                                  {disabled ? " — unavailable" : ""}
-                                </Box>
-                              </MenuItem>
+                                {formatTime(slot)}
+                              </button>
                             );
                           })}
-                        </TextField>
-                      </Grid>
+                        </div>
+                      )}
+                    </div>
 
-                      <Grid size={{ xs: 12 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          label="Reason for Visit"
-                          value={formData.reason}
-                          onChange={handleChange("reason")}
-                        >
-                          {appointmentReasons.map((reason) => (
-                            <MenuItem key={reason.value} value={reason.value}>
-                              {reason.label}
-                              {reason.type === "emergency" && (
-                                <Chip
-                                  size="small"
-                                  label="Emergency"
-                                  color="error"
-                                  sx={{ ml: 1 }}
-                                />
-                              )}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                )}
+                    <div>
+                      <label className={labelCls}>Reason for Visit</label>
+                      <select
+                        className={fieldCls}
+                        value={formData.reason}
+                        onChange={handleChange("reason")}
+                      >
+                        {appointmentReasons.map((reason) => (
+                          <option key={reason.value} value={reason.value}>
+                            {reason.label}
+                            {reason.type === "emergency" ? " (Emergency)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                {/* Step 2: Patient Details */}
-                {activeStep === 1 && (
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      className="font-semibold mb-4! flex items-center gap-2"
-                    >
-                      <PersonIcon className="text-teal-600" />
-                      Patient Information
-                    </Typography>
+              {/* Step 2: Patient Details */}
+              {activeStep === 1 && (
+                <div>
+                  <h2 className="text-[#003366] text-lg font-semibold mb-5 flex items-center gap-2">
+                    <PersonIcon className="text-accent" />
+                    Patient Information
+                  </h2>
 
-                    <Grid container spacing={3}>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Full Name *"
-                          value={formData.name}
-                          onChange={handleChange("name")}
-                          placeholder="Enter your full name"
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Phone Number *"
-                          value={formData.phone}
-                          onChange={handleChange("phone")}
-                          placeholder="10-digit phone number"
-                          inputProps={{ maxLength: 10 }}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          required
-                          label="Email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleChange("email")}
-                          placeholder="your@email.com"
-                          helperText="Required for login to patient portal"
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 3 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          label="Gender"
-                          value={formData.gender}
-                          onChange={handleChange("gender")}
-                        >
-                          <MenuItem value="male">Male</MenuItem>
-                          <MenuItem value="female">Female</MenuItem>
-                          <MenuItem value="other">Other</MenuItem>
-                        </TextField>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 3 }}>
-                        <TextField
-                          fullWidth
-                          label="Age"
-                          type="number"
-                          value={formData.age}
-                          onChange={handleChange("age")}
-                          inputProps={{ min: 1, max: 120 }}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12 }}>
-                        <TextField
-                          fullWidth
-                          label="Additional Notes (Optional)"
-                          value={formData.notes}
-                          onChange={handleChange("notes")}
-                          placeholder="Any specific concerns or requirements..."
-                          multiline
-                          rows={3}
-                        />
-                      </Grid>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Full Name *</label>
+                      <input
+                        className={fieldCls}
+                        value={formData.name}
+                        onChange={handleChange("name")}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Phone Number *</label>
+                      <input
+                        className={fieldCls}
+                        value={formData.phone}
+                        onChange={handleChange("phone")}
+                        placeholder="10-digit phone number"
+                        maxLength={10}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className={labelCls}>Email *</label>
+                      <input
+                        type="email"
+                        className={fieldCls}
+                        value={formData.email}
+                        onChange={handleChange("email")}
+                        placeholder="your@email.com"
+                      />
+                      <p className="text-gray-400 text-[13px] mt-1">
+                        Required for login to patient portal
+                      </p>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Gender</label>
+                      <select
+                        className={fieldCls}
+                        value={formData.gender}
+                        onChange={handleChange("gender")}
+                      >
+                        <option value="">Select</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Age</label>
+                      <input
+                        type="number"
+                        className={fieldCls}
+                        value={formData.age}
+                        onChange={handleChange("age")}
+                        min={1}
+                        max={120}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className={labelCls}>
+                        Additional Notes (Optional)
+                      </label>
+                      <textarea
+                        className={fieldCls}
+                        value={formData.notes}
+                        onChange={handleChange("notes")}
+                        placeholder="Any specific concerns or requirements..."
+                        rows={3}
+                      />
+                    </div>
 
-                      {/* reCAPTCHA */}
-                      <Grid size={{ xs: 12 }}>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            mt: 1,
-                          }}
-                        >
-                          <ReCAPTCHA
-                            ref={captchaRef}
-                            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                            onChange={(token) => setCaptchaToken(token)}
-                            onExpired={() => setCaptchaToken(null)}
-                          />
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                )}
+                    {/* reCAPTCHA */}
+                    <div className="md:col-span-2 flex justify-center mt-1">
+                      <ReCAPTCHA
+                        ref={captchaRef}
+                        sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                        onChange={(token) => setCaptchaToken(token)}
+                        onExpired={() => setCaptchaToken(null)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                {/* Step 3: Payment */}
-                {activeStep === 2 && (
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      className="font-semibold mb-4 flex items-center gap-2"
-                    >
-                      <PaymentIcon className="text-teal-600" />
-                      Payment Details
-                    </Typography>
+              {/* Step 3: Payment */}
+              {activeStep === 2 && (
+                <div>
+                  <h2 className="text-[#003366] text-lg font-semibold mb-5 flex items-center gap-2">
+                    <PaymentIcon className="text-accent" />
+                    Payment Details
+                  </h2>
 
-                    {/* Booking Summary */}
-                    <Card className="bg-gray-50 mb-4">
-                      <CardContent>
-                        <Typography
-                          variant="subtitle2"
-                          className="font-semibold mb-3"
-                        >
-                          Booking Summary
-                        </Typography>
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              Clinic
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              className="font-semibold"
-                            >
-                              {
-                                clinics.find((c) => c._id === formData.clinic)
-                                  ?.name
-                              }
-                            </Typography>
-                          </Grid>
-                          <Grid size={{ xs: 6, md: 3 }}>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              Date
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              className="font-semibold"
-                            >
-                              {formatDate(formData.date)}
-                            </Typography>
-                          </Grid>
-                          <Grid size={{ xs: 6, md: 3 }}>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              Time
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              className="font-semibold"
-                            >
-                              {formatTime(formData.time)}
-                            </Typography>
-                          </Grid>
-                          <Grid size={{ xs: 12 }}>
-                            <Divider />
-                          </Grid>
-                          <Grid size={{ xs: 6 }}>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              Patient
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              className="font-semibold"
-                            >
-                              {formData.name}
-                            </Typography>
-                          </Grid>
-                          <Grid size={{ xs: 6 }}>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              Phone
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              className="font-semibold"
-                            >
-                              {formData.phone}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
+                  {/* Booking Summary */}
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-5 mb-4">
+                    <p className="text-[15px] font-semibold text-gray-800 mb-3">
+                      Booking Summary
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2">
+                        <p className="text-[13px] text-gray-500">Clinic</p>
+                        <p className="text-[14px] font-semibold text-gray-800">
+                          {clinics.find((c) => c._id === formData.clinic)?.name}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[13px] text-gray-500">Date</p>
+                        <p className="text-[14px] font-semibold text-gray-800">
+                          {formatDate(formData.date)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[13px] text-gray-500">Time</p>
+                        <p className="text-[14px] font-semibold text-gray-800">
+                          {formatTime(formData.time)}
+                        </p>
+                      </div>
+                      <div className="col-span-2 border-t border-gray-200" />
+                      <div>
+                        <p className="text-[13px] text-gray-500">Patient</p>
+                        <p className="text-[14px] font-semibold text-gray-800">
+                          {formData.name}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[13px] text-gray-500">Phone</p>
+                        <p className="text-[14px] font-semibold text-gray-800">
+                          {formData.phone}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                    {/* OPD Fee Card */}
-                    <Card className="bg-teal-50 border-2 border-teal-200 mb-4">
-                      <CardContent>
-                        <Box className="flex justify-between items-center">
-                          <Box>
-                            <Typography
-                              variant="body1"
-                              className="font-semibold"
-                            >
-                              OPD Registration Fee
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {appointmentReasons.find(
-                                (r) => r.value === formData.reason,
-                              )?.type === "emergency"
-                                ? "Emergency Appointment"
-                                : "Regular Appointment"}
-                            </Typography>
-                          </Box>
-                          <Typography
-                            variant="h4"
-                            className="font-bold text-teal-700"
-                          >
-                            {feeLoading ? (
-                              <CircularProgress size={24} />
-                            ) : (
-                              formatCurrency(getOpdFee())
-                            )}
-                          </Typography>
-                        </Box>
-                      </CardContent>
-                    </Card>
+                  {/* OPD Fee Card */}
+                  <div className="bg-orange-50 border-l-4 border-accent rounded-lg px-4 py-3 mb-4 flex justify-between items-center">
+                    <div>
+                      <p className="text-[15px] font-semibold text-gray-800">
+                        OPD Fee
+                      </p>
+                      <p className="text-[13px] text-gray-500">
+                        {appointmentReasons.find(
+                          (r) => r.value === formData.reason,
+                        )?.type === "emergency"
+                          ? "Emergency Appointment"
+                          : "Regular Appointment"}
+                      </p>
+                    </div>
+                    <div className="text-2xl font-extrabold text-accent">
+                      {feeLoading ? (
+                        <CircularProgress size={24} sx={{ color: "#f57c00" }} />
+                      ) : (
+                        formatCurrency(getOpdFee())
+                      )}
+                    </div>
+                  </div>
 
-                    <Alert severity="info" className="mb-4">
-                      <Typography variant="body2">
-                        Payment is required to confirm your appointment. You can
-                        pay securely using UPI, Credit/Debit Card, or Net
-                        Banking.
-                      </Typography>
-                    </Alert>
+                  <div className="bg-blue-50 text-blue-800 text-[14px] rounded-lg px-4 py-3 mb-4">
+                    Payment is required to confirm your appointment. You can pay
+                    securely using UPI, Credit/Debit Card, or Net Banking.
+                  </div>
 
-                    {/* Pay Now Button */}
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      size="large"
-                      onClick={handlePayment}
-                      disabled={isProcessing || feeLoading}
-                      startIcon={
-                        isProcessing ? (
-                          <CircularProgress size={20} color="inherit" />
-                        ) : (
-                          <PaymentIcon />
-                        )
-                      }
-                      className="bg-teal-600 hover:bg-teal-700"
-                      sx={{ py: 1.5 }}
-                    >
-                      {isProcessing
-                        ? "Processing..."
-                        : `Pay ${formatCurrency(getOpdFee())} & Book`}
-                    </Button>
-                  </Box>
-                )}
+                  {/* Pay Now Button */}
+                  <button
+                    type="button"
+                    onClick={handlePayment}
+                    disabled={isProcessing || feeLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark disabled:opacity-60 text-white rounded-xl py-3.5 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    {isProcessing ? (
+                      <CircularProgress size={20} sx={{ color: "#fff" }} />
+                    ) : (
+                      <PaymentIcon className="text-[20px]!" />
+                    )}
+                    {isProcessing
+                      ? "Processing..."
+                      : `Pay ${formatCurrency(getOpdFee())} & Book`}
+                  </button>
+                </div>
+              )}
 
-                {/* Navigation Buttons */}
-                {activeStep < 2 && (
-                  <Box className="flex justify-between mt-6">
-                    <Button
-                      variant="outlined"
-                      startIcon={<ArrowBackIcon />}
-                      onClick={handleBack}
-                      disabled={activeStep === 0}
-                    >
-                      Back
-                    </Button>
+              {/* Navigation Buttons */}
+              {activeStep < 2 && (
+                <div className="flex justify-between items-center mt-8">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    disabled={activeStep === 0}
+                    className="inline-flex items-center gap-1 text-[15px] font-semibold text-[#003366] disabled:text-gray-300 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <ArrowBackIcon className="text-[18px]!" />
+                    Back
+                  </button>
 
-                    <Button
-                      variant="contained"
-                      endIcon={<ArrowForwardIcon />}
-                      onClick={handleNext}
-                      className="bg-teal-600 hover:bg-teal-700"
-                    >
-                      Next
-                    </Button>
-                  </Box>
-                )}
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="inline-flex items-center gap-1 bg-accent hover:bg-accent-dark text-white rounded-xl px-8 py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer"
+                  >
+                    Next
+                    <ArrowForwardIcon className="text-[18px]!" />
+                  </button>
+                </div>
+              )}
 
-                {activeStep === 2 && (
-                  <Box className="mt-4">
-                    <Button
-                      variant="outlined"
-                      startIcon={<ArrowBackIcon />}
-                      onClick={handleBack}
-                      disabled={isProcessing}
-                    >
-                      Back
-                    </Button>
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
+              {activeStep === 2 && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    disabled={isProcessing}
+                    className="inline-flex items-center gap-1 text-[15px] font-semibold text-[#003366] disabled:text-gray-300 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <ArrowBackIcon className="text-[18px]!" />
+                    Back
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
-      </Container>
-    </Box>
+      </div>
+    </div>
   );
 };
 

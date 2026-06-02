@@ -350,11 +350,3 @@ body {
   }
 }
 
-.book-appointment-card {
-  input {
-    padding: 10px !important;
-  }
-  .css-18jp67o-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input{
-    padding: 10px !important;
-  }
-}
