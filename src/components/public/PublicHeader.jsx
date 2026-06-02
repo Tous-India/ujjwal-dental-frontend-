@@ -170,11 +170,11 @@ const PublicHeader = () => {
 
             {/* Desktop Nav */}
             <div
-              className={`md:flex flex-1 justify-center items-cente main-navbar ${showMenu ? "showMenuWithTransition" : ""}`}
+              className={`md:flex ml-auto mr-6 items-center main-navbar ${showMenu ? "showMenuWithTransition" : ""}`}
             >
               <nav className="navdiv ">
                 <img src={"/public/ujjwal-dental-logo.png"} alt="logo" />
-                <ul className="md:flex items-center gap-8">
+                <ul className="md:flex items-center gap-[32px]">
                   <li>
                     {" "}
                     <NavLink

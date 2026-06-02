@@ -229,26 +229,6 @@ const HomePage = () => {
             </SwiperSlide>
           ))}
         </Swiper>
-
-        {/* Text overlay (sits on top of the banner images) */}
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center bg-gradient-to-r from-black/60 via-black/30 to-transparent">
-          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 w-full">
-            <div className="max-w-xl text-center md:text-left">
-              <h1 className="text-white font-bold leading-tight mb-3 text-[28px] md:text-[44px]">
-                Your Smile, Our Priority
-              </h1>
-              <p className="text-white/90 font-normal mb-6 text-[18px] md:text-[20px]">
-                Advanced Dental Care in Sonipat
-              </p>
-              <Link
-                to="/book-appointment"
-                className="pointer-events-auto inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[15px] tracking-wide px-7 py-3 no-underline shadow-md hover:bg-[#E06C00] transition-all duration-200"
-              >
-                Book Appointment
-              </Link>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Stats Ticker */}
