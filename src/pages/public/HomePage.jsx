@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import {
@@ -25,6 +25,8 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Patient1 from "../../../public/patient-1.webp";
 import Patient2 from "../../../public/patient-2.webp";
 import Patient3 from "../../../public/patient-3.webp";
@@ -114,14 +116,26 @@ const dentalPlans = [
   },
 ];
 
+// img: thumbnail path (files not yet uploaded — cards fall back to a gradient
+// placeholder via onError until real thumbnails are added).
+// videoUrl: YouTube link — when present, the card opens it in a lightbox.
 const patientSpeaks = [
-  { name: "Avantika", city: "Indore", treatment: "Aligners", img: "/images/patient-avantika.jpg" },
-  { name: "Neha", city: "Delhi", treatment: "Aligners", img: "/images/patient-neha.jpg" },
-  { name: "Pulak", city: "Delhi", treatment: "Dental Implants", img: "/images/patient-pulak.jpg" },
-  { name: "Pratyush", city: "Bangalore", treatment: "Aligners", img: "/images/patient-pratyush.jpg" },
-  { name: "Ayushi", city: "Pune", treatment: "Aligners", img: "/images/patient-ayushi.jpg" },
-  { name: "Gurkiran", city: "Delhi", treatment: "Aligners", img: "/images/patient-gurkiran.jpg" },
+  { name: "Avantika", city: "Indore", treatment: "Aligners", img: "/images/patient-avantika.jpg", videoUrl: null },
+  { name: "Neha", city: "Delhi", treatment: "Aligners", img: "/images/patient-neha.jpg", videoUrl: null },
+  { name: "Pulak", city: "Delhi", treatment: "Dental Implants", img: "/images/patient-pulak.jpg", videoUrl: null },
+  { name: "Pratyush", city: "Bangalore", treatment: "Aligners", img: "/images/patient-pratyush.jpg", videoUrl: null },
+  { name: "Ayushi", city: "Pune", treatment: "Aligners", img: "/images/patient-ayushi.jpg", videoUrl: null },
+  { name: "Gurkiran", city: "Delhi", treatment: "Aligners", img: "/images/patient-gurkiran.jpg", videoUrl: null },
 ];
+
+// Convert a YouTube watch/short URL into an autoplay embed URL for the lightbox.
+const toEmbedUrl = (url) => {
+  if (!url) return "";
+  const match = url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([\w-]{11})/);
+  return match
+    ? `https://www.youtube.com/embed/${match[1]}?autoplay=1&rel=0`
+    : url;
+};
 
 const marqueeItems = [
   { icon: <GroupsIcon />, value: "10,000+", label: "Happy Patients" },
@@ -193,6 +207,9 @@ const treatments = [
 
 const HomePage = () => {
   const [planPrices, setPlanPrices] = useState(null);
+  const [activeVideo, setActiveVideo] = useState(null);
+  const reviewsPrevRef = useRef(null);
+  const reviewsNextRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -499,70 +516,129 @@ const HomePage = () => {
             className="text-[#003366] text-center mb-2"
             style={{ fontSize: "2rem", fontWeight: 800 }}
           >
-            Patient Speaks
+            What Our Patients Say
           </h2>
-          <p
-            className="text-center text-gray-500 mb-10 max-w-2xl mx-auto"
-            style={{ fontSize: "1rem" }}
-          >
-            Hear what our happy patients have to say about their journey with
-            Ujjwal Dental
+          <p className="text-center text-gray-500 mb-10 max-w-2xl mx-auto text-base">
+            Real stories from real patients
           </p>
-          <Swiper
-            modules={[Navigation, FreeMode]}
-            navigation
-            freeMode
-            spaceBetween={16}
-            slidesPerView={1.3}
-            breakpoints={{
-              480: { slidesPerView: 2.2 },
-              640: { slidesPerView: 3 },
-              768: { slidesPerView: 4 },
-              1024: { slidesPerView: 5 },
-            }}
-          >
-            {patientSpeaks.map((p, i) => (
-              <SwiperSlide key={i}>
-                <div className="flex flex-col">
-                  <div className="relative rounded-[10px] overflow-hidden bg-gray-200 aspect-[3/4]">
-                    <img
-                      src={p.img}
-                      alt={p.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
-                        <PlayArrowIcon className="text-white text-[22px]!" />
+
+          <div className="relative">
+            {/* Prev / Next arrow controls */}
+            <button
+              ref={reviewsPrevRef}
+              type="button"
+              aria-label="Previous"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-[#003366] transition-colors duration-200 hover:bg-gray-50 -ml-1 md:-ml-3"
+            >
+              <ChevronLeftIcon />
+            </button>
+            <button
+              ref={reviewsNextRef}
+              type="button"
+              aria-label="Next"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-[#003366] transition-colors duration-200 hover:bg-gray-50 -mr-1 md:-mr-3"
+            >
+              <ChevronRightIcon />
+            </button>
+
+            <Swiper
+              modules={[Navigation, Autoplay]}
+              speed={600}
+              loop
+              spaceBetween={24}
+              slidesPerView={1}
+              autoplay={{
+                delay: 4000,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+              }}
+              navigation={{
+                prevEl: reviewsPrevRef.current,
+                nextEl: reviewsNextRef.current,
+              }}
+              onBeforeInit={(swiper) => {
+                swiper.params.navigation.prevEl = reviewsPrevRef.current;
+                swiper.params.navigation.nextEl = reviewsNextRef.current;
+              }}
+              breakpoints={{
+                768: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 },
+                1280: { slidesPerView: 4 },
+              }}
+              className="px-1 py-2"
+            >
+              {patientSpeaks.map((p, i) => (
+                <SwiperSlide key={i} className="h-auto">
+                  <div
+                    onClick={() => p.videoUrl && setActiveVideo(p.videoUrl)}
+                    className={`group bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md ${
+                      p.videoUrl ? "cursor-pointer" : ""
+                    }`}
+                  >
+                    {/* Thumbnail / gradient placeholder (16:9) */}
+                    <div className="relative w-full aspect-video bg-gradient-to-br from-[#0D1B4A] to-[#1e3a8a]">
+                      {p.img && (
+                        <img
+                          src={p.img}
+                          alt={p.name}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                          <PlayArrowIcon className="text-[#0D1B4A] text-[30px]! ml-0.5" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <div>
-                      <p
-                        className="text-[#1a1a1a]"
-                        style={{ fontSize: "0.9rem", fontWeight: 600 }}
-                      >
+
+                    {/* Card body */}
+                    <div className="p-4">
+                      <p className="text-[#1a1a1a] text-base font-semibold leading-tight">
                         {p.name}
                       </p>
-                      <p
-                        className="text-gray-400"
-                        style={{ fontSize: "0.75rem" }}
-                      >
-                        {p.city}
-                      </p>
+                      <p className="text-gray-500 text-sm mb-3">{p.city}</p>
+                      <span className="inline-block bg-orange-50 text-[#F57C00] rounded-full px-3 py-1 text-[12px] font-semibold">
+                        {p.treatment}
+                      </span>
                     </div>
-                    <span
-                      className="text-[#006694]"
-                      style={{ fontSize: "0.75rem", fontWeight: 600 }}
-                    >
-                      {p.treatment}
-                    </span>
                   </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
         </div>
+
+        {/* Video lightbox */}
+        {activeVideo && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setActiveVideo(null)}
+          >
+            <div
+              className="relative w-full max-w-3xl aspect-video"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setActiveVideo(null)}
+                className="absolute -top-10 right-0 text-white text-3xl leading-none cursor-pointer"
+              >
+                &times;
+              </button>
+              <iframe
+                src={toEmbedUrl(activeVideo)}
+                title="Patient review video"
+                className="w-full h-full rounded-xl"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Dental Health Plans */}
