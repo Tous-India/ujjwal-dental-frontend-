@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import {
   Autoplay,
+  Pagination,
   EffectFade,
   Navigation,
   FreeMode,
@@ -24,6 +25,9 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import Patient1 from "../../../public/patient-1.webp";
+import Patient2 from "../../../public/patient-2.webp";
+import Patient3 from "../../../public/patient-3.webp";
 
 const treatmentCards = [
   { title: "Teeth Braces", slug: "braces", img: "/images/braces.png" },
@@ -313,7 +317,7 @@ const HomePage = () => {
             technology and compassionate care
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Painless Laser Dentistry */}
             <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
@@ -362,6 +366,42 @@ const HomePage = () => {
                   with trusted, evidence-based care.
                 </p>
               </div>
+            </div>
+
+            {/* Patient Reviews (highlighted) */}
+            <div className="rounded-[10px]! overflow-hidden transition-all duration-300 text-white md:row-span-2 whychooseus-swiper shadow border p-1">
+              <Swiper
+                modules={[Autoplay, Pagination, FreeMode]}
+                autoplay={{ delay: 2500, disableOnInteraction: false }}
+                pagination={{ clickable: true }}
+                loop
+                breakpoints={{
+                  640: {
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                  },
+                  768: {
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                  },
+                  1024: {
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                  },
+                }}
+                speed={1500}
+                className="h-full whychoouse-swiper-wrapper"
+              >
+                <SwiperSlide>
+                  <img src={Patient1} alt="Patient Review 1" />
+                </SwiperSlide>
+                <SwiperSlide>
+                  <img src={Patient2} alt="Patient Review 2" />
+                </SwiperSlide>
+                <SwiperSlide>
+                  <img src={Patient3} alt="Patient Review 3" />
+                </SwiperSlide>
+              </Swiper>
             </div>
 
             {/* Complete Family Dental Care */}
