@@ -7,13 +7,15 @@ import api from "../../api/axios";
 
 const DEFAULT_CONFIG = {
   enabled: true,
-  delaySeconds: 5,
+  delaySeconds: 30,
   pages: ["/", "/treatments", "/contact", "/membership-plans", "/book-appointment"],
   showOnAllPages: true,
 };
 
 const STORAGE_KEY = "popup_enquiry_submitted";
 const DISMISSED_KEY = "popup_enquiry_dismissed";
+// Once dismissed, stay hidden for 24 hours.
+const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 const PopupEnquiryForm = () => {
   const location = useLocation();
@@ -23,6 +25,8 @@ const PopupEnquiryForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const captchaRef = useRef(null);
   const timerRef = useRef(null);
+  // Show at most once per page session (survives in-app navigation).
+  const shownThisSessionRef = useRef(false);
 
   const [config, setConfig] = useState(DEFAULT_CONFIG);
 
@@ -38,8 +42,15 @@ const PopupEnquiryForm = () => {
   useEffect(() => {
     if (!config.enabled) return;
 
-    const alreadySubmitted = localStorage.getItem(STORAGE_KEY);
-    if (alreadySubmitted) return;
+    // Already shown once this session — don't show again until a full reload.
+    if (shownThisSessionRef.current) return;
+
+    // Never show again once an enquiry has been submitted.
+    if (localStorage.getItem(STORAGE_KEY)) return;
+
+    // Respect the 24h cooldown after the popup was last dismissed.
+    const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY)) || 0;
+    if (dismissedAt && Date.now() - dismissedAt < COOLDOWN_MS) return;
 
     if (!config.showOnAllPages) {
       const currentPath = location.pathname;
@@ -53,8 +64,9 @@ const PopupEnquiryForm = () => {
     }
 
     timerRef.current = setTimeout(() => {
+      shownThisSessionRef.current = true;
       setVisible(true);
-    }, (config.delaySeconds || 5) * 1000);
+    }, (config.delaySeconds || 30) * 1000);
 
     return () => clearTimeout(timerRef.current);
   }, [location.pathname, config]);
