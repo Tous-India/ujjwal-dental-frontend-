@@ -33,7 +33,7 @@ export const createTreatmentType = async (data) => {
  * Update treatment type
  */
 export const updateTreatmentType = async (id, data) => {
-  const res = await api.put(`/treatments/master/${id}`, data);
+  const res = await api.patch(`/treatments/master/${id}`, data);
   return res.data;
 };
 
