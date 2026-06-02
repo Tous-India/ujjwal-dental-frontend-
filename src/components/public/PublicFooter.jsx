@@ -164,7 +164,15 @@ const PublicFooter = () => {
             © 2026 Ujjwal Dental Clinic. All Rights Reserved.
           </p>
           <p className="text-gray-400 text-[13px]">
-            Developed by Grid IT Solutions
+            Developed by{" "}
+            <a
+              href="https://thetous.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 no-underline hover:text-white transition-colors duration-200"
+            >
+              The Tous
+            </a>
           </p>
         </div>
       </div>
