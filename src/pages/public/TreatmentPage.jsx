@@ -68,10 +68,19 @@ const TreatmentPage = () => {
     page?.title ||
     slug?.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const metaTitle = `${title} in Sonipat | Ujjwal Dental Clinic`;
+  const metaDescription = page?.content
+    ? page.content.slice(0, 160)
+    : `Learn about ${title} at Ujjwal Dental Clinic, Sonipat. Call ${PHONE_DISPLAY} to book your consultation.`;
+
   // Fallback for slugs without data.
   if (!page) {
     return (
       <>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
         <BreadcrumbBanner
           title={title}
           breadcrumbs={[
@@ -95,6 +104,10 @@ const TreatmentPage = () => {
 
   return (
     <>
+      <title>{metaTitle}</title>
+      <meta name="description" content={metaDescription} />
+      <meta property="og:title" content={metaTitle} />
+      <meta property="og:description" content={metaDescription} />
       <BreadcrumbBanner
         title={title}
         breadcrumbs={[
@@ -106,7 +119,7 @@ const TreatmentPage = () => {
 
       {/* SECTION 1 — Hero */}
       <section className="bg-gray-50 py-[48px]">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+        <div className="max-w-4xl mx-auto px-[32px]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
               <h1 className="text-[#003366] text-3xl md:text-[40px] font-extrabold leading-tight">
@@ -133,12 +146,12 @@ const TreatmentPage = () => {
                 </a>
               </div>
             </div>
-            <div className="flex justify-center">
+            <div className="flex items-center justify-center">
               {page.img && (
                 <img
                   src={page.img}
                   alt={title}
-                  className="w-full max-w-[360px] h-auto object-contain"
+                  className="w-full max-w-[250px] max-h-[250px] h-auto object-contain"
                 />
               )}
             </div>
@@ -149,7 +162,7 @@ const TreatmentPage = () => {
       {/* Sticky section tabs */}
       {navItems.length > 0 && (
         <div className="sticky top-[70px] z-30 bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+          <div className="max-w-4xl mx-auto px-[32px]">
             <div className="flex gap-2 overflow-x-auto py-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {navItems.map((item) => (
                 <button
@@ -172,7 +185,7 @@ const TreatmentPage = () => {
 
       {/* SECTION 2 — Key highlights */}
       {page.highlights?.length > 0 && (
-        <div className="max-w-4xl mx-auto px-4 md:px-8 pt-[32px]">
+        <div className="max-w-4xl mx-auto px-[32px] pt-[32px]">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {page.highlights.map((h, i) => {
               const Icon = HIGHLIGHT_ICONS[h.icon] || CheckIcon;
@@ -194,7 +207,7 @@ const TreatmentPage = () => {
       )}
 
       {/* SECTION 3 — Content */}
-      <div className="max-w-4xl mx-auto px-4 md:px-8">
+      <div className="max-w-4xl mx-auto px-[32px]">
         {page.content && (
           <p className="text-gray-700 text-base leading-[1.8] max-w-[65ch] pt-[32px]">
             {page.content}
@@ -354,7 +367,7 @@ const TreatmentPage = () => {
 
       {/* SECTION 6 — Bottom CTA banner */}
       <section className="bg-[#0D1B4A] py-[48px] md:py-[64px]">
-        <div className="max-w-4xl mx-auto px-4 md:px-8 text-center">
+        <div className="max-w-4xl mx-auto px-[32px] text-center">
           <h2 className="text-white text-2xl md:text-3xl font-bold mb-2">
             Ready to get started?
           </h2>

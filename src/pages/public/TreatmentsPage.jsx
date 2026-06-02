@@ -12,6 +12,19 @@ const treatments = Object.entries(treatmentsData).map(([slug, data]) => ({
 const TreatmentsPage = () => {
   return (
     <>
+      <title>Dental Treatments in Sonipat | Ujjwal Dental Clinic</title>
+      <meta
+        name="description"
+        content="15+ dental treatments including implants, RCT, braces, aligners, whitening, laser dentistry, kids dentistry. Painless procedures with modern equipment."
+      />
+      <meta
+        property="og:title"
+        content="Dental Treatments in Sonipat | Ujjwal Dental Clinic"
+      />
+      <meta
+        property="og:description"
+        content="15+ dental treatments including implants, RCT, braces, aligners, whitening, laser dentistry, kids dentistry. Painless procedures with modern equipment."
+      />
       <BreadcrumbBanner
         title="Our Treatments"
         breadcrumbs={[

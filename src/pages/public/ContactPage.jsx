@@ -49,6 +49,19 @@ const ContactPage = () => {
 
   return (
     <>
+      <title>Contact Ujjwal Dental Clinic Sonipat | Book Appointment</title>
+      <meta
+        name="description"
+        content="Visit Ujjwal Dental at Delhi Road or Parsavnath City Center, Sonipat. Call +91 8708362763. Open Mon-Sat 9AM-8PM."
+      />
+      <meta
+        property="og:title"
+        content="Contact Ujjwal Dental Clinic Sonipat | Book Appointment"
+      />
+      <meta
+        property="og:description"
+        content="Visit Ujjwal Dental at Delhi Road or Parsavnath City Center, Sonipat. Call +91 8708362763. Open Mon-Sat 9AM-8PM."
+      />
       <BreadcrumbBanner
         title="Contact Us"
         breadcrumbs={[{ label: "Home", path: "/" }, { label: "Contact Us" }]}

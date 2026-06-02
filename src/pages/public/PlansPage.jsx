@@ -150,6 +150,19 @@ const PlansPage = () => {
 
   return (
     <>
+      <title>Dental Membership Plans | Ujjwal Dental Clinic Sonipat</title>
+      <meta
+        name="description"
+        content="Save with annual dental plans from ₹2,000. Free consultations, X-rays & treatment discounts. Individual & family plans available."
+      />
+      <meta
+        property="og:title"
+        content="Dental Membership Plans | Ujjwal Dental Clinic Sonipat"
+      />
+      <meta
+        property="og:description"
+        content="Save with annual dental plans from ₹2,000. Free consultations, X-rays & treatment discounts. Individual & family plans available."
+      />
       <BreadcrumbBanner
         title="Our Plans"
         breadcrumbs={[{ label: "Home", path: "/" }, { label: "Plans" }]}

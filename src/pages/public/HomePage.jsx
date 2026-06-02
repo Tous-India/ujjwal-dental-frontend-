@@ -229,6 +229,21 @@ const HomePage = () => {
 
   return (
     <div>
+      <title>
+        Ujjwal Dental Clinic | Advanced Dental Care in Sonipat, Haryana
+      </title>
+      <meta
+        name="description"
+        content="Ujjwal Dental offers dental implants, braces, root canal, teeth whitening & laser dentistry in Sonipat. Book online. 20+ years experience."
+      />
+      <meta
+        property="og:title"
+        content="Ujjwal Dental Clinic | Advanced Dental Care in Sonipat, Haryana"
+      />
+      <meta
+        property="og:description"
+        content="Ujjwal Dental offers dental implants, braces, root canal, teeth whitening & laser dentistry in Sonipat. Book online. 20+ years experience."
+      />
       {/* Hero Banner Slider */}
       <section className="relative w-full overflow-hidden">
         <Swiper
