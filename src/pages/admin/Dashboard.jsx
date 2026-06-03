@@ -21,7 +21,6 @@ import {
   CardContent,
   Typography,
   Avatar,
-  Chip,
   Skeleton,
   IconButton,
   Button,
@@ -41,25 +40,25 @@ import PatientDetailModal from "../../components/admin/modals/PatientDetailModal
  * Stats Card Component
  * Reusable card for displaying statistics
  */
-const StatsCard = ({ title, value, icon: Icon, color, loading }) => (
-  <Card className="h-full">
-    <CardContent className="flex items-center gap-4">
+const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading }) => (
+  <Card elevation={0} className="h-full rounded-xl! border border-gray-100 shadow-xs!">
+    <CardContent className="flex items-center gap-4 p-5!">
       {/* Icon */}
       <Box
-        className={`p-3 rounded-xl ${color}`}
+        className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${iconBg}`}
       >
-        <Icon className="text-white text-2xl" />
+        <Icon className={`${iconColor} text-2xl`} />
       </Box>
 
       {/* Content */}
       <Box>
-        <Typography variant="body2" className="text-gray-500 mb-1">
+        <Typography variant="body2" className="text-gray-500 mb-1 text-[13px] font-medium">
           {title}
         </Typography>
         {loading ? (
           <Skeleton width={60} height={32} />
         ) : (
-          <Typography variant="h5" className="font-bold text-gray-800">
+          <Typography variant="h5" className="font-numbers font-bold text-[#003366] text-[28px]">
             {value ?? 0}
           </Typography>
         )}
@@ -69,21 +68,26 @@ const StatsCard = ({ title, value, icon: Icon, color, loading }) => (
 );
 
 /**
- * Status chip color mapping
+ * Status pill styling (soft pastel pills — navy/orange/gray theme + semantic states)
  */
-const getStatusColor = (status) => {
-  const colors = {
-    scheduled: "info",
-    confirmed: "primary",
-    checked_in: "warning",
-    in_progress: "warning",
-    completed: "success",
-    cancelled: "error",
-    no_show: "default",
-    pending: "warning",
+const statusPill = (status) => {
+  const map = {
+    scheduled: "bg-blue-50 text-blue-600",
+    confirmed: "bg-blue-50 text-blue-600",
+    checked_in: "bg-amber-50 text-amber-600",
+    in_progress: "bg-amber-50 text-amber-600",
+    completed: "bg-green-50 text-green-600",
+    cancelled: "bg-red-50 text-red-600",
+    no_show: "bg-gray-100 text-gray-500",
+    pending: "bg-amber-50 text-amber-600",
+    new: "bg-blue-50 text-blue-600",
+    contacted: "bg-amber-50 text-amber-600",
   };
-  return colors[status?.toLowerCase()] || "default";
+  return map[status?.toLowerCase()] || "bg-gray-100 text-gray-500";
 };
+
+const PILL_CLS =
+  "inline-block rounded-full px-2.5 py-0.5 text-[12px] font-medium capitalize whitespace-nowrap";
 
 /**
  * Format date helper
@@ -131,7 +135,7 @@ const Dashboard = () => {
       {/* Page Header */}
       <Box className="flex justify-between items-center mb-6">
         <Box>
-          <Typography variant="h4" className="font-bold text-gray-800">
+          <Typography variant="h4" className="font-bold text-[#003366]">
             Dashboard
           </Typography>
           <Typography variant="body2" className="text-gray-500">
@@ -150,7 +154,8 @@ const Dashboard = () => {
             title="Total Patients"
             value={stats?.totalPatients}
             icon={PeopleIcon}
-            color="bg-blue-500"
+            iconBg="bg-blue-50"
+            iconColor="text-blue-500"
             loading={isLoadingStats}
           />
         </Grid>
@@ -159,7 +164,8 @@ const Dashboard = () => {
             title="Total Appointments"
             value={stats?.totalAppointments}
             icon={EventIcon}
-            color="bg-green-500"
+            iconBg="bg-orange-50"
+            iconColor="text-accent"
             loading={isLoadingStats}
           />
         </Grid>
@@ -168,7 +174,8 @@ const Dashboard = () => {
             title="Pending Payments"
             value={stats?.pendingPayments}
             icon={PaymentIcon}
-            color="bg-orange-500"
+            iconBg="bg-red-50"
+            iconColor="text-red-500"
             loading={isLoadingStats}
           />
         </Grid>
@@ -177,7 +184,8 @@ const Dashboard = () => {
             title="Today's Appointments"
             value={stats?.todayAppointments}
             icon={TodayIcon}
-            color="bg-purple-500"
+            iconBg="bg-green-50"
+            iconColor="text-green-500"
             loading={isLoadingStats}
           />
         </Grid>
@@ -187,15 +195,16 @@ const Dashboard = () => {
       <Grid container spacing={3}>
         {/* Recent Appointments Table */}
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Card>
-            <CardContent>
+          <Card elevation={0} className="rounded-xl! border border-gray-100">
+            <CardContent className="p-5!">
               {/* Card Header */}
               <Box className="flex justify-between items-center mb-4">
-                <Typography variant="h6" className="font-semibold text-gray-800">
+                <Typography variant="h6" className="font-semibold text-[#003366] text-[16px]">
                   Recent Appointments
                 </Typography>
                 <Button
                   size="small"
+                  className="text-accent!"
                   endIcon={<ArrowForwardIcon />}
                   onClick={() => navigate("/admin/appointments")}
                 >
@@ -223,7 +232,7 @@ const Dashboard = () => {
                       sx={{ cursor: "pointer" }}
                       onClick={() => navigate("/admin/appointments")}
                     >
-                      <Avatar sx={{ width: 36, height: 36 }} className="bg-blue-100 text-blue-600">
+                      <Avatar sx={{ width: 36, height: 36 }} className="bg-gray-100 text-[#003366]">
                         {appointment.patient?.name?.[0] || "P"}
                       </Avatar>
                       <Box className="flex-1 min-w-0">
@@ -234,13 +243,9 @@ const Dashboard = () => {
                           {appointment.reason || "Checkup"} • {formatDate(appointment.date)} • {appointment.timeSlot || ""}
                         </Typography>
                       </Box>
-                      <Chip
-                        label={appointment.status?.replace("_", " ") || "scheduled"}
-                        color={getStatusColor(appointment.status)}
-                        size="small"
-                        className="capitalize"
-                        sx={{ fontSize: "0.65rem" }}
-                      />
+                      <span className={`${PILL_CLS} ${statusPill(appointment.status)}`}>
+                        {appointment.status?.replace("_", " ") || "scheduled"}
+                      </span>
                     </Box>
                   ))
                 ) : (
@@ -257,15 +262,16 @@ const Dashboard = () => {
 
         {/* Recent Patients */}
         <Grid size={{ xs: 12, lg: 4 }}>
-          <Card className="h-full">
-            <CardContent>
+          <Card elevation={0} className="h-full rounded-xl! border border-gray-100">
+            <CardContent className="p-5!">
               {/* Card Header */}
               <Box className="flex justify-between items-center mb-4">
-                <Typography variant="h6" className="font-semibold text-gray-800">
+                <Typography variant="h6" className="font-semibold text-[#003366] text-[16px]">
                   Recent Patients
                 </Typography>
                 <Button
                   size="small"
+                  className="text-accent!"
                   endIcon={<ArrowForwardIcon />}
                   onClick={() => navigate("/admin/patients")}
                 >
@@ -293,7 +299,7 @@ const Dashboard = () => {
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                       onClick={() => setSelectedPatient(patient)}
                     >
-                      <Avatar className="bg-blue-100 text-blue-600">
+                      <Avatar className="bg-gray-100 text-[#003366]">
                         {patient.name?.[0] || "P"}
                       </Avatar>
                       <Box className="flex-1 min-w-0">
@@ -323,14 +329,15 @@ const Dashboard = () => {
 
         {/* Recent Enquiries / Contact Form Entries */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
+          <Card elevation={0} className="rounded-xl! border border-gray-100">
+            <CardContent className="p-5!">
               <Box className="flex justify-between items-center mb-4">
-                <Typography variant="h6" className="font-semibold text-gray-800">
+                <Typography variant="h6" className="font-semibold text-[#003366] text-[16px]">
                   Recent Enquiries
                 </Typography>
                 <Button
                   size="small"
+                  className="text-accent!"
                   endIcon={<ArrowForwardIcon />}
                   onClick={() => navigate("/admin/enquiries")}
                 >
@@ -356,7 +363,7 @@ const Dashboard = () => {
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                       onClick={() => navigate("/admin/enquiries")}
                     >
-                      <Avatar className="bg-orange-100 text-orange-600">
+                      <Avatar className="bg-gray-100 text-[#003366]">
                         {enquiry.name?.[0] || "?"}
                       </Avatar>
                       <Box className="flex-1 min-w-0">
@@ -367,12 +374,9 @@ const Dashboard = () => {
                           {enquiry.phone} {enquiry.treatmentName ? `• ${enquiry.treatmentName}` : ""}
                         </Typography>
                       </Box>
-                      <Chip
-                        label={enquiry.status || "new"}
-                        size="small"
-                        color={enquiry.status === "new" ? "info" : enquiry.status === "contacted" ? "warning" : "default"}
-                        sx={{ fontSize: "0.65rem" }}
-                      />
+                      <span className={`${PILL_CLS} ${statusPill(enquiry.status || "new")}`}>
+                        {enquiry.status || "new"}
+                      </span>
                     </Box>
                   ))
                 ) : (
@@ -389,11 +393,11 @@ const Dashboard = () => {
 
         {/* Today's Schedule */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
+          <Card elevation={0} className="rounded-xl! border border-gray-100">
+            <CardContent className="p-5!">
               {/* Card Header */}
               <Box className="flex justify-between items-center mb-4">
-                <Typography variant="h6" className="font-semibold text-gray-800">
+                <Typography variant="h6" className="font-semibold text-[#003366] text-[16px]">
                   Today's Schedule
                 </Typography>
                 <Typography variant="body2" className="text-gray-500">
@@ -418,11 +422,11 @@ const Dashboard = () => {
                   {todayAppointments.map((appointment) => (
                     <Box
                       key={appointment._id}
-                      className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
+                      className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 hover:shadow-sm transition-all cursor-pointer"
                       onClick={() => navigate("/admin/appointments")}
                     >
                       <Box className="flex items-center gap-3 mb-2">
-                        <Avatar sx={{ width: 36, height: 36 }} className="bg-blue-100 text-blue-600 text-sm">
+                        <Avatar sx={{ width: 36, height: 36 }} className="bg-gray-100 text-[#003366] text-sm">
                           {appointment.patient?.name?.[0] || "P"}
                         </Avatar>
                         <Box className="flex-1 min-w-0">
@@ -438,12 +442,9 @@ const Dashboard = () => {
                         <Typography variant="caption" className="text-gray-600 truncate max-w-[100px]">
                           {appointment.reason || "Checkup"}
                         </Typography>
-                        <Chip
-                          label={appointment.status?.replace("_", " ") || "scheduled"}
-                          color={getStatusColor(appointment.status)}
-                          size="small"
-                          className="capitalize"
-                        />
+                        <span className={`${PILL_CLS} ${statusPill(appointment.status)}`}>
+                          {appointment.status?.replace("_", " ") || "scheduled"}
+                        </span>
                       </Box>
                     </Box>
                   ))}

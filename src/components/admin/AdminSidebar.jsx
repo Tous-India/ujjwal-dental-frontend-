@@ -144,10 +144,10 @@ const AdminSidebar = ({ open, onClose }) => {
   const sidebarContent = (
     <>
       {/* Logo/Brand */}
-      <Toolbar className="border-b border-gray-200">
+      <Toolbar className="border-b border-gray-100">
         <Box className="flex items-center gap-2">
           <img src={logo} alt="Ujjwal Dental Clinic" width={70} />
-          <Typography variant="p" className="font-bold text-[14px] text-gray-800">
+          <Typography variant="p" className="font-bold text-[14px] text-[#003366]">
             Ujjwal Dental Clinic
           </Typography>
         </Box>
@@ -170,16 +170,16 @@ const AdminSidebar = ({ open, onClose }) => {
                   }
                 }}
                 className={`
-                  rounded-lg transition-all duration-200
+                  rounded-lg! transition-all duration-200 py-2.5! px-4!
                   ${
                     active
-                      ? "bg-[#1976d2]! text-white! rounded!"
-                      : "hover:bg-gray-100 text-gray-700"
+                      ? "bg-orange-50! text-accent! font-semibold!"
+                      : "hover:bg-gray-50 text-gray-600"
                   }
                 `}
               >
                 <ListItemIcon
-                  className={`min-w-[40px] ${active ? "text-white!" : "text-gray-500"}`}
+                  className={`min-w-[40px] ${active ? "text-accent!" : "text-gray-500"}`}
                 >
                   <Icon />
                 </ListItemIcon>
@@ -187,7 +187,7 @@ const AdminSidebar = ({ open, onClose }) => {
                   primary={item.label}
                   primaryTypographyProps={{
                     fontSize: "0.95rem",
-                    fontWeight: active ? 600 : 400,
+                    fontWeight: active ? 600 : 500,
                   }}
                 />
                 {item.badgeKey && badges[item.badgeKey] > 0 && !active && (

@@ -194,7 +194,7 @@ const AdminHeader = ({ onMenuClick }) => {
         width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
         ml: { md: `${DRAWER_WIDTH}px` },
         bgcolor: "white",
-        borderBottom: "1px solid #e5e7eb",
+        borderBottom: "1px solid #f3f4f6",
         zIndex: (theme) => theme.zIndex.drawer + 1,
       }}
     >
@@ -212,7 +212,7 @@ const AdminHeader = ({ onMenuClick }) => {
 
           <Typography
             variant="h6"
-            className="text-gray-800 font-medium hidden sm:block"
+            className="text-[#003366] font-semibold text-[18px] hidden sm:block"
           >
             Admin Panel
           </Typography>
@@ -236,7 +236,7 @@ const AdminHeader = ({ onMenuClick }) => {
             aria-expanded={menuOpen ? "true" : undefined}
           >
             <Avatar
-              className="bg-blue-600"
+              className="bg-[#003366]"
               sx={{ width: 36, height: 36, fontSize: "0.9rem" }}
             >
               {getInitials()}
@@ -369,7 +369,7 @@ const AdminHeader = ({ onMenuClick }) => {
                 component={Link}
                 to="/admin/notifications"
                 size="small"
-                className="text-blue-600"
+                className="text-accent"
                 onClick={handleNotifClose}
               >
                 View All Notifications
