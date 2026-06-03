@@ -59,7 +59,9 @@ const columns = [
     field: "price",
     headerName: "Price (₹)",
     minWidth: 120,
-    render: (value) => `₹${value?.toLocaleString() || 0}`,
+    render: (value) => (
+      <span className="font-numbers">₹{value?.toLocaleString() || 0}</span>
+    ),
   },
   {
     field: "turnaroundTime",

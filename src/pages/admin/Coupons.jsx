@@ -81,7 +81,7 @@ const columns = [
     field: "flatDiscount",
     headerName: "Flat Off",
     minWidth: 80,
-    render: (value) => <Typography variant="body2">₹{value}</Typography>,
+    render: (value) => <Typography variant="body2" className="font-numbers">₹{value}</Typography>,
   },
   {
     field: "surgeryDiscount",

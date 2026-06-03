@@ -126,7 +126,7 @@ const columns = [
     headerName: "Total",
     minWidth: 120,
     render: (value) => (
-      <Typography variant="body2" className="font-semibold">
+      <Typography variant="body2" className="font-numbers font-semibold">
         ₹{(value || 0).toLocaleString("en-IN")}
       </Typography>
     ),
@@ -136,7 +136,7 @@ const columns = [
     headerName: "Paid",
     minWidth: 110,
     render: (value) => (
-      <Typography variant="body2" className="text-green-600">
+      <Typography variant="body2" className="font-numbers text-green-600">
         ₹{(value || 0).toLocaleString("en-IN")}
       </Typography>
     ),
@@ -148,7 +148,7 @@ const columns = [
     render: (value) => (
       <Typography
         variant="body2"
-        className={value > 0 ? "text-red-600 font-medium" : "text-gray-500"}
+        className={`font-numbers ${value > 0 ? "text-red-600 font-medium" : "text-gray-500"}`}
       >
         ₹{(value || 0).toLocaleString("en-IN")}
       </Typography>
@@ -221,7 +221,7 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
         <Typography variant="caption" className="text-gray-500">
           {label}
         </Typography>
-        <Typography variant="h6" className="font-bold leading-tight">
+        <Typography variant="h6" className="font-numbers font-bold leading-tight">
           {value}
         </Typography>
       </Box>

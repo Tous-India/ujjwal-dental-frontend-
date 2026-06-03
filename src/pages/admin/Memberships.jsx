@@ -94,7 +94,7 @@ const columns = [
     headerName: "Price",
     minWidth: 120,
     render: (_, row) => (
-      <Typography variant="body2" className="font-semibold text-green-600">
+      <Typography variant="body2" className="font-numbers font-semibold text-green-600">
         {row.priceDisplay || `₹${row.price?.toLocaleString("en-IN")}`}
       </Typography>
     ),

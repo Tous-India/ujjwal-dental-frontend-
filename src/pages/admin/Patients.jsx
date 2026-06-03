@@ -47,6 +47,7 @@ const columns = [
     field: "phone",
     headerName: "Phone",
     minWidth: 130,
+    render: (value) => <span className="font-numbers">{value}</span>,
   },
   {
     field: "gender",

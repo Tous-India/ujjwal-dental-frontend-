@@ -66,7 +66,7 @@ const columns = [
         </Avatar>
         <Box>
           <Typography variant="body2" className="font-medium">{value || "Unknown"}</Typography>
-          <Typography variant="caption" className="text-gray-500">{row.phone}</Typography>
+          <Typography variant="caption" className="font-numbers text-gray-500">{row.phone}</Typography>
         </Box>
       </Box>
     ),

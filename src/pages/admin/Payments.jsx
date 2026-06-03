@@ -58,7 +58,7 @@ const columns = [
     headerName: "Amount",
     minWidth: 120,
     render: (value) => (
-      <Typography variant="body2" className="font-semibold text-green-600">
+      <Typography variant="body2" className="font-numbers font-semibold text-green-600">
         ₹{(value || 0).toLocaleString("en-IN")}
       </Typography>
     ),

@@ -398,7 +398,7 @@ const Appointments = () => {
                 >
                   Regular
                 </Typography>
-                <Typography variant="body2" className="font-bold text-gray-800">
+                <Typography variant="body2" className="font-numbers font-bold text-gray-800">
                   {feeLoading ? "..." : `₹${feeSettings.opdFeeRegular}`}
                 </Typography>
               </Box>
@@ -409,7 +409,7 @@ const Appointments = () => {
                 >
                   Emergency
                 </Typography>
-                <Typography variant="body2" className="font-bold text-red-600">
+                <Typography variant="body2" className="font-numbers font-bold text-red-600">
                   {feeLoading ? "..." : `₹${feeSettings.opdFeeEmergency}`}
                 </Typography>
               </Box>
