@@ -126,16 +126,26 @@ const PublicFooter = () => {
             <h3 className="text-white text-sm font-semibold uppercase tracking-wide mb-4">
               Visit Us
             </h3>
-            <p className="text-gray-300 text-[13px] leading-relaxed mb-3">
+            <a
+              href="https://maps.google.com/maps?ftid=0x390db015196a31eb:0xbd564d96abb10882"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-gray-300 text-[13px] leading-relaxed mb-3 no-underline hover:text-white transition-colors"
+            >
               <span className="text-white">Ujjwal Dental – Delhi Road</span>
               <br />
-              Shop No. 5, Near Bus Stand, Sonipat 131001
-            </p>
-            <p className="text-gray-300 text-[13px] leading-relaxed mb-3">
-              <span className="text-white">Ujjwal Dental – Parsavnath</span>
+              Plot 35/13, Delhi Rd, Sikka Colony, Lakshmi Nagar, Sonipat, Haryana 131001
+            </a>
+            <a
+              href="https://maps.google.com/maps?ftid=0x390db11d9832411b:0x1b0ad40bb6f1c49"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-gray-300 text-[13px] leading-relaxed mb-3 no-underline hover:text-white transition-colors"
+            >
+              <span className="text-white">Ujjwal Dental – Parsvnath</span>
               <br />
-              Parsavnath City Center, Shop No. 12, Sonepat 131001
-            </p>
+              Villa 445, A Block, Parsvnath City, Sonipat, Haryana 131001
+            </a>
             <p className="text-[13px] mb-1">
               <a
                 href="tel:+918708362763"

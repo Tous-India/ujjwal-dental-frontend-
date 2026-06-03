@@ -67,7 +67,7 @@ const ContactPage = () => {
       <title>Contact Ujjwal Dental Clinic Sonipat | Book Appointment</title>
       <meta
         name="description"
-        content="Visit Ujjwal Dental at Delhi Road or Parsavnath City Center, Sonipat. Call +91 8708362763. Open Mon-Sat 9AM-8PM."
+        content="Visit Ujjwal Dental at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763. Open Mon-Sat 9AM-8PM."
       />
       <meta
         property="og:title"
@@ -75,7 +75,7 @@ const ContactPage = () => {
       />
       <meta
         property="og:description"
-        content="Visit Ujjwal Dental at Delhi Road or Parsavnath City Center, Sonipat. Call +91 8708362763. Open Mon-Sat 9AM-8PM."
+        content="Visit Ujjwal Dental at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763. Open Mon-Sat 9AM-8PM."
       />
       <BreadcrumbBanner
         title="Contact Us"
@@ -116,20 +116,30 @@ const ContactPage = () => {
               </InfoCard>
 
               <InfoCard icon={<LocationOnIcon />} title="Visit Us">
-                <p className="text-gray-700 text-[14px] leading-relaxed">
+                <a
+                  href="https://maps.google.com/maps?ftid=0x390db015196a31eb:0xbd564d96abb10882"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-gray-700 text-[14px] leading-relaxed no-underline hover:text-accent transition-colors"
+                >
                   <span className="text-[#003366] font-semibold">
                     Ujjwal Dental – Delhi Road
                   </span>
                   <br />
-                  Shop No. 5, Near Bus Stand, Sonipat 131001
-                </p>
-                <p className="text-gray-700 text-[14px] leading-relaxed mt-2">
+                  Plot 35/13, Delhi Rd, Sikka Colony, Lakshmi Nagar, Sonipat, Haryana 131001
+                </a>
+                <a
+                  href="https://maps.google.com/maps?ftid=0x390db11d9832411b:0x1b0ad40bb6f1c49"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-gray-700 text-[14px] leading-relaxed mt-3 no-underline hover:text-accent transition-colors"
+                >
                   <span className="text-[#003366] font-semibold">
-                    Ujjwal Dental – Parsavnath
+                    Ujjwal Dental – Parsvnath
                   </span>
                   <br />
-                  Parsavnath City Center, Shop No. 12, Sonepat 131001
-                </p>
+                  Villa 445, A Block, Parsvnath City, Sonipat, Haryana 131001
+                </a>
               </InfoCard>
 
               <InfoCard icon={<AccessTimeIcon />} title="Hours">

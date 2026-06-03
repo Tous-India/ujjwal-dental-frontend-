@@ -202,7 +202,7 @@ const faqs = [
   },
   {
     q: "Where is Ujjwal Dental Clinic located?",
-    a: "We have two clinics in Sonipat, Haryana: Ujjwal Dental – Delhi Road (Shop No. 5, Near Bus Stand, Sonipat 131001) and Ujjwal Dental – Parsavnath (Parsavnath City Center, Shop No. 12, Sonepat 131001).",
+    a: "We have two clinics in Sonipat, Haryana: Ujjwal Dental – Delhi Road (Plot 35/13, Delhi Rd, Sikka Colony, Lakshmi Nagar, Sonipat, Haryana 131001) and Ujjwal Dental – Parsvnath (Villa 445, A Block, Parsvnath City, Sonipat, Haryana 131001).",
   },
   {
     q: "Do you accept online payments?",
