@@ -177,6 +177,9 @@ body {
             border-radius: 0.375rem;
             &:hover {
               background-color: #fff7ed;
+              a {
+                color: #f57c00;
+              }
             }
             a {
               padding: 8px 16px;

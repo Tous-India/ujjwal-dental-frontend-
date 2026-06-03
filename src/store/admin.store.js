@@ -5,11 +5,15 @@ export const useAdminStore = create(
   persist(
     (set) => ({
       admin: null,
+      token: null,
       isAuthenticated: false,
 
-      login: (admin) =>
+      // token is sent as Authorization: Bearer (see axios request interceptor)
+      // so admin auth works cross-site where cookies may be blocked.
+      login: (admin, token = null) =>
         set({
           admin,
+          token,
           isAuthenticated: true,
         }),
 
@@ -21,6 +25,7 @@ export const useAdminStore = create(
       logout: () =>
         set({
           admin: null,
+          token: null,
           isAuthenticated: false,
         }),
     }),
@@ -28,6 +33,7 @@ export const useAdminStore = create(
       name: "admin-auth",
       partialize: (state) => ({
         admin: state.admin,
+        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     }

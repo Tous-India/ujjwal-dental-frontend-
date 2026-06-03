@@ -37,8 +37,8 @@ export const useAdminAuth = () => {
   const loginMutation = useMutation({
     mutationFn: ({ email, password }) => loginAdmin(email, password),
     onSuccess: (response) => {
-      const { user } = response.data;
-      storeLogin(user);
+      const { user, token } = response.data;
+      storeLogin(user, token);
       navigate("/admin/dashboard");
     },
     onError: (error) => {

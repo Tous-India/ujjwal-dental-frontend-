@@ -205,7 +205,10 @@ const PublicHeader = () => {
                       Treatments{" "}
                       <ExpandMoreIcon className="text-[18px]! iconsDD" />
                       <div className="dropdown-nav">
-                        <ul onClick={closeMobileMenu}>
+                        <ul
+                          onClick={closeMobileMenu}
+                          className="md:!grid md:!grid-cols-2 md:!gap-x-2 md:!w-auto md:!min-w-[400px] md:!p-4 md:!rounded-xl"
+                        >
                           <li>
                             <NavLink to="/treatments/dental-implant">
                               Dental Implant
