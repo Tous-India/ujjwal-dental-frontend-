@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import YouTubeIcon from "@mui/icons-material/YouTube";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
 const quickLinks = [
   { label: "Home", to: "/" },
@@ -31,18 +30,13 @@ const treatmentLinks = [
 const socialLinks = [
   {
     icon: <InstagramIcon sx={{ fontSize: 20 }} />,
-    url: "https://www.instagram.com/ujjwaldentalimplant/",
+    url: "https://www.instagram.com/ujjwaldentalplanet/",
     label: "Instagram",
   },
   {
     icon: <YouTubeIcon sx={{ fontSize: 20 }} />,
     url: "https://www.youtube.com/@ujjwaldentalplanet",
     label: "YouTube",
-  },
-  {
-    icon: <LinkedInIcon sx={{ fontSize: 20 }} />,
-    url: "https://www.linkedin.com/company/unavailable/",
-    label: "LinkedIn",
   },
   {
     icon: <FacebookIcon sx={{ fontSize: 20 }} />,
