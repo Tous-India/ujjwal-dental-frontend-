@@ -352,9 +352,9 @@ const PublicHeader = () => {
             {/* Mobile-only Book button (desktop has the full CTA above) */}
             <NavLink
               to="/book-appointment"
-              className="md:hidden ml-auto mr-3 inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[13px] px-4 py-1.5 no-underline shrink-0 hover:bg-[#E06C00] transition-colors"
+              className="md:hidden ml-auto mr-3 inline-flex items-center whitespace-nowrap bg-[#F57C00] text-white rounded-full font-semibold text-[13px] px-4 py-1.5 no-underline shrink-0 hover:bg-[#E06C00] transition-colors"
             >
-              Book
+              Book Now
             </NavLink>
 
             <div className="menuIcon">

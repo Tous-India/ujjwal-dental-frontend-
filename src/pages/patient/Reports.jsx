@@ -145,7 +145,7 @@ const Reports = () => {
             </Box>
           ) : (
             <TableContainer component={Paper} elevation={0}>
-              <Table>
+              <Table sx={{ bgcolor: "white" }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: "#f5f5f5" }}>
                     <TableCell>Report</TableCell>

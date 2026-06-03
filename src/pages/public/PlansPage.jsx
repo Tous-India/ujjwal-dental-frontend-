@@ -15,13 +15,27 @@ import { useAuthStore } from "../../store/auth.store";
 import api from "../../api/axios";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
 
+const fieldCls =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-[15px] text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200";
+
+// Load the Razorpay checkout script on demand (resolves once available) so the
+// gateway is guaranteed loaded before new window.Razorpay() is called.
+const loadRazorpayScript = () =>
+  new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+
 const PlansPage = () => {
   const [buyDialog, setBuyDialog] = useState(null);
   const [buyForm, setBuyForm] = useState({ name: "", phone: "", email: "" });
   const [isProcessing, setIsProcessing] = useState(false);
 
   const patient = useAuthStore((state) => state.patient);
-  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
 
   // Fetch plans from API
   const { data, isLoading } = useQuery({
@@ -58,6 +72,14 @@ const PlansPage = () => {
 
     setIsProcessing(true);
     try {
+      // Ensure the Razorpay gateway script is loaded before using it.
+      const scriptOk = await loadRazorpayScript();
+      if (!scriptOk) {
+        toast.error("Failed to load payment gateway. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+
       // Create Razorpay order
       const orderRes = await api.post("/payments/razorpay/create-order", {
         planId: buyDialog._id,
@@ -296,42 +318,51 @@ const PlansPage = () => {
               .
             </p>
 
+            {/* Your details — no login required; account is created/linked after payment */}
+            <div className="mt-5 space-y-3">
+              <input
+                className={fieldCls}
+                placeholder="Full Name"
+                value={buyForm.name}
+                onChange={(e) => setBuyForm((p) => ({ ...p, name: e.target.value }))}
+              />
+              <input
+                className={fieldCls}
+                placeholder="Phone Number"
+                value={buyForm.phone}
+                onChange={(e) => setBuyForm((p) => ({ ...p, phone: e.target.value }))}
+              />
+              <input
+                type="email"
+                className={fieldCls}
+                placeholder="Email"
+                value={buyForm.email}
+                onChange={(e) => setBuyForm((p) => ({ ...p, email: e.target.value }))}
+              />
+            </div>
+
             {/* Action */}
-            <div className="mt-6">
-              {isLoggedIn ? (
-                <button
-                  type="button"
-                  onClick={handlePurchase}
-                  disabled={isProcessing}
-                  className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark disabled:opacity-60 text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  {isProcessing && (
-                    <CircularProgress size={18} sx={{ color: "#fff" }} />
-                  )}
-                  {isProcessing
-                    ? "Processing..."
-                    : `Proceed to Payment — ${formatPrice(buyDialog.price)}`}
-                </button>
-              ) : (
-                <div className="text-center">
-                  <Link
-                    to="/login"
-                    className="w-full inline-block bg-accent hover:bg-accent-dark text-white rounded-xl py-3 text-[15px] font-semibold no-underline transition-colors duration-200"
-                  >
-                    Login to purchase
-                  </Link>
-                  <p className="text-[13px] text-gray-400 mt-2">
-                    Please log in to your patient account to buy a membership.
-                  </p>
-                </div>
-              )}
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={handlePurchase}
+                disabled={isProcessing}
+                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark disabled:opacity-60 text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
+              >
+                {isProcessing && (
+                  <CircularProgress size={18} sx={{ color: "#fff" }} />
+                )}
+                {isProcessing
+                  ? "Processing..."
+                  : `Proceed to Payment — ${formatPrice(buyDialog.price)}`}
+              </button>
+              <p className="text-[13px] text-gray-400 mt-2 text-center">
+                Login details will be emailed to you after purchase.
+              </p>
             </div>
           </div>
         </div>
       )}
-
-      {/* Load Razorpay Script */}
-      <script src="https://checkout.razorpay.com/v1/checkout.js" />
     </>
   );
 };

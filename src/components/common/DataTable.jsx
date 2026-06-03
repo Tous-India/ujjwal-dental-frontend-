@@ -259,8 +259,10 @@ const DataTable = ({
       </Box>
 
       {/* Table */}
-      <TableContainer>
-        <Table>
+      {/* bg-white on both the scroll container and the table so the white
+          background extends with horizontal scroll (no off-white gap). */}
+      <TableContainer className="bg-white">
+        <Table sx={{ bgcolor: "white" }}>
           <TableHead>
             <TableRow className="bg-gray-50">
               {columns.map((column) => (

@@ -6,7 +6,7 @@
  * 2. Password-based: Patient enters email + password given by doctor
  */
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
 import { requestOtp, loginWithPassword } from "../../api/auth.api";
 import { CircularProgress } from "@mui/material";
@@ -26,6 +26,9 @@ const trustPoints = [
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Optional post-login destination, e.g. /login?redirect=/membership-plans
+  const redirect = searchParams.get("redirect");
   const setPendingEmail = useAuthStore((state) => state.setPendingEmail);
   const login = useAuthStore((state) => state.login);
 
@@ -55,7 +58,12 @@ const Login = () => {
     try {
       await requestOtp(validEmail);
       setPendingEmail(validEmail);
-      navigate("/verify-otp", { replace: true });
+      navigate(
+        redirect
+          ? `/verify-otp?redirect=${encodeURIComponent(redirect)}`
+          : "/verify-otp",
+        { replace: true },
+      );
     } catch (err) {
       const message =
         err.response?.data?.message || "Failed to send OTP. Please try again.";
@@ -81,7 +89,7 @@ const Login = () => {
     try {
       const response = await loginWithPassword(validEmail, password);
       login(response.data.patient, response.data.token);
-      navigate("/dashboard", { replace: true });
+      navigate(redirect || "/dashboard", { replace: true });
     } catch (err) {
       const message =
         err.response?.data?.message || "Invalid email or password";

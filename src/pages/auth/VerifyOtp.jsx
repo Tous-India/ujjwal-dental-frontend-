@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
 import { verifyOtp, resendOtp } from "../../api/auth.api";
 import { CircularProgress } from "@mui/material";
@@ -23,6 +23,8 @@ const trustPoints = [
  */
 const VerifyOtp = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const { pendingEmail, isAuthenticated, login, setPendingEmail } =
     useAuthStore();
 
@@ -116,8 +118,8 @@ const VerifyOtp = () => {
 
       login(patient, token);
 
-      // Navigate to dashboard
-      navigate("/dashboard", { replace: true });
+      // Navigate to the requested return URL, or the dashboard by default
+      navigate(redirect || "/dashboard", { replace: true });
     } catch (err) {
       const message =
         err.response?.data?.message || "Invalid OTP. Please try again.";

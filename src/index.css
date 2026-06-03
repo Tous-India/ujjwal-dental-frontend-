@@ -31,6 +31,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* All table body cells (admin + patient portals) use Inter tabular figures so
+   amounts, dates, phone numbers and counts align cleanly in columns. */
+td,
+.MuiTableCell-body {
+  font-family: "Inter", "DM Sans", sans-serif !important;
+  font-variant-numeric: tabular-nums;
+}
+
 .css-1f0zdka-MuiList-root {
   padding-top: 30px !important;
 }
