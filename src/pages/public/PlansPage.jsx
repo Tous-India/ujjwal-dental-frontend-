@@ -188,13 +188,6 @@ const PlansPage = () => {
                       </span>
                     )}
 
-                    {/* Tier badge */}
-                    {plan.tier && (
-                      <span className="absolute top-4 right-4 bg-[#003366] text-white text-[12px] font-semibold rounded-full px-3 py-0.5 capitalize">
-                        {plan.tier}
-                      </span>
-                    )}
-
                     {/* Name + description */}
                     <div className="text-center">
                       <h3 className="text-[#003366] text-xl font-bold leading-tight capitalize">

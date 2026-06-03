@@ -5,12 +5,16 @@ export const useAuthStore = create(
   persist(
     (set) => ({
       patient: null,
+      token: null,
       isAuthenticated: false,
       pendingEmail: null,
 
-      login: (patient) =>
+      // token is sent as Authorization: Bearer (see axios request interceptor)
+      // so auth works cross-site where cookies may be blocked.
+      login: (patient, token = null) =>
         set({
           patient,
+          token,
           isAuthenticated: true,
           pendingEmail: null,
         }),
@@ -26,6 +30,7 @@ export const useAuthStore = create(
       logout: () =>
         set({
           patient: null,
+          token: null,
           isAuthenticated: false,
           pendingEmail: null,
         }),
@@ -34,6 +39,7 @@ export const useAuthStore = create(
       name: "patient-auth",
       partialize: (state) => ({
         patient: state.patient,
+        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     }

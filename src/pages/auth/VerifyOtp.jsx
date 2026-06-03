@@ -112,9 +112,9 @@ const VerifyOtp = () => {
     try {
       const response = await verifyOtp(pendingEmail, otpValue);
 
-      const { patient } = response.data;
+      const { patient, token } = response.data;
 
-      login(patient);
+      login(patient, token);
 
       // Navigate to dashboard
       navigate("/dashboard", { replace: true });

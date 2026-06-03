@@ -65,6 +65,9 @@ const PopupEnquiryForm = () => {
 
     timerRef.current = setTimeout(() => {
       shownThisSessionRef.current = true;
+      // Start the 24h cooldown the moment it's shown, so it won't reappear
+      // on the next visit/reload even if the user never clicks the × button.
+      localStorage.setItem(DISMISSED_KEY, Date.now().toString());
       setVisible(true);
     }, (config.delaySeconds || 30) * 1000);
 

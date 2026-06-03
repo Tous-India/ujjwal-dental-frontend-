@@ -7,6 +7,18 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Attach the patient JWT as a Bearer token (in addition to the cookie) so
+// authenticated requests succeed even when the cookie is blocked cross-site
+// (e.g. frontend and backend on different domains in production).
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

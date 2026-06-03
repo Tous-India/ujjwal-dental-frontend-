@@ -261,7 +261,7 @@ const HomePage = () => {
               <img
                 src={banner.src}
                 alt={banner.alt}
-                className="w-full h-auto object-cover"
+                className="w-full aspect-[4/3] md:aspect-video object-cover"
               />
             </SwiperSlide>
           ))}
@@ -530,7 +530,7 @@ const HomePage = () => {
             <Swiper
               modules={[Navigation, Autoplay]}
               speed={600}
-              loop
+              loop={false}
               spaceBetween={16}
               slidesPerView={1.2}
               autoplay={{

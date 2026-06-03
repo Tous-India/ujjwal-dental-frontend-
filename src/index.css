@@ -310,6 +310,14 @@ body {
   .menuIcon {
     display: block;
   }
+
+  /* In the mobile drawer the menu items are full-width blocks, so the
+     active-item underline spans the whole row and looks like a stray
+     divider. Drop the line on mobile — the orange text already marks active. */
+  .main-navbar .active-nav {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
 }
 
 .showMenuWithTransition {

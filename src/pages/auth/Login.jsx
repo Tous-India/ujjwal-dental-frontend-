@@ -80,7 +80,7 @@ const Login = () => {
 
     try {
       const response = await loginWithPassword(validEmail, password);
-      login(response.data.patient);
+      login(response.data.patient, response.data.token);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       const message =
@@ -130,6 +130,12 @@ const Login = () => {
       {/* Right form panel */}
       <div className="w-full lg:w-[45%] bg-white flex items-center justify-center px-[40px] py-10">
         <div className="w-full max-w-md">
+          <Link
+            to="/"
+            className="inline-block text-[14px] text-gray-500 hover:text-[#003366] no-underline transition-colors mb-6"
+          >
+            ← Back to Home
+          </Link>
           {/* Brand on mobile only (desktop shows it on the left panel) */}
           <p className="lg:hidden text-[#003366] text-xl font-bold text-center mb-4">
             Ujjwal Dental

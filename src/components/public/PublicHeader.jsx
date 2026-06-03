@@ -86,6 +86,13 @@ const PublicHeader = () => {
     SetShowMenu(false);
   };
 
+  // Close the mobile drawer (and collapse any expanded submenu) after a
+  // nav link is tapped, so navigating from the menu also dismisses it.
+  const closeMobileMenu = () => {
+    SetShowMenu(false);
+    setMobileExpanded({});
+  };
+
   return (
     <>
       {/* Top Bar */}
@@ -173,12 +180,13 @@ const PublicHeader = () => {
               className={`md:flex ml-auto mr-6 items-center main-navbar ${showMenu ? "showMenuWithTransition" : ""}`}
             >
               <nav className="navdiv ">
-                <img src={"/public/ujjwal-dental-logo.png"} alt="logo" />
+                <img src={logo} alt="logo" />
                 <ul className="md:flex items-center gap-1.5">
                   <li>
                     {" "}
                     <NavLink
                       to="/"
+                      onClick={closeMobileMenu}
                       className={`navItems ${isActive("/") ? "active-nav" : ""}`}
                     >
                       Home
@@ -197,7 +205,7 @@ const PublicHeader = () => {
                       Treatments{" "}
                       <ExpandMoreIcon className="text-[18px]! iconsDD" />
                       <div className="dropdown-nav">
-                        <ul>
+                        <ul onClick={closeMobileMenu}>
                           <li>
                             <NavLink to="/treatments/dental-implant">
                               Dental Implant
@@ -288,7 +296,7 @@ const PublicHeader = () => {
                       Appointments{" "}
                       <ExpandMoreIcon className="text-[18px]! iconsDD" />
                       <div className="dropdown-nav">
-                        <ul>
+                        <ul onClick={closeMobileMenu}>
                           <li>
                             <NavLink to="/book-appointment">
                               Book Appointment
@@ -305,6 +313,7 @@ const PublicHeader = () => {
                     {" "}
                     <NavLink
                       to="/membership-plans"
+                      onClick={closeMobileMenu}
                       className={`flex items-center gap-0.5 navItems ${isActive("/membership-plans") ? "active-nav" : ""}`}
                     >
                       Membership Plan{" "}
@@ -313,6 +322,7 @@ const PublicHeader = () => {
                   <li>
                     <NavLink
                       to="/contact"
+                      onClick={closeMobileMenu}
                       className={`navItems ${isActive("/contact") ? "active-nav" : ""}`}
                     >
                       Contacts
@@ -334,6 +344,14 @@ const PublicHeader = () => {
               className="hidden md:inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[15px] tracking-wide px-6 py-2.5 no-underline cursor-pointer shrink-0 shadow-sm hover:bg-[#E06C00] hover:shadow-md transition-all duration-200"
             >
               Book Appointment
+            </NavLink>
+
+            {/* Mobile-only Book button (desktop has the full CTA above) */}
+            <NavLink
+              to="/book-appointment"
+              className="md:hidden ml-auto mr-3 inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[13px] px-4 py-1.5 no-underline shrink-0 hover:bg-[#E06C00] transition-colors"
+            >
+              Book
             </NavLink>
 
             <div className="menuIcon">
