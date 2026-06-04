@@ -163,7 +163,7 @@ const PublicHeader = () => {
               <img
                 src={logo}
                 alt="Ujjwal Dental Clinic"
-                className="h-13.75 object-contain"
+                className="h-10 md:h-12 w-auto max-h-12 object-contain"
               />
               <div className="hidden sm:block ml-2">
                 <span
@@ -216,7 +216,7 @@ const PublicHeader = () => {
                       <div className="dropdown-nav">
                         <ul
                           onClick={closeMobileMenu}
-                          className="lg:!grid lg:!grid-cols-2 lg:!gap-x-2 lg:!w-auto lg:!min-w-[360px] lg:!max-w-[90vw] lg:!p-4 lg:!rounded-xl"
+                          className="lg:!grid lg:!grid-cols-2 lg:!gap-x-2 lg:!w-auto lg:!min-w-[520px] lg:!max-w-[90vw] lg:!p-4 lg:!rounded-xl lg:[&_a]:!whitespace-nowrap lg:[&_a]:!text-[13px]"
                         >
                           <li>
                             <NavLink to="/treatments/dental-implant">

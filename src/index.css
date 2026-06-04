@@ -15,10 +15,15 @@ body {
   overflow-x: hidden;
   max-width: 100%;
 }
-img,
-video {
-  max-width: 100%;
-  height: auto;
+/* In @layer base so Tailwind height/width utilities (e.g. h-12) still override
+   it — an unlayered rule here would beat every utility and break sized images
+   like the header logo. */
+@layer base {
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 /* Site-wide design tokens (warm navy + warm orange accent) */

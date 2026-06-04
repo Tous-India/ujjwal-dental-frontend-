@@ -237,7 +237,7 @@ const faqs = [
 
 const HomePage = () => {
   const [planPrices, setPlanPrices] = useState(null);
-  const [openFaqs, setOpenFaqs] = useState({ 0: true });
+  const [openFaqs, setOpenFaqs] = useState({});
   const reviewsPrevRef = useRef(null);
   const reviewsNextRef = useRef(null);
   const doctorsPrevRef = useRef(null);
@@ -794,7 +794,7 @@ const HomePage = () => {
                       <span className="font-numbers text-[#003366] text-[38px] font-extrabold">
                         ₹{getPrice(plan.title, plan.price)}
                       </span>
-                      <span className="text-gray-500 text-sm">/year</span>
+                      <span className="font-numbers text-gray-500 text-sm">/year</span>
                     </p>
                   </div>
 
