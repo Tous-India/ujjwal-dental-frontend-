@@ -47,8 +47,13 @@ const PlansPage = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const plans = data?.data?.plans || data?.data || [];
-  // The middle plan is highlighted as the recommended ("Most Popular") option.
+  // Order cards by price ascending so Premium (₹666) sits left, Star (₹999)
+  // in the center, and Implant Post Care (₹4,500) on the right.
+  const plans = [...(data?.data?.plans || data?.data || [])].sort(
+    (a, b) => (a.price || 0) - (b.price || 0)
+  );
+  // The middle plan is highlighted as the recommended ("Most Popular") option —
+  // with the price-ascending order above this lands on Star (₹999).
   const featuredIndex = plans.length ? Math.floor(plans.length / 2) : -1;
 
   // Handle Buy Now click — opens the checkout modal, prefilling the

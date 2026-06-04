@@ -56,15 +56,6 @@ const doctors = [
 
 const dentalPlans = [
   {
-    title: "Implant Post Care",
-    img: "/images/dental-implant.png",
-    features: [
-      "Post-implant care and follow-up visits.",
-      "Free consultation and X-ray for implant patients.",
-    ],
-    price: "4500",
-  },
-  {
     title: "Premium Dental Health Plan",
     img: "/images/clear-aligner.png",
     features: [
@@ -82,6 +73,15 @@ const dentalPlans = [
       "₹4,000 off on orthodontic and implant treatments",
     ],
     price: "999",
+  },
+  {
+    title: "Implant Post Care",
+    img: "/images/dental-implant.png",
+    features: [
+      "Post-implant care and follow-up visits.",
+      "Free consultation and X-ray for implant patients.",
+    ],
+    price: "4500",
   },
 ];
 
