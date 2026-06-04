@@ -49,9 +49,15 @@ const treatmentCards = [
 ];
 
 const doctors = [
-  { name: "Dr. Ujjwal", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
+  { name: "Dr. Ujjwal Prem", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
   { name: "Dr. Alisha", experience: "5 Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
-  { name: "New Specialist", experience: "Joining Soon", lead: false },
+  {
+    name: "Dr. Ajay Kaushik",
+    experience: "7 Yrs Experience",
+    subtitle: "MDS — Orthodontics & Dentofacial Orthopaedics",
+    lead: false,
+    img: "/doctors/ajay.webp",
+  },
 ];
 
 const dentalPlans = [
@@ -622,7 +628,7 @@ const HomePage = () => {
               </span>
               <div>
                 <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                  <span className="font-numbers text-[#e88a1a]">2</span> Specialists
+                  <span className="font-numbers text-[#e88a1a]">3</span> Specialists
                 </p>
                 <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
                   Expert dental care across multiple specializations.
@@ -686,6 +692,11 @@ const HomePage = () => {
                   <p className="text-[#003366] text-base font-semibold leading-tight">
                     {doc.name}
                   </p>
+                  {doc.subtitle && (
+                    <p className="text-gray-500 text-[14px] mt-1 leading-snug">
+                      {doc.subtitle}
+                    </p>
+                  )}
                   <p className="font-numbers text-gray-500 text-sm mt-1">{doc.experience}</p>
                 </div>
               </div>

@@ -8,153 +8,67 @@ import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
 
 const doctors = [
   {
-    name: "Dr. Ajay Sangwan",
-    slug: "dr-ajay-sangwan",
+    name: "Dr. Ujjwal Prem",
+    slug: "dr-ujjwal-prem",
     experience: "15",
-    specialization: "Orthodontist",
-    role: "General Dentistry, Orthodontics",
-    img: "/images/doctor-ajay.jpg",
-    qualifications: "BDS, MDS (Orthodontics)",
+    specialization: "Implants, Cosmetic & General Dentistry",
+    role: "Implants, Cosmetic & General Dentistry",
+    img: "/doctors/ujjwal.jpg",
+    qualifications: "",
     location: "Sonipat, Haryana",
-    bio: "Dr. Ajay Sangwan, Orthodontist & Smile Design Expert, is skilled in braces, clear aligners, smile correction & interceptive orthodontics. Backed by 15 years of clinical experience, he offers ethical, high-quality care through holistic, tailored treatment plans.",
-    stats: [
-      { value: "3000+", label: "Braces Cases" },
-      { value: "500+", label: "Aligners" },
-      { value: "200+", label: "Smile Corrections" },
-      { value: "5000+", label: "Consultations" },
-    ],
+    bio: "Dr. Ujjwal Prem is the lead dentist at Ujjwal Dental, with 15+ years of clinical experience across dental implants, cosmetic and restorative dentistry. He is known for patient-first, evidence-based care.",
+    stats: [],
     expertise: [
-      "Specializes in braces",
-      "clear aligners",
-      "smile design",
-      "interceptive orthodontics",
-      "lingual braces",
-      "ceramic braces",
-      "retainers",
-      "jaw alignment",
-      "teeth straightening",
-      "bite correction",
+      "Dental implants",
+      "Root canal treatment",
+      "Crowns & bridges",
+      "Cosmetic dentistry",
+      "Full mouth rehabilitation",
+      "Smile design",
     ],
-    achievements: [
-      "Member of Indian Orthodontic Society",
-      "Certification in Invisalign (2019)",
-      "Certification in Advanced Orthodontics (2018)",
-      "Best Orthodontist Award — Dental Excellence Awards (2021)",
-      "Speaker at National Orthodontic Conference (2022)",
-    ],
+    achievements: [],
   },
   {
-    name: "Dr. Supriya Kumar Roy",
-    slug: "dr-supriya-kumar-roy",
-    experience: "41",
-    specialization: "Prosthodontist",
-    role: "Prosthodontics, Implantology",
-    img: "/images/doctor-supriya.jpg",
-    qualifications: "BDS, MDS (Prosthodontics)",
+    name: "Dr. Alisha",
+    slug: "dr-alisha",
+    experience: "5",
+    specialization: "General & Preventive Dentistry",
+    role: "General & Preventive Dentistry",
+    img: "/doctors/alisha.jpg",
+    qualifications: "",
     location: "Sonipat, Haryana",
-    bio: "Dr. Supriya Kumar Roy, Prosthodontist & Implantologist, brings over 41 years of clinical expertise in dental implants, full-mouth rehabilitation & dentures. His vast experience and compassionate approach make him one of the most trusted dental professionals in the region.",
-    stats: [
-      { value: "5000+", label: "RCTs & Crowns" },
-      { value: "1000+", label: "Implants" },
-      { value: "300+", label: "Full Mouth Rehabs" },
-      { value: "10000+", label: "Dental Fillings" },
-    ],
+    bio: "Dr. Alisha is a dental surgeon with 5 years of experience in general and preventive dentistry, focused on gentle, comfortable care for every patient.",
+    stats: [],
     expertise: [
-      "Specializes in implants",
-      "full mouth rehab",
-      "dentures",
-      "crown & bridge",
-      "veneers",
-      "laminates",
-      "smile design",
-      "prosthodontics",
-      "overdentures",
-      "implant-supported prosthesis",
+      "General dentistry",
+      "Scaling & polishing",
+      "Dental fillings",
+      "Root canal treatment",
+      "Teeth whitening",
+      "Preventive care",
     ],
-    achievements: [
-      "Fellow of Indian Prosthodontic Society",
-      "Lifetime Achievement Award — State Dental Council (2020)",
-      "Certification in Advanced Implantology (2015)",
-      "Published 12+ research papers in national journals",
-      "Mentor & examiner at dental universities",
-    ],
+    achievements: [],
   },
   {
-    name: "Dr. Adrita Nag",
-    slug: "dr-adrita-nag",
-    experience: "23",
-    specialization: "Oral Surgeon",
-    role: "Oral Surgery, Implantology",
-    img: "/images/doctor-adrita.jpg",
-    qualifications: "BDS, MDS (Oral Surgery)",
+    name: "Dr. Ajay Kaushik",
+    slug: "dr-ajay-kaushik",
+    experience: "7",
+    specialization: "Orthodontics & Dentofacial Orthopaedics",
+    role: "Orthodontics & Dentofacial Orthopaedics",
+    img: "/doctors/ajay.webp",
+    qualifications: "MDS — Orthodontics & Dentofacial Orthopaedics",
     location: "Sonipat, Haryana",
-    bio: "Dr. Adrita Nag, Oral Surgeon & Implantologist, is an experienced specialist in wisdom teeth extractions, dental implant surgery & advanced oral surgical procedures. With 23 years of experience, she is known for her precision, patient comfort and ethical practice.",
-    stats: [
-      { value: "4000+", label: "Extractions" },
-      { value: "800+", label: "Implants" },
-      { value: "500+", label: "Surgical Cases" },
-      { value: "7000+", label: "Consultations" },
-    ],
+    bio: "Dr. Ajay Kaushik is an orthodontist (MDS — Orthodontics & Dentofacial Orthopaedics) with 7 years of experience in braces, clear aligners and dentofacial orthopaedics.",
+    stats: [],
     expertise: [
-      "Specializes in extractions",
-      "dental implants",
-      "wisdom teeth removal",
-      "jaw surgery",
-      "cyst removal",
-      "trauma management",
-      "bone grafting",
-      "sinus lift",
-      "apicoectomy",
-      "biopsy procedures",
+      "Braces",
+      "Clear aligners",
+      "Smile correction",
+      "Interceptive orthodontics",
+      "Retainers",
+      "Bite correction",
     ],
-    achievements: [
-      "Member of Association of Oral & Maxillofacial Surgeons",
-      "Certification in Advanced Implant Surgery (2018)",
-      "Certification in Laser Surgery (2020)",
-      "Best Oral Surgeon — Regional Dental Awards (2019)",
-      "Speaker at International Oral Surgery Symposium (2021)",
-    ],
-  },
-  {
-    name: "Dr. Arpita Nag",
-    slug: "dr-arpita-nag",
-    experience: "9",
-    specialization: "Cosmetic Dentist",
-    role: "General Dentistry, Implantology, Periodontist",
-    img: "/images/doctor-arpita.jpg",
-    qualifications: "MDS",
-    location: "Sonipat, Haryana",
-    bio: "Dr. Arpita Nag, Periodontist & Oral Implantologist, is skilled in implants, smile design, full mouth rehab & periodontal therapy. Backed by rich clinical experience, she offers ethical, high-quality care through holistic, tailored treatment plans.",
-    stats: [
-      { value: "4000+", label: "RCTs & Crowns" },
-      { value: "500+", label: "Implants" },
-      { value: "200+", label: "Full Mouth Rehabs" },
-      { value: "8000+", label: "Dental Fillings" },
-    ],
-    expertise: [
-      "Specializes in implants",
-      "aligners",
-      "veneers",
-      "laminates",
-      "smile design",
-      "full mouth rehab",
-      "RCTs",
-      "crowns",
-      "fillings",
-      "post & core",
-      "inlays/onlays",
-      "periodontal therapy",
-      "lasers",
-      "teeth whitening",
-      "aesthetic & general dentistry",
-    ],
-    achievements: [
-      "Member of Indian Society of Periodontology",
-      "Certification in Clinical Implantology (2021)",
-      "Certification in Clinical Skill Enhancement (2020)",
-      "Certification in Rotary Endodontics (2022)",
-      "Specialist of the year — Periodontist Category at Indian Dental Diva Awards (2022)",
-    ],
+    achievements: [],
   },
 ];
 
@@ -225,12 +139,14 @@ const DoctorProfilePage = () => {
                   >
                     {doctor.name}
                   </p>
-                  <p
-                    className="text-gray-500"
-                    style={{ fontSize: "0.8rem" }}
-                  >
-                    ({doctor.role})
-                  </p>
+                  {doctor.role && (
+                    <p
+                      className="text-gray-500"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      ({doctor.role})
+                    </p>
+                  )}
                 </div>
                 <span
                   className="shrink-0 text-center rounded-[8px] px-2 py-1"
@@ -239,10 +155,12 @@ const DoctorProfilePage = () => {
                   {doctor.experience}+ Yrs<br />Exp
                 </span>
               </div>
-              <div className="mt-3">
-                <p style={{ fontSize: "0.85rem", fontWeight: 700 }}>Qualification</p>
-                <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>{doctor.qualifications}</p>
-              </div>
+              {doctor.qualifications && (
+                <div className="mt-3">
+                  <p style={{ fontSize: "0.85rem", fontWeight: 700 }}>Qualification</p>
+                  <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>{doctor.qualifications}</p>
+                </div>
+              )}
               <div className="mt-3 flex items-center gap-1 text-gray-500">
                 <LocationOnIcon className="text-[16px]!" />
                 <p style={{ fontSize: "0.8rem" }}>{doctor.location}</p>
@@ -269,6 +187,7 @@ const DoctorProfilePage = () => {
             </div>
 
             {/* Stats Bar */}
+            {doctor.stats.length > 0 && (
             <div className="flex flex-wrap border border-gray-200 rounded-[8px] mb-8 overflow-hidden">
               {doctor.stats.map((stat, i) => (
                 <div
@@ -291,6 +210,7 @@ const DoctorProfilePage = () => {
                 </div>
               ))}
             </div>
+            )}
 
             {/* Expertise */}
             <div className="mb-8">
@@ -323,6 +243,7 @@ const DoctorProfilePage = () => {
             </div>
 
             {/* Achievements */}
+            {doctor.achievements.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-1">
                 <span style={{ fontSize: "1.2rem" }}>🏆</span>
@@ -351,6 +272,7 @@ const DoctorProfilePage = () => {
                 ))}
               </div>
             </div>
+            )}
           </div>
 
           {/* Right Sidebar — Appointment Form */}
