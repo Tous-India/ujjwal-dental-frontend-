@@ -29,7 +29,7 @@ const doctors = [
     achievements: [],
   },
   {
-    name: "Dr. Alisha",
+    name: "Dr. Alisha Dogra",
     slug: "dr-alisha",
     experience: "5",
     specialization: "General & Preventive Dentistry",
@@ -37,7 +37,7 @@ const doctors = [
     img: "/doctors/alisha.jpg",
     qualifications: "",
     location: "Sonipat, Haryana",
-    bio: "Dr. Alisha is a dental surgeon with 5 years of experience in general and preventive dentistry, focused on gentle, comfortable care for every patient.",
+    bio: "Dr. Alisha Dogra is a dental surgeon with 5 years of experience in general and preventive dentistry, focused on gentle, comfortable care for every patient.",
     stats: [],
     expertise: [
       "General dentistry",
