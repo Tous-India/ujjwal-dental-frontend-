@@ -100,15 +100,24 @@ const PublicHeader = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <div className="flex justify-between items-center flex-wrap gap-2">
             <div className="flex items-center gap-4">
-              <NavLink
-                to="tel:+918708362763"
-                className="flex items-center gap-1 text-white no-underline cursor-pointer hover:text-gray-200 transition-colors"
-              >
+              <div className="flex items-center gap-1 text-white">
                 <PhoneIcon className="text-[16px]!" />
-                <span className="text-[13px]!">
-                  +91 8708362763
+                <span className="text-[13px]! flex items-center gap-1">
+                  <a
+                    href="tel:+918708362763"
+                    className="text-white no-underline cursor-pointer hover:text-gray-200 transition-colors"
+                  >
+                    +91 8708362763
+                  </a>
+                  <span className="text-gray-400">|</span>
+                  <a
+                    href="tel:+919467776028"
+                    className="text-white no-underline cursor-pointer hover:text-gray-200 transition-colors"
+                  >
+                    +91 9467776028
+                  </a>
                 </span>
-              </NavLink>
+              </div>
               <NavLink
                 to="mailto:ujjwaldentalplanet.in@gmail.com"
                 className="flex items-center gap-1 text-white no-underline cursor-pointer hover:text-gray-200 transition-colors"

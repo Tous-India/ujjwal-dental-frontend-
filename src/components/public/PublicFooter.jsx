@@ -59,7 +59,7 @@ const PublicFooter = () => {
               CARING FOR YOUR SMILE
             </p>
             <p className="text-gray-300 text-sm leading-relaxed mb-5">
-              Advanced dental care in Sonipat with 20+ years of expertise.
+              Advanced dental care in Sonipat with 15+ years of expertise.
             </p>
             <div className="flex items-center gap-3">
               {socialLinks.map((social) => (
@@ -146,6 +146,13 @@ const PublicFooter = () => {
                 className="text-gray-300 no-underline hover:text-white transition-colors duration-200"
               >
                 +91 8708362763
+              </a>
+              <span className="text-gray-500"> | </span>
+              <a
+                href="tel:+919467776028"
+                className="text-gray-300 no-underline hover:text-white transition-colors duration-200"
+              >
+                +91 9467776028
               </a>
             </p>
             <p className="text-[13px] mb-3">

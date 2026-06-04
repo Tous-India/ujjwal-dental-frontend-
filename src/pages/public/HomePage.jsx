@@ -49,7 +49,7 @@ const treatmentCards = [
 ];
 
 const doctors = [
-  { name: "Dr. Ujjwal", experience: "20 Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
+  { name: "Dr. Ujjwal", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
   { name: "Dr. Alisha", experience: "5 Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
   { name: "New Specialist", experience: "Joining Soon", lead: false },
 ];
@@ -245,7 +245,7 @@ const HomePage = () => {
       </title>
       <meta
         name="description"
-        content="Ujjwal Dental offers dental implants, braces, root canal, teeth whitening & laser dentistry in Sonipat. Book online. 20+ years experience."
+        content="Ujjwal Dental offers dental implants, braces, root canal, teeth whitening & laser dentistry in Sonipat. Book online. 15+ years experience."
       />
       <meta
         property="og:title"
@@ -253,7 +253,7 @@ const HomePage = () => {
       />
       <meta
         property="og:description"
-        content="Ujjwal Dental offers dental implants, braces, root canal, teeth whitening & laser dentistry in Sonipat. Book online. 20+ years experience."
+        content="Ujjwal Dental offers dental implants, braces, root canal, teeth whitening & laser dentistry in Sonipat. Book online. 15+ years experience."
       />
       {/* Hero Banner Slider */}
       <section className="relative w-full overflow-hidden">
@@ -396,7 +396,7 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* 20+ Years of Expertise */}
+            {/* 15+ Years of Expertise */}
             <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
@@ -408,13 +408,13 @@ const HomePage = () => {
                   className="text-[#003366] mb-2"
                   style={{ fontSize: "1.25rem", fontWeight: 700 }}
                 >
-                  20+ Years of Expertise
+                  15+ Years of Expertise
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
                   style={{ fontSize: "0.95rem" }}
                 >
-                  Two decades of clinical experience across dental implants,
+                  Over fifteen years of clinical experience across dental implants,
                   orthodontics, and oral surgery. Over 10,000 patients treated
                   with trusted, evidence-based care.
                 </p>
@@ -635,10 +635,10 @@ const HomePage = () => {
               </span>
               <div>
                 <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                  <span className="font-numbers text-[#e88a1a]">20+</span> Years Avg. Experience
+                  <span className="font-numbers text-[#e88a1a]">15+</span> Years Avg. Experience
                 </p>
                 <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
-                  Two decades of combined clinical expertise.
+                  Over fifteen years of combined clinical expertise.
                 </p>
               </div>
             </div>

@@ -4,8 +4,10 @@ import {
   RouterProvider,
   Route,
   Navigate,
+  Outlet,
+  useLocation,
 } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import Loading from "./components/Loading";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -96,10 +98,30 @@ const AdminEnquiries = lazy(() => import("./pages/admin/Enquiries"));
  * - /admin/clinics - Manage clinics
  * - /admin/settings - Admin settings
  */
+/**
+ * Scrolls the window to the top on every route change so new pages always
+ * open at the top (e.g. treatment links no longer land mid/bottom of page).
+ */
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
+// Root layout: mounts ScrollToTop once for the whole app, then renders routes.
+const RootLayout = () => (
+  <>
+    <ScrollToTop />
+    <Outlet />
+  </>
+);
+
 const App = () => {
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <>
+      <Route element={<RootLayout />}>
         {/* ======================== */}
         {/* PUBLIC WEBSITE ROUTES */}
         {/* ======================== */}
@@ -176,7 +198,7 @@ const App = () => {
 
         {/* Catch all - redirect to dashboard */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </>
+      </Route>
     )
   );
 

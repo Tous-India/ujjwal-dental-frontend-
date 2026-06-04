@@ -100,9 +100,15 @@ const ContactPage = () => {
               <InfoCard icon={<PhoneIcon />} title="Phone">
                 <a
                   href="tel:+918708362763"
-                  className="font-numbers text-[#003366] font-semibold no-underline hover:text-accent transition-colors"
+                  className="font-numbers text-[#003366] font-semibold no-underline hover:text-accent transition-colors block"
                 >
                   +91 8708362763
+                </a>
+                <a
+                  href="tel:+919467776028"
+                  className="font-numbers text-[#003366] font-semibold no-underline hover:text-accent transition-colors block"
+                >
+                  +91 9467776028
                 </a>
               </InfoCard>
 
