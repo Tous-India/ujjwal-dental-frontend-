@@ -49,7 +49,7 @@ const treatmentCards = [
 ];
 
 const doctors = [
-  { name: "Dr. Ujjwal Prem", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
+  { name: "Dr. Ujjwal Prem", subtitle: "MDS (Oral and Maxillofacial Surgeon)", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
   { name: "Dr. Alisha Dogra", experience: "5 Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
   {
     name: "Dr. Ajay Kaushik",
@@ -91,10 +91,14 @@ const dentalPlans = [
     title: "Implant Post Care",
     img: "/images/dental-implant.png",
     features: [
-      "Post-implant care and follow-up visits.",
-      "Free consultation and X-ray for implant patients.",
+      "OPD for one year",
+      "Oral Prophylaxis (twice a year)",
+      "Two oral health kits in a year",
+      "RVG for one year",
+      "Post Operative Dental Implant Care",
     ],
     price: "4500",
+    annual: true,
   },
 ];
 
@@ -129,7 +133,7 @@ const patientSpeaks = [
 const marqueeItems = [
   { icon: <GroupsIcon />, value: "10,000+", label: "Happy Patients" },
   { icon: <MedicalServicesIcon />, value: "15+", label: "Treatments" },
-  { icon: <VerifiedIcon />, value: "10+", label: "Years Experience" },
+  { icon: <VerifiedIcon />, value: "15+", label: "Years Experience" },
   { icon: <EventAvailableIcon />, value: "24/7", label: "Emergency Care" },
 ];
 
@@ -794,7 +798,9 @@ const HomePage = () => {
                       <span className="font-numbers text-[#003366] text-[38px] font-extrabold">
                         ₹{getPrice(plan.title, plan.price)}
                       </span>
-                      <span className="font-numbers text-gray-500 text-sm">/year</span>
+                      {plan.annual && (
+                        <span className="font-numbers text-gray-500 text-sm">/year</span>
+                      )}
                     </p>
                   </div>
 
