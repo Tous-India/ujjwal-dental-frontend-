@@ -8,6 +8,9 @@ import { useState } from "react";
 import { CircularProgress } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useAuthStore } from "../../store/auth.store";
@@ -179,33 +182,42 @@ const PlansPage = () => {
             discounts and priority care.
           </p>
 
-          {/* Intro content */}
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <h2 className="text-[#003366] text-[28px] font-bold mb-4">
+          {/* Compact intro — 3 quick benefits (keeps plan cards near the top) */}
+          <div className="max-w-4xl mx-auto mb-10">
+            <h2 className="text-[#003366] text-[22px] md:text-[24px] font-bold text-center mb-5">
               What is the Ujjwal Dental Health Plan?
             </h2>
-            <div className="text-gray-600 text-base space-y-4" style={{ lineHeight: 1.8 }}>
-              <p>
-                The Ujjwal Dental Health Plan is a comprehensive and affordable
-                way to ensure your dental health is always a priority. Designed
-                for individuals and families, our plan provides access to a wide
-                range of preventive and restorative dental services, helping you
-                maintain a healthy smile without the stress of unexpected
-                expenses.
-              </p>
-              <p>
-                Aligned with the vision of 'Smile for All', Ujjwal Dental's
-                Health Plans aim to make 'Caring for your smile' a reality. We're
-                bridging the gap between quality dental care and affordability,
-                ensuring that every individual — regardless of background — has
-                access to safe, expert, and compassionate oral healthcare.
-              </p>
-              <p>
-                With the Ujjwal Dental Health Plan, you get discounts on
-                treatments, free consultations, and the flexibility to choose
-                from a range of dental services — all while enjoying the trusted
-                care of our expert team.
-              </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                {
+                  icon: <LocalOfferIcon className="text-accent!" />,
+                  title: "Discounts on treatments",
+                  desc: "Save on a wide range of dental procedures.",
+                },
+                {
+                  icon: <MedicalServicesIcon className="text-accent!" />,
+                  title: "Free consultations & X-rays",
+                  desc: "Included with every plan.",
+                },
+                {
+                  icon: <HealthAndSafetyIcon className="text-accent!" />,
+                  title: "Affordable care for everyone",
+                  desc: "Quality dentistry, accessible to all.",
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="bg-white rounded-xl border border-gray-100 p-4 text-center"
+                >
+                  <span className="inline-flex w-10 h-10 rounded-full bg-orange-50 items-center justify-center mb-2">
+                    {item.icon}
+                  </span>
+                  <p className="text-[#003366] text-[15px] font-semibold leading-tight">
+                    {item.title}
+                  </p>
+                  <p className="text-gray-500 text-[13px] mt-1">{item.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -289,6 +301,36 @@ const PlansPage = () => {
               })}
             </div>
           )}
+
+          {/* Full philosophy — below the cards so plans/prices come first */}
+          <div className="max-w-3xl mx-auto text-center mt-14">
+            <h2 className="text-[#003366] text-[24px] font-bold mb-4">
+              More about our Health Plans
+            </h2>
+            <div className="text-gray-600 text-base space-y-4" style={{ lineHeight: 1.8 }}>
+              <p>
+                The Ujjwal Dental Health Plan is a comprehensive and affordable
+                way to ensure your dental health is always a priority. Designed
+                for individuals and families, our plan provides access to a wide
+                range of preventive and restorative dental services, helping you
+                maintain a healthy smile without the stress of unexpected
+                expenses.
+              </p>
+              <p>
+                Aligned with the vision of 'Smile for All', Ujjwal Dental's
+                Health Plans aim to make 'Caring for your smile' a reality. We're
+                bridging the gap between quality dental care and affordability,
+                ensuring that every individual — regardless of background — has
+                access to safe, expert, and compassionate oral healthcare.
+              </p>
+              <p>
+                With the Ujjwal Dental Health Plan, you get discounts on
+                treatments, free consultations, and the flexibility to choose
+                from a range of dental services — all while enjoying the trusted
+                care of our expert team.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

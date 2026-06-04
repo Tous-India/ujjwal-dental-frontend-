@@ -261,7 +261,7 @@ const HomePage = () => {
               <img
                 src={banner.src}
                 alt={banner.alt}
-                className="w-full aspect-[4/3] md:aspect-video object-cover"
+                className="w-full aspect-[4/3] md:aspect-[16/9] lg:aspect-[21/9] lg:max-h-[500px] object-cover"
               />
             </SwiperSlide>
           ))}
