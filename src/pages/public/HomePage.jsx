@@ -24,7 +24,6 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import PersonIcon from "@mui/icons-material/Person";
@@ -86,26 +85,33 @@ const dentalPlans = [
   },
 ];
 
-// img: thumbnail path (files not yet uploaded — cards fall back to a gradient
-// placeholder via onError until real thumbnails are added).
-// videoUrl: YouTube link — when present, the card opens it in a lightbox.
+// Patient testimonial reels (Cloudinary). videoUrl plays inline in each card.
 const patientSpeaks = [
-  { name: "Avantika", city: "Indore", treatment: "Aligners", img: "/images/patient-avantika.jpg", videoUrl: null },
-  { name: "Neha", city: "Delhi", treatment: "Aligners", img: "/images/patient-neha.jpg", videoUrl: null },
-  { name: "Pulak", city: "Delhi", treatment: "Dental Implants", img: "/images/patient-pulak.jpg", videoUrl: null },
-  { name: "Pratyush", city: "Bangalore", treatment: "Aligners", img: "/images/patient-pratyush.jpg", videoUrl: null },
-  { name: "Ayushi", city: "Pune", treatment: "Aligners", img: "/images/patient-ayushi.jpg", videoUrl: null },
-  { name: "Gurkiran", city: "Delhi", treatment: "Aligners", img: "/images/patient-gurkiran.jpg", videoUrl: null },
+  {
+    name: "Patient Review",
+    treatment: "Dental Care",
+    videoUrl:
+      "https://res.cloudinary.com/douaodgru/video/upload/v1780553951/Reel1_ucd1ts.mp4",
+  },
+  {
+    name: "Patient Review",
+    treatment: "Dental Implants",
+    videoUrl:
+      "https://res.cloudinary.com/douaodgru/video/upload/v1780553952/Dental_implant_patients_review_smile_dentalcrowns_dentalimplant_instapost_instagood_instag_ul9sqy.mp4",
+  },
+  {
+    name: "Smile Design",
+    treatment: "Dental Veneers",
+    videoUrl:
+      "https://res.cloudinary.com/douaodgru/video/upload/v1780553950/SMILE_DESIGN_BY_DENTAL_VENEERS_SMILE_CONFIDENTLY_WITH_US_smile_dentalcare_instagood_instagra_p3uvce.mp4",
+  },
+  {
+    name: "Ansh's Story",
+    treatment: "Crown Treatment",
+    videoUrl:
+      "https://res.cloudinary.com/douaodgru/video/upload/v1780553949/Part_1_Ansh_was_experiencing_toothache_and_an_infection_and_frequent_crown_removal.He_underwent_n8rmtz.mp4",
+  },
 ];
-
-// Convert a YouTube watch/short URL into an autoplay embed URL for the lightbox.
-const toEmbedUrl = (url) => {
-  if (!url) return "";
-  const match = url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([\w-]{11})/);
-  return match
-    ? `https://www.youtube.com/embed/${match[1]}?autoplay=1&rel=0`
-    : url;
-};
 
 const marqueeItems = [
   { icon: <GroupsIcon />, value: "10,000+", label: "Happy Patients" },
@@ -212,7 +218,6 @@ const faqs = [
 
 const HomePage = () => {
   const [planPrices, setPlanPrices] = useState(null);
-  const [activeVideo, setActiveVideo] = useState(null);
   const [openFaqs, setOpenFaqs] = useState({ 0: true });
   const reviewsPrevRef = useRef(null);
   const reviewsNextRef = useRef(null);
@@ -554,29 +559,16 @@ const HomePage = () => {
             >
               {patientSpeaks.map((p, i) => (
                 <SwiperSlide key={i} className="h-auto overflow-visible">
-                  <div
-                    onClick={() => p.videoUrl && setActiveVideo(p.videoUrl)}
-                    className={`group bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md ${
-                      p.videoUrl ? "cursor-pointer" : ""
-                    }`}
-                  >
-                    {/* Thumbnail / gradient placeholder (portrait 9:16) */}
-                    <div className="relative w-full aspect-[9/16] bg-gradient-to-br from-[#0D1B4A] to-[#1e3a8a]">
-                      {p.img && (
-                        <img
-                          src={p.img}
-                          alt={p.name}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                          <PlayArrowIcon className="text-[#0D1B4A] text-[30px]! ml-0.5" />
-                        </div>
-                      </div>
+                  <div className="bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                    {/* Inline video player (portrait 9:16 reel) */}
+                    <div className="relative w-full aspect-[9/16] bg-black">
+                      <video
+                        src={p.videoUrl}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
                     </div>
 
                     {/* Card body — name + badge on one line */}
@@ -594,35 +586,6 @@ const HomePage = () => {
             </Swiper>
           </div>
         </div>
-
-        {/* Video lightbox */}
-        {activeVideo && (
-          <div
-            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
-            onClick={() => setActiveVideo(null)}
-          >
-            <div
-              className="relative w-full max-w-3xl aspect-video"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setActiveVideo(null)}
-                className="absolute -top-10 right-0 text-white text-3xl leading-none cursor-pointer"
-              >
-                &times;
-              </button>
-              <iframe
-                src={toEmbedUrl(activeVideo)}
-                title="Patient review video"
-                className="w-full h-full rounded-xl"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        )}
       </section>
 
       {/* Meet Our Doctors */}
