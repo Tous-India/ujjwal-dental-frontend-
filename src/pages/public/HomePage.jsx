@@ -50,8 +50,8 @@ const treatmentCards = [
 ];
 
 const doctors = [
-  { name: "Dr. Ujjwal", experience: "20 Yrs Experience", lead: true },
-  { name: "Dr. Alisha", experience: "5 Yrs Experience", lead: false },
+  { name: "Dr. Ujjwal", experience: "20 Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
+  { name: "Dr. Alisha", experience: "5 Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
   { name: "New Specialist", experience: "Joining Soon", lead: false },
 ];
 
@@ -66,23 +66,23 @@ const dentalPlans = [
     price: "4500",
   },
   {
-    title: "Cosmodentofacial Family Dental Plan",
-    img: "/images/cosmatic-dental-bonding.png",
-    features: [
-      "Complete family dental check-up and cleaning.",
-      "Discounted rates on cosmetic and orthodontic treatments.",
-      "Free consultation and X-ray for the entire family.",
-    ],
-    price: "4999",
-  },
-  {
-    title: "Individuals Plan",
+    title: "Premium Dental Health Plan",
     img: "/images/clear-aligner.png",
     features: [
-      "Comprehensive individual dental care package.",
-      "Free consultation and intraoral X-ray.",
+      "₹1,500 treatment coupon redeemable against any dental procedure",
+      "Free consultation and X-ray",
     ],
-    price: "2000",
+    price: "666",
+  },
+  {
+    title: "Star Dental Health Plan",
+    img: "/images/cosmatic-dental-bonding.png",
+    features: [
+      "₹1,500 treatment coupon redeemable against any dental procedure",
+      "Free consultation and X-ray",
+      "₹4,000 off on orthodontic and implant treatments",
+    ],
+    price: "999",
   },
 ];
 
@@ -194,7 +194,7 @@ const faqs = [
   },
   {
     q: "What are the dental membership plans and pricing?",
-    a: "We offer three annual plans: Individuals Plan (₹2,000), Implant Post Care (₹4,500), and Cosmodentofacial Family Dental Plan (₹4,999). Plans include free consultations, X-rays, and discounts on treatments. Buy online or at the clinic.",
+    a: "We offer three plans: Premium Dental Health Plan (₹666, includes ₹1,500 treatment coupon + free consultation & X-ray), Star Dental Health Plan (₹999, includes ₹1,500 coupon + free consultation & X-ray + ₹4,000 off on ortho & implants), and Implant Post Care (₹4,500). Plans are valid for 6 months. Buy online or at the clinic.",
   },
   {
     q: "Is Ujjwal Dental Clinic good for kids?",
@@ -692,11 +692,22 @@ const HomePage = () => {
                   doc.lead ? "border-t-4 border-[#e88a1a]" : ""
                 }`}
               >
-                {/* Photo placeholder (navy gradient + silhouette, 4:5) */}
+                {/* Photo (4:5) — real image on top, navy gradient + silhouette
+                    as the fallback layer if no/broken image. */}
                 <div className="relative w-full aspect-[4/5] bg-gradient-to-br from-[#0D1B4A] to-[#1e3a8a]">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <PersonIcon className="text-white/80 text-[64px]!" />
                   </div>
+                  {doc.img && (
+                    <img
+                      src={doc.img}
+                      alt={doc.name}
+                      className="absolute inset-0 w-full h-full object-cover object-top"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
                 </div>
                 <div className="p-4">
                   <p className="text-[#003366] text-base font-semibold leading-tight">

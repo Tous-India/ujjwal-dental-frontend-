@@ -10,7 +10,6 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { Link } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
 import api from "../../api/axios";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
@@ -34,6 +33,7 @@ const PlansPage = () => {
   const [buyDialog, setBuyDialog] = useState(null);
   const [buyForm, setBuyForm] = useState({ name: "", phone: "", email: "" });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const patient = useAuthStore((state) => state.patient);
 
@@ -52,6 +52,7 @@ const PlansPage = () => {
   // logged-in patient's details for the payment step.
   const handleBuyClick = (plan) => {
     setBuyDialog(plan);
+    setShowTerms(false);
     setBuyForm({
       name: patient?.name || "",
       phone: patient?.phone || "",
@@ -177,6 +178,36 @@ const PlansPage = () => {
             Choose the perfect plan for you and your family. Enjoy exclusive
             discounts and priority care.
           </p>
+
+          {/* Intro content */}
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <h2 className="text-[#003366] text-[28px] font-bold mb-4">
+              What is the Ujjwal Dental Health Plan?
+            </h2>
+            <div className="text-gray-600 text-base space-y-4" style={{ lineHeight: 1.8 }}>
+              <p>
+                The Ujjwal Dental Health Plan is a comprehensive and affordable
+                way to ensure your dental health is always a priority. Designed
+                for individuals and families, our plan provides access to a wide
+                range of preventive and restorative dental services, helping you
+                maintain a healthy smile without the stress of unexpected
+                expenses.
+              </p>
+              <p>
+                Aligned with the vision of 'Smile for All', Ujjwal Dental's
+                Health Plans aim to make 'Caring for your smile' a reality. We're
+                bridging the gap between quality dental care and affordability,
+                ensuring that every individual — regardless of background — has
+                access to safe, expert, and compassionate oral healthcare.
+              </p>
+              <p>
+                With the Ujjwal Dental Health Plan, you get discounts on
+                treatments, free consultations, and the flexibility to choose
+                from a range of dental services — all while enjoying the trusted
+                care of our expert team.
+              </p>
+            </div>
+          </div>
 
           {isLoading ? (
             <div className="text-center py-16">
@@ -308,16 +339,6 @@ const PlansPage = () => {
               </ul>
             )}
 
-            {/* Terms snippet */}
-            <p className="mt-5 text-[13px] text-gray-400 leading-relaxed">
-              Membership is valid for 1 year from purchase, non-transferable, and
-              valid at all Ujjwal Dental locations. By proceeding you agree to our{" "}
-              <Link to="/terms" className="text-accent no-underline hover:underline">
-                Terms &amp; Conditions
-              </Link>
-              .
-            </p>
-
             {/* Your details — no login required; account is created/linked after payment */}
             <div className="mt-5 space-y-3">
               <input
@@ -360,6 +381,30 @@ const PlansPage = () => {
                 Login details will be emailed to you after purchase.
               </p>
             </div>
+
+            {/* Terms & Conditions accordion (collapsed by default) */}
+            {buyDialog.terms && (
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowTerms((s) => !s)}
+                  className="w-full flex items-center justify-between text-[13px] font-semibold text-[#003366] cursor-pointer"
+                  aria-expanded={showTerms}
+                >
+                  <span>Terms &amp; Conditions</span>
+                  <span
+                    className={`transition-transform duration-200 ${showTerms ? "rotate-180" : ""}`}
+                  >
+                    ▾
+                  </span>
+                </button>
+                {showTerms && (
+                  <p className="mt-2 text-[12px] text-gray-500 leading-relaxed">
+                    {buyDialog.terms}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
