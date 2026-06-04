@@ -122,14 +122,20 @@ const marqueeItems = [
 
 const heroBanners = [
   {
-    src: "/images/banner1.png",
-    alt: "Perfectly Aligned Smiles, Expertly Crafted Braces",
+    desktop: "/banners/banner1-desktop.webp",
+    mobile: "/banners/banner1-mobile.webp",
+    alt: "Complete Family Dental Care - Ujjwal Dental Clinic Sonipat",
   },
   {
-    src: "/images/banner2.png",
-    alt: "The Joy of Healthy Smiles - Kids Dentistry",
+    desktop: "/banners/banner2-desktop.webp",
+    mobile: "/banners/banner2-mobile.webp",
+    alt: "Your Smile Our Priority - Smile Makeovers at Ujjwal Dental",
   },
-  { src: "/images/banner3.png", alt: "Expert Dental Care for a Healthy Smile" },
+  {
+    desktop: "/banners/banner3-desktop.webp",
+    mobile: "/banners/banner3-mobile.webp",
+    alt: "Painless Laser Dentistry - Dr. Ujjwal at Ujjwal Dental Clinic",
+  },
 ];
 
 const treatments = [
@@ -263,11 +269,15 @@ const HomePage = () => {
         >
           {heroBanners.map((banner, i) => (
             <SwiperSlide key={i}>
-              <img
-                src={banner.src}
-                alt={banner.alt}
-                className="w-full aspect-[4/3] md:aspect-[16/9] lg:aspect-[21/9] lg:max-h-[500px] object-cover"
-              />
+              <picture>
+                {/* Desktop image ≥768px, mobile image below */}
+                <source media="(min-width: 768px)" srcSet={banner.desktop} />
+                <img
+                  src={banner.mobile}
+                  alt={banner.alt}
+                  className="block w-full h-auto md:max-h-[500px] md:object-cover"
+                />
+              </picture>
             </SwiperSlide>
           ))}
         </Swiper>
