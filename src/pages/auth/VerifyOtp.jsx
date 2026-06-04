@@ -184,7 +184,7 @@ const VerifyOtp = () => {
       </div>
 
       {/* Right form panel */}
-      <div className="w-full lg:w-[45%] bg-white flex items-center justify-center px-[40px] py-10">
+      <div className="w-full lg:w-[45%] bg-white flex items-center justify-center px-6 sm:px-[40px] py-10">
         <div className="w-full max-w-sm">
           {/* Back link */}
           <button
@@ -208,7 +208,7 @@ const VerifyOtp = () => {
           </p>
 
           {/* OTP input boxes */}
-          <div className="flex justify-center gap-3 mb-6">
+          <div className="flex justify-center gap-2 sm:gap-3 mb-6">
             {otp.map((digit, index) => (
               <input
                 key={index}
@@ -221,7 +221,7 @@ const VerifyOtp = () => {
                 inputMode="numeric"
                 autoFocus={index === 0}
                 disabled={loading}
-                className="font-numbers w-[52px] h-[52px] rounded-xl border border-gray-200 text-center text-[20px] font-semibold text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200 disabled:opacity-60"
+                className="font-numbers w-11 h-11 sm:w-[52px] sm:h-[52px] rounded-xl border border-gray-200 text-center text-[18px] sm:text-[20px] font-semibold text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200 disabled:opacity-60"
               />
             ))}
           </div>

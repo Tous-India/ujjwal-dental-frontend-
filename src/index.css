@@ -2,6 +2,25 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap");
 @import "tailwindcss";
 
+/* ============ GLOBAL OVERFLOW / SIZING GUARDS ============ */
+/* Prevent any stray wide element from causing horizontal scroll on phones,
+   keep media fluid, and make every box include padding/border in its width. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Site-wide design tokens (warm navy + warm orange accent) */
 @theme {
   /* Pinned to the Tailwind v4 default so the spacing scale stays correct
@@ -43,6 +62,42 @@ td,
 .MuiTableCell-body {
   font-family: "Inter", "DM Sans", sans-serif !important;
   font-variant-numeric: tabular-nums;
+}
+
+/* ============ RESPONSIVE TABLES (admin + patient portals) ============ */
+/* Both the scroll wrapper AND the table itself are white so the area revealed
+   while scrolling horizontally never shows the half-white/half-grey seam. */
+.MuiTableContainer-root,
+.MuiTable-root {
+  background-color: #fff;
+}
+/* Allow horizontal scrolling on any overflowing MUI table container. */
+.MuiTableContainer-root {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* On tablets and below, tighten cell density so more columns fit before the
+   table needs to scroll. */
+@media (max-width: 1024px) {
+  .MuiTableCell-root {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
+}
+
+/* ============ FULL-SCREEN DIALOGS ON PHONES ============ */
+/* Admin/patient/public modals fill the screen on phones (no stray margins or
+   rounded corners causing horizontal overflow); they stay centered cards on
+   tablet and desktop. */
+@media (max-width: 640px) {
+  .MuiDialog-paper {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+  }
 }
 
 .css-1f0zdka-MuiList-root {
@@ -225,7 +280,7 @@ body {
 .menuIcon {
   display: none;
 }
-@media (max-width: 720px) {
+@media (max-width: 1023px) {
   .main-navbar {
     img {
       display: block !important;

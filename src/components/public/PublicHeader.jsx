@@ -95,8 +95,8 @@ const PublicHeader = () => {
 
   return (
     <>
-      {/* Top Bar */}
-      <div className="bg-[#0D1B4A] text-white py-2 text-sm">
+      {/* Top Bar (hidden on phones, shown tablet and up) */}
+      <div className="hidden md:block bg-[#0D1B4A] text-white py-2 text-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <div className="flex justify-between items-center flex-wrap gap-2">
             <div className="flex items-center gap-4">
@@ -186,11 +186,11 @@ const PublicHeader = () => {
 
             {/* Desktop Nav */}
             <div
-              className={`md:flex ml-auto mr-6 items-center main-navbar ${showMenu ? "showMenuWithTransition" : ""}`}
+              className={`lg:flex ml-auto mr-6 items-center main-navbar ${showMenu ? "showMenuWithTransition" : ""}`}
             >
               <nav className="navdiv ">
                 <img src={logo} alt="logo" />
-                <ul className="md:flex items-center gap-1.5">
+                <ul className="lg:flex items-center gap-1.5">
                   <li>
                     {" "}
                     <NavLink
@@ -216,7 +216,7 @@ const PublicHeader = () => {
                       <div className="dropdown-nav">
                         <ul
                           onClick={closeMobileMenu}
-                          className="md:!grid md:!grid-cols-2 md:!gap-x-2 md:!w-auto md:!min-w-[400px] md:!p-4 md:!rounded-xl"
+                          className="lg:!grid lg:!grid-cols-2 lg:!gap-x-2 lg:!w-auto lg:!min-w-[360px] lg:!max-w-[90vw] lg:!p-4 lg:!rounded-xl"
                         >
                           <li>
                             <NavLink to="/treatments/dental-implant">
@@ -353,15 +353,15 @@ const PublicHeader = () => {
             {/* Book Appointment CTA */}
             <NavLink
               to="/book-appointment"
-              className="hidden md:inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[15px] tracking-wide px-6 py-2.5 no-underline cursor-pointer shrink-0 shadow-sm hover:bg-[#E06C00] hover:shadow-md transition-all duration-200"
+              className="hidden lg:inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[15px] tracking-wide px-6 py-2.5 no-underline cursor-pointer shrink-0 shadow-sm hover:bg-[#E06C00] hover:shadow-md transition-all duration-200"
             >
               Book Appointment
             </NavLink>
 
-            {/* Mobile-only Book button (desktop has the full CTA above) */}
+            {/* Mobile/tablet Book button (full nav + CTA shows at lg and up) */}
             <NavLink
               to="/book-appointment"
-              className="md:hidden ml-auto mr-3 inline-flex items-center whitespace-nowrap bg-[#F57C00] text-white rounded-full font-semibold text-[13px] px-4 py-1.5 no-underline shrink-0 hover:bg-[#E06C00] transition-colors"
+              className="lg:hidden ml-auto mr-3 inline-flex items-center whitespace-nowrap bg-[#F57C00] text-white rounded-full font-semibold text-[13px] px-4 py-1.5 no-underline shrink-0 hover:bg-[#E06C00] transition-colors"
             >
               Book Now
             </NavLink>

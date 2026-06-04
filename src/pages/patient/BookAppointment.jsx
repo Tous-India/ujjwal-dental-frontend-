@@ -581,7 +581,7 @@ const BookAppointment = () => {
                         {completed ? <CheckIcon className="text-[18px]!" /> : i + 1}
                       </div>
                       <span
-                        className={`mt-1.5 text-[13px] text-center leading-tight ${
+                        className={`mt-1.5 text-[11px] sm:text-[13px] text-center leading-tight ${
                           current
                             ? "text-[#003366] font-bold"
                             : "text-gray-400 font-medium"
@@ -612,7 +612,7 @@ const BookAppointment = () => {
             </p>
 
             {/* Form card */}
-            <div className="bg-white rounded-2xl shadow-sm px-[40px] py-[32px]">
+            <div className="bg-white rounded-2xl shadow-sm px-5 sm:px-[40px] py-[32px]">
               {/* Step 1: Clinic & Date */}
               {activeStep === 0 && (
                 <div>

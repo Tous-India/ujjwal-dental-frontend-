@@ -53,7 +53,7 @@ const AdminLayout = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` },
           minHeight: "100vh",
         }}
         className="bg-gray-50"

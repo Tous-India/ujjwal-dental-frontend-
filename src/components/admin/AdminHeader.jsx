@@ -191,8 +191,8 @@ const AdminHeader = ({ onMenuClick }) => {
       position="fixed"
       elevation={0}
       sx={{
-        width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-        ml: { md: `${DRAWER_WIDTH}px` },
+        width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` },
+        ml: { lg: `${DRAWER_WIDTH}px` },
         bgcolor: "white",
         borderBottom: "1px solid #f3f4f6",
         zIndex: (theme) => theme.zIndex.drawer + 1,
@@ -204,7 +204,7 @@ const AdminHeader = ({ onMenuClick }) => {
           <IconButton
             onClick={onMenuClick}
             edge="start"
-            sx={{ display: { md: "none" } }}
+            sx={{ display: { lg: "none" } }}
             className="text-gray-600"
           >
             <MenuIcon />

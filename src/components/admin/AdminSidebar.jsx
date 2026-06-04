@@ -120,7 +120,7 @@ const AdminSidebar = ({ open, onClose }) => {
   });
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
   /**
    * Handle navigation item click
@@ -228,7 +228,7 @@ const AdminSidebar = ({ open, onClose }) => {
   return (
     <Box
       component="nav"
-      sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+      sx={{ width: { lg: DRAWER_WIDTH }, flexShrink: { lg: 0 } }}
     >
       {/* Mobile Drawer (temporary) */}
       <Drawer
@@ -237,7 +237,7 @@ const AdminSidebar = ({ open, onClose }) => {
         onClose={onClose}
         ModalProps={{ keepMounted: true }} // Better mobile performance
         sx={{
-          display: { xs: "block", md: "none" },
+          display: { xs: "block", lg: "none" },
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
@@ -251,7 +251,7 @@ const AdminSidebar = ({ open, onClose }) => {
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: "none", md: "block" },
+          display: { xs: "none", lg: "block" },
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",

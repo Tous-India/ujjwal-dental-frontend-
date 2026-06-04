@@ -275,7 +275,7 @@ const HomePage = () => {
                 <img
                   src={banner.mobile}
                   alt={banner.alt}
-                  className="block w-full h-auto md:max-h-[500px] md:object-cover"
+                  className="block w-full h-auto md:max-h-[400px] lg:max-h-[500px] md:object-cover"
                 />
               </picture>
             </SwiperSlide>
@@ -657,7 +657,7 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
             {doctors.map((doc) => (
               <div
                 key={doc.name}
@@ -715,7 +715,7 @@ const HomePage = () => {
                   key={i}
                   className={`relative rounded-2xl py-8 px-6 flex flex-col border ${
                     featured
-                      ? "bg-white border-[#003366] md:scale-[1.03]"
+                      ? "bg-white border-[#003366] md:scale-[1.03] order-first md:order-none"
                       : "bg-gray-50 border-gray-100"
                   }`}
                 >

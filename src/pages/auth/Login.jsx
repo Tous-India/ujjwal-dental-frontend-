@@ -136,7 +136,7 @@ const Login = () => {
       </div>
 
       {/* Right form panel */}
-      <div className="w-full lg:w-[45%] bg-white flex items-center justify-center px-[40px] py-10">
+      <div className="w-full lg:w-[45%] bg-white flex items-center justify-center px-6 sm:px-[40px] py-10">
         <div className="w-full max-w-md">
           <Link
             to="/"
