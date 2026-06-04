@@ -25,7 +25,13 @@
 }
 
 /* Numbers/prices: Inter renders sharp, tabular figures (font-family uses
-   !important to override the global DM Sans !important rule). */
+   !important to override the global DM Sans !important rule). The attribute
+   selectors auto-catch any element whose class hints at money/numbers, so
+   dynamically rendered prices are covered without per-element edits. */
+[class*="price"],
+[class*="amount"],
+[class*="fee"],
+[class*="cost"],
 .font-numbers {
   font-family: "Inter", sans-serif !important;
   font-variant-numeric: tabular-nums;

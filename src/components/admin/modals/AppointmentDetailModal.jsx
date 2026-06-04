@@ -210,7 +210,7 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
                 {isFree ? (
                   <Chip label="Free" size="small" color="info" />
                 ) : (
-                  <Typography variant="body2" className="font-medium">₹{opdFee || 300}</Typography>
+                  <Typography variant="body2" className="font-numbers font-medium">₹{opdFee || 300}</Typography>
                 )}
               </Box>
               <Box className="flex justify-between items-center py-2">

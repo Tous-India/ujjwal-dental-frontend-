@@ -216,7 +216,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
               </Typography>
             </Box>
             <Box className="bg-gray-50 rounded-lg p-4">
-              <InfoRow label="Amount" value={formatCurrency(payment.amount)} highlight />
+              <InfoRow label="Amount" value={<span className="font-numbers">{formatCurrency(payment.amount)}</span>} highlight />
               <InfoRow label="Mode" value={paymentModeLabels[payment.paymentMode] || payment.paymentMode} />
               <InfoRow label="Type" value={paymentTypeLabels[payment.type] || payment.type} />
               <InfoRow label="Status" value={payment.status?.toUpperCase()} />
@@ -244,7 +244,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
                 <>
                   <Divider className="my-2" />
                   <InfoRow label="Invoice #" value={payment.invoice?.invoiceNumber} />
-                  <InfoRow label="Invoice Total" value={formatCurrency(payment.invoice?.grandTotal)} />
+                  <InfoRow label="Invoice Total" value={<span className="font-numbers">{formatCurrency(payment.invoice?.grandTotal)}</span>} />
                 </>
               )}
             </Box>

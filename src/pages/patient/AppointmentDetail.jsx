@@ -205,7 +205,7 @@ const AppointmentDetail = () => {
               <InfoRow
                 icon={PaymentIcon}
                 label="OPD Fee"
-                value={appointment.isFree ? "Free" : `₹${appointment.opdFee || 0}`}
+                value={appointment.isFree ? "Free" : <span className="font-numbers">{`₹${appointment.opdFee || 0}`}</span>}
               />
               <Box className="flex items-start gap-3 py-3">
                 <PaymentIcon className="text-gray-400 mt-0.5" fontSize="small" />

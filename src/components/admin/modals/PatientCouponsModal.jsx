@@ -80,7 +80,7 @@ const PatientCouponsModal = ({ open, onClose, patientId, patientName }) => {
                     </Typography>
                     <Chip label={coupon.status.toUpperCase()} size="small" color={statusColors[coupon.status]} sx={{ fontSize: "0.65rem", height: 20 }} />
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8rem" }}>
+                  <Typography variant="body2" color="text.secondary" className="font-numbers" sx={{ fontSize: "0.8rem" }}>
                     ₹{coupon.flatDiscount} off + {coupon.surgeryDiscount}% surgery discount
                   </Typography>
                   {coupon.status === "used" && coupon.usedAt && (

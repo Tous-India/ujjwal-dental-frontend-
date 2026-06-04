@@ -84,7 +84,7 @@ const CouponCard = ({ coupon }) => {
       <Box sx={{ textAlign: "center", my: 1 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5, mb: 0.5 }}>
           <LocalOfferIcon sx={{ fontSize: 18, color: isActive ? "#006694" : "#999" }} />
-          <Typography sx={{ fontSize: "1.3rem", fontWeight: 800, color: isActive ? "#003366" : "#999" }}>
+          <Typography className="font-numbers" sx={{ fontSize: "1.3rem", fontWeight: 800, color: isActive ? "#003366" : "#999" }}>
             ₹{coupon.flatDiscount} OFF
           </Typography>
         </Box>

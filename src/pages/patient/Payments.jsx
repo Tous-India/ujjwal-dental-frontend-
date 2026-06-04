@@ -102,7 +102,7 @@ const Payments = () => {
                   <Typography variant="body2" color="text.secondary">
                     Total Paid
                   </Typography>
-                  <Typography variant="h5" fontWeight="bold" className="text-green-600">
+                  <Typography variant="h5" fontWeight="bold" className="font-numbers text-green-600">
                     {formatCurrency(summary.totalPaid)}
                   </Typography>
                 </Box>
@@ -119,7 +119,7 @@ const Payments = () => {
                   <Typography variant="body2" color="text.secondary">
                     Pending Amount
                   </Typography>
-                  <Typography variant="h5" fontWeight="bold" className="text-orange-600">
+                  <Typography variant="h5" fontWeight="bold" className="font-numbers text-orange-600">
                     {formatCurrency(summary.totalPending)}
                   </Typography>
                 </Box>

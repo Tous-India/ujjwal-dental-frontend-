@@ -139,7 +139,7 @@ const TestDetailModal = ({ open, onClose, test, onEdit, onDelete }) => {
               <InfoRow
                 icon={AttachMoneyIcon}
                 label="Price"
-                value={`₹${price?.toLocaleString() || 0}`}
+                value={<span className="font-numbers">{`₹${price?.toLocaleString() || 0}`}</span>}
                 color="text-purple-600"
               />
               <InfoRow

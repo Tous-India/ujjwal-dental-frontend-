@@ -116,7 +116,7 @@ const PlanCard = ({ plan, onBuy, isBuying, hasMembership }) => {
           </Typography>
         </Box>
         <Typography variant="h4" className="font-bold">
-          {formatCurrency(plan.price)}
+          <span className="font-numbers">{formatCurrency(plan.price)}</span>
           <Typography component="span" variant="body2" className="opacity-80 ml-1">
             / {plan.durationMonths || 12} months
           </Typography>

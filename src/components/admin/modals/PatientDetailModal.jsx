@@ -581,25 +581,25 @@ const PaymentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
       {summary && (
         <Box className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <Box className="bg-green-50 rounded-lg p-4 text-center">
-            <Typography variant="h6" className="font-bold text-green-600">
+            <Typography variant="h6" className="font-numbers font-bold text-green-600">
               {formatCurrency(summary.totalPaid)}
             </Typography>
             <Typography variant="caption" className="text-gray-600">Total Paid</Typography>
           </Box>
           <Box className="bg-red-50 rounded-lg p-4 text-center">
-            <Typography variant="h6" className="font-bold text-red-600">
+            <Typography variant="h6" className="font-numbers font-bold text-red-600">
               {formatCurrency(summary.totalPending)}
             </Typography>
             <Typography variant="caption" className="text-gray-600">Pending</Typography>
           </Box>
           <Box className="bg-blue-50 rounded-lg p-4 text-center">
-            <Typography variant="h6" className="font-bold text-blue-600">
+            <Typography variant="h6" className="font-numbers font-bold text-blue-600">
               {summary.totalPayments || 0}
             </Typography>
             <Typography variant="caption" className="text-gray-600">Total Payments</Typography>
           </Box>
           <Box className="bg-purple-50 rounded-lg p-4 text-center">
-            <Typography variant="h6" className="font-bold text-purple-600">
+            <Typography variant="h6" className="font-numbers font-bold text-purple-600">
               {formatCurrency(summary.totalAmount)}
             </Typography>
             <Typography variant="caption" className="text-gray-600">Total Amount</Typography>

@@ -143,7 +143,7 @@ const Membership = () => {
                     Plan Value
                   </Typography>
                   <Typography variant="h5" className="font-bold text-green-600">
-                    {formatCurrency(plan.price)}
+                    <span className="font-numbers">{formatCurrency(plan.price)}</span>
                     <Typography component="span" variant="body2" color="text.secondary">
                       {" "}
                       / {plan.duration || 12} months

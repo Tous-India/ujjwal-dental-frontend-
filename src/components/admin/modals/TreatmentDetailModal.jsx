@@ -131,7 +131,7 @@ const TreatmentDetailModal = ({ open, onClose, treatment, onEdit, onDelete }) =>
               <InfoRow
                 icon={AttachMoneyIcon}
                 label="Price"
-                value={priceRange ? `₹${priceRange.min} - ₹${priceRange.max}` : `₹${price}`}
+                value={<span className="font-numbers">{priceRange ? `₹${priceRange.min} - ₹${priceRange.max}` : `₹${price}`}</span>}
                 color="text-teal-600"
               />
               <InfoRow

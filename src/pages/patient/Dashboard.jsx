@@ -155,7 +155,7 @@ const Dashboard = () => {
                 {stat.value === null ? (
                   <Skeleton width={60} height={40} />
                 ) : (
-                  <Typography variant="h4" fontWeight="bold">
+                  <Typography variant="h4" fontWeight="bold" className="font-numbers">
                     {stat.value}
                   </Typography>
                 )}

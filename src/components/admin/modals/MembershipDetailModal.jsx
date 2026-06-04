@@ -139,7 +139,7 @@ const MembershipDetailModal = ({ open, onClose, plan, onEdit, onDelete }) => {
         <Box className={`rounded-lg p-4 mb-6 ${tierStyle.bg} border ${tierStyle.border}`}>
           <Box className="flex justify-between items-center">
             <Box>
-              <Typography variant="h4" className={`font-bold ${tierStyle.text}`}>
+              <Typography variant="h4" className={`font-numbers font-bold ${tierStyle.text}`}>
                 {priceDisplay || formatCurrency(price)}
               </Typography>
               <Typography variant="body2" className="text-gray-600">
@@ -252,7 +252,7 @@ const MembershipDetailModal = ({ open, onClose, plan, onEdit, onDelete }) => {
                   <Typography variant="caption" className="text-gray-500 block">
                     Flat Discount
                   </Typography>
-                  <Typography variant="body2" className="font-medium">
+                  <Typography variant="body2" className="font-numbers font-medium">
                     {plan.couponConfig.flatDiscount != null ? `₹${plan.couponConfig.flatDiscount}` : "-"}
                   </Typography>
                 </Grid>

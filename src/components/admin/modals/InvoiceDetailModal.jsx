@@ -359,32 +359,32 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
             {/* Totals Breakdown */}
             <Box className="flex justify-end mb-4">
               <Paper variant="outlined" className="p-4 min-w-[300px]">
-                <InfoRow label="Subtotal">{formatCurrency(inv?.subtotal)}</InfoRow>
+                <InfoRow label="Subtotal"><span className="font-numbers">{formatCurrency(inv?.subtotal)}</span></InfoRow>
                 {(inv?.discount?.percentage > 0 || inv?.discount?.amount > 0) && (
                   <InfoRow label={`Discount${inv?.discount?.percentage ? ` (${inv.discount.percentage}%)` : ""}`}>
-                    <span className="text-red-500">
+                    <span className="font-numbers text-red-500">
                       -{formatCurrency(inv?.discount?.amount || 0)}
                     </span>
                   </InfoRow>
                 )}
                 {inv?.totalTax > 0 && (
-                  <InfoRow label="Tax">{formatCurrency(inv?.totalTax)}</InfoRow>
+                  <InfoRow label="Tax"><span className="font-numbers">{formatCurrency(inv?.totalTax)}</span></InfoRow>
                 )}
                 <Divider className="my-2" />
                 <InfoRow label="Grand Total">
-                  <span className="text-lg font-bold">
+                  <span className="font-numbers text-lg font-bold">
                     {formatCurrency(inv?.grandTotal)}
                   </span>
                 </InfoRow>
                 <InfoRow label="Amount Paid">
-                  <span className="text-green-600 font-medium">
+                  <span className="font-numbers text-green-600 font-medium">
                     {formatCurrency(inv?.amountPaid)}
                   </span>
                 </InfoRow>
                 <Divider className="my-1" />
                 <InfoRow label="Balance Due">
                   <span
-                    className={`font-bold ${inv?.balanceDue > 0 ? "text-red-600" : "text-green-600"}`}
+                    className={`font-numbers font-bold ${inv?.balanceDue > 0 ? "text-red-600" : "text-green-600"}`}
                   >
                     {formatCurrency(inv?.balanceDue)}
                   </span>

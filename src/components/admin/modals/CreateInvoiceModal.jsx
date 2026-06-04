@@ -441,7 +441,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     <Box className="flex items-center justify-between">
                       <Typography
                         variant="body2"
-                        className="font-semibold text-green-600"
+                        className="font-numbers font-semibold text-green-600"
                       >
                         ₹{itemTotals[index]?.total.toLocaleString("en-IN", { maximumFractionDigits: 2 }) || "0"}
                       </Typography>
@@ -468,7 +468,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   <Typography variant="body2" className="text-gray-600">
                     Subtotal:
                   </Typography>
-                  <Typography variant="body2">
+                  <Typography variant="body2" className="font-numbers">
                     ₹{subtotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                   </Typography>
                 </Box>
@@ -477,7 +477,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     <Typography variant="body2" className="text-gray-600">
                       Discount ({formData.discountPercent}%):
                     </Typography>
-                    <Typography variant="body2" className="text-red-500">
+                    <Typography variant="body2" className="font-numbers text-red-500">
                       -₹{discountAmount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                     </Typography>
                   </Box>
@@ -487,7 +487,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     <Typography variant="body2" className="text-gray-600">
                       Tax:
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant="body2" className="font-numbers">
                       ₹{totalTax.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                     </Typography>
                   </Box>
@@ -499,7 +499,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Typography>
                   <Typography
                     variant="subtitle2"
-                    className="font-bold text-green-600"
+                    className="font-numbers font-bold text-green-600"
                   >
                     ₹{grandTotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                   </Typography>

@@ -377,7 +377,7 @@ const PlanDetailPage = () => {
                     "&:hover": { bgcolor: "#005580" },
                 }}
               >
-                Buy Now - ₹{plan.price?.toLocaleString("en-IN")}
+                Buy Now - <span className="font-numbers">₹{plan.price?.toLocaleString("en-IN")}</span>
               </Button>
             </Box>
           </Grid>
@@ -471,7 +471,7 @@ const PlanDetailPage = () => {
             sx={{ bgcolor: "#006694", borderRadius: 5, px: 4, "&:hover": { bgcolor: "#005580" } }}
             startIcon={isProcessing ? <CircularProgress size={16} color="inherit" /> : <ShoppingCartIcon />}
           >
-            {isProcessing ? "Processing..." : `Pay ₹${plan?.price?.toLocaleString("en-IN")}`}
+            {isProcessing ? "Processing..." : <span>Pay <span className="font-numbers">₹{plan?.price?.toLocaleString("en-IN")}</span></span>}
           </Button>
         </DialogActions>
       </Dialog>
