@@ -58,6 +58,13 @@ const doctors = [
     lead: false,
     img: "/doctors/ajay.webp",
   },
+  {
+    name: "Dr. Shivani Sharma",
+    experience: "15 Yrs Experience",
+    subtitle: "MDS — Periodontist",
+    lead: false,
+    img: "/doctors/shivani.webp",
+  },
 ];
 
 const dentalPlans = [
@@ -233,6 +240,8 @@ const HomePage = () => {
   const [openFaqs, setOpenFaqs] = useState({ 0: true });
   const reviewsPrevRef = useRef(null);
   const reviewsNextRef = useRef(null);
+  const doctorsPrevRef = useRef(null);
+  const doctorsNextRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -628,7 +637,7 @@ const HomePage = () => {
               </span>
               <div>
                 <p style={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                  <span className="font-numbers text-[#e88a1a]">3</span> Specialists
+                  <span className="font-numbers text-[#e88a1a]">4</span> Specialists
                 </p>
                 <p className="text-gray-500" style={{ fontSize: "0.8rem" }}>
                   Expert dental care across multiple specializations.
@@ -663,44 +672,84 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            {doctors.map((doc) => (
-              <div
-                key={doc.name}
-                className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
-                  doc.lead ? "border-t-4 border-[#e88a1a]" : ""
-                }`}
-              >
-                {/* Photo (4:5) — real image on top, navy gradient + silhouette
-                    as the fallback layer if no/broken image. */}
-                <div className="relative w-full aspect-[4/5] bg-gradient-to-br from-[#0D1B4A] to-[#1e3a8a]">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <PersonIcon className="text-white/80 text-[64px]!" />
+          {/* Doctor slider: 1.2 cards on mobile (peek next), 2.5 on tablet,
+              all 4 on desktop. Swipeable; arrows appear on hover (desktop). */}
+          <div className="group relative max-w-6xl mx-auto">
+            {/* Hover arrows (desktop only) */}
+            <button
+              ref={doctorsPrevRef}
+              aria-label="Previous doctors"
+              className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white text-[#003366] shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+              <ChevronLeftIcon />
+            </button>
+            <button
+              ref={doctorsNextRef}
+              aria-label="Next doctors"
+              className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white text-[#003366] shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+              <ChevronRightIcon />
+            </button>
+
+            <Swiper
+              modules={[Navigation]}
+              speed={500}
+              loop={false}
+              spaceBetween={16}
+              slidesPerView={1.2}
+              navigation={{
+                prevEl: doctorsPrevRef.current,
+                nextEl: doctorsNextRef.current,
+              }}
+              onBeforeInit={(swiper) => {
+                swiper.params.navigation.prevEl = doctorsPrevRef.current;
+                swiper.params.navigation.nextEl = doctorsNextRef.current;
+              }}
+              breakpoints={{
+                768: { slidesPerView: 2.5 },
+                1024: { slidesPerView: 4 },
+              }}
+              className="px-1 pt-2 pb-4 !items-stretch"
+            >
+              {doctors.map((doc) => (
+                <SwiperSlide key={doc.name} className="h-auto">
+                  <div
+                    className={`h-full bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
+                      doc.lead ? "border-t-4 border-[#e88a1a]" : ""
+                    }`}
+                  >
+                    {/* Photo (4:5) — real image on top, navy gradient + silhouette
+                        as the fallback layer if no/broken image. */}
+                    <div className="relative w-full aspect-[4/5] bg-gradient-to-br from-[#0D1B4A] to-[#1e3a8a]">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <PersonIcon className="text-white/80 text-[64px]!" />
+                      </div>
+                      {doc.img && (
+                        <img
+                          src={doc.img}
+                          alt={doc.name}
+                          className="absolute inset-0 w-full h-full object-cover object-top"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <p className="text-[#003366] text-base font-semibold leading-tight">
+                        {doc.name}
+                      </p>
+                      {doc.subtitle && (
+                        <p className="text-gray-500 text-[14px] mt-1 leading-snug">
+                          {doc.subtitle}
+                        </p>
+                      )}
+                      <p className="font-numbers text-gray-500 text-sm mt-1">{doc.experience}</p>
+                    </div>
                   </div>
-                  {doc.img && (
-                    <img
-                      src={doc.img}
-                      alt={doc.name}
-                      className="absolute inset-0 w-full h-full object-cover object-top"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  )}
-                </div>
-                <div className="p-4">
-                  <p className="text-[#003366] text-base font-semibold leading-tight">
-                    {doc.name}
-                  </p>
-                  {doc.subtitle && (
-                    <p className="text-gray-500 text-[14px] mt-1 leading-snug">
-                      {doc.subtitle}
-                    </p>
-                  )}
-                  <p className="font-numbers text-gray-500 text-sm mt-1">{doc.experience}</p>
-                </div>
-              </div>
-            ))}
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
         </div>
       </section>
