@@ -50,7 +50,7 @@ const treatmentCards = [
 
 const doctors = [
   { name: "Dr. Ujjwal Prem", subtitle: "MDS (Oral and Maxillofacial Surgeon)", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
-  { name: "Dr. Alisha Dogra", experience: "5 Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
+  { name: "Dr. Alisha Dogra", subtitle: "BDS — Bachelor of Dental Surgery", experience: "5 Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
   {
     name: "Dr. Ajay Kaushik",
     experience: "7 Yrs Experience",
