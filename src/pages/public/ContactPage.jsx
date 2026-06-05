@@ -3,6 +3,7 @@
  */
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
+import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -32,7 +33,10 @@ const ContactPage = () => {
   const [form, setForm] = useState({ name: "", phone: "", email: "", subject: "", message: "" });
   const [sending, setSending] = useState(false);
 
-  const handleChange = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
+  const handleChange = (field) => (e) => {
+    const value = field === "name" ? filterName(e.target.value) : e.target.value;
+    setForm((p) => ({ ...p, [field]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -172,7 +176,7 @@ const ContactPage = () => {
                       className={fieldCls}
                       value={form.name}
                       onChange={handleChange("name")}
-                      placeholder="Enter your name"
+                      placeholder={NAME_PLACEHOLDER}
                     />
                   </div>
                   <div>

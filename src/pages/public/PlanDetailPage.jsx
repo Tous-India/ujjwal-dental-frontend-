@@ -31,6 +31,7 @@ import LoginIcon from "@mui/icons-material/Login";
 import Grid from "@mui/material/Grid";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
@@ -420,8 +421,9 @@ const PlanDetailPage = () => {
                 <TextField
                   fullWidth size="small" required
                   label="Full Name"
+                  placeholder={NAME_PLACEHOLDER}
                   value={buyForm.name}
-                  onChange={(e) => setBuyForm((p) => ({ ...p, name: e.target.value }))}
+                  onChange={(e) => setBuyForm((p) => ({ ...p, name: filterName(e.target.value) }))}
                 />
                 <TextField
                   fullWidth size="small" required

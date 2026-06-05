@@ -26,6 +26,7 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import AddIcon from "@mui/icons-material/Add";
 import { usePatientMutations } from "../../../hooks/admin/usePatients";
 import { todayStr, dateGuards } from "../../../utils/dateInput";
+import { filterName, NAME_PLACEHOLDER } from "../../../utils/nameInput";
 
 /**
  * Gender options
@@ -79,7 +80,12 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
    * Handle input change
    */
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    // Person-name fields accept letters, spaces and dots only
+    const value =
+      name === "name" || name === "emergencyContact.name"
+        ? filterName(e.target.value)
+        : e.target.value;
 
     // Handle nested fields
     if (name.includes(".")) {
@@ -272,6 +278,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
               fullWidth
               label="Full Name"
               name="name"
+              placeholder={NAME_PLACEHOLDER}
               value={formData.name}
               onChange={handleChange}
               error={!!errors.name}
@@ -435,6 +442,7 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
               fullWidth
               label="Contact Name"
               name="emergencyContact.name"
+              placeholder="Enter contact name"
               value={formData.emergencyContact.name}
               onChange={handleChange}
               size="small"

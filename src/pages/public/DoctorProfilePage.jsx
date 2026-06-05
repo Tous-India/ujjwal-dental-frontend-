@@ -4,6 +4,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import submitEnquiry from "../../utils/submitEnquiry";
+import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
 
 const doctors = [
@@ -293,9 +294,9 @@ const DoctorProfilePage = () => {
               <div className="flex flex-col gap-3">
                 <input
                   type="text"
-                  placeholder="Your Name*"
+                  placeholder={NAME_PLACEHOLDER}
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  onChange={(e) => setForm({ ...form, name: filterName(e.target.value) })}
                   className="w-full px-4 py-2.5 rounded-[5px] border border-[#e88a1a] outline-none focus:border-[#c26e1a] transition-colors"
                   style={{ fontSize: "14px", fontFamily: "'Poppins', sans-serif" }}
                 />

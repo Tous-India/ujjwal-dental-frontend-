@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
+import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
@@ -391,9 +392,9 @@ const PlansPage = () => {
             <div className="mt-5 space-y-3">
               <input
                 className={fieldCls}
-                placeholder="Full Name"
+                placeholder={NAME_PLACEHOLDER}
                 value={buyForm.name}
-                onChange={(e) => setBuyForm((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) => setBuyForm((p) => ({ ...p, name: filterName(e.target.value) }))}
               />
               <input
                 className={fieldCls}

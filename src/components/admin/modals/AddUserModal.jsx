@@ -4,6 +4,7 @@
  * Modal for creating a new staff/admin user.
  */
 import { useState, useEffect } from "react";
+import { filterName, NAME_PLACEHOLDER } from "../../../utils/nameInput";
 import {
   Dialog,
   DialogTitle,
@@ -51,7 +52,8 @@ const AddUserModal = ({ open, onClose, onSuccess }) => {
   }, [open]);
 
   const handleChange = (field) => (e) => {
-    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = field === "name" ? filterName(e.target.value) : e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
@@ -116,7 +118,7 @@ const AddUserModal = ({ open, onClose, onSuccess }) => {
               value={formData.name}
               onChange={handleChange("name")}
               size="small"
-              placeholder="e.g., Dr. Rahul Sharma"
+              placeholder={NAME_PLACEHOLDER}
             />
           </Grid>
 

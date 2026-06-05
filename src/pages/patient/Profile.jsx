@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import { useAuthStore } from "../../store/auth.store";
 import { updatePatientProfile } from "../../api/patient/patients.api";
 import {
@@ -51,7 +52,10 @@ const Profile = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    // Patient name accepts letters, spaces and dots only (emergencyContact
+    // combines name + phone, so it is intentionally left untouched here)
+    const value = name === "name" ? filterName(e.target.value) : e.target.value;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -215,6 +219,7 @@ const Profile = () => {
                     fullWidth
                     label="Full Name"
                     name="name"
+                    placeholder={NAME_PLACEHOLDER}
                     value={formData.name}
                     onChange={handleChange}
                     disabled={!isEditing || loading}

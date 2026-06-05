@@ -4,6 +4,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
+import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 
 const DEFAULT_CONFIG = {
   enabled: true,
@@ -160,9 +161,9 @@ const PopupEnquiryForm = () => {
             <div className="grid grid-cols-2 gap-3">
               <input
                 type="text"
-                placeholder="Name"
+                placeholder={NAME_PLACEHOLDER}
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) => setForm({ ...form, name: filterName(e.target.value) })}
                 className="w-full px-4 py-2.5 rounded-lg border-2 border-[#1a8fc4] outline-none focus:border-[#003366] transition-colors bg-white"
                 style={{ fontSize: "14px", fontFamily: "'Poppins', sans-serif" }}
               />

@@ -4,6 +4,7 @@
  * Shows user/staff details with edit and deactivate/reactivate actions.
  */
 import { useState, useMemo } from "react";
+import { filterName, NAME_PLACEHOLDER } from "../../../utils/nameInput";
 import {
   Dialog,
   DialogTitle,
@@ -210,9 +211,10 @@ const UserDetailModal = ({ open, onClose, user, onRefresh }) => {
               <TextField
                 fullWidth
                 label="Name"
+                placeholder={NAME_PLACEHOLDER}
                 value={editData.name}
                 onChange={(e) =>
-                  setEditData((prev) => ({ ...prev, name: e.target.value }))
+                  setEditData((prev) => ({ ...prev, name: filterName(e.target.value) }))
                 }
                 size="small"
               />

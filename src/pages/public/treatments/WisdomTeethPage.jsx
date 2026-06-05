@@ -3,6 +3,7 @@ import { Box, Typography, Container } from "@mui/material";
 import ReCAPTCHA from "react-google-recaptcha";
 import BreadcrumbBanner from "../../../components/public/BreadcrumbBanner";
 import submitEnquiry from "../../../utils/submitEnquiry";
+import { filterName, NAME_PLACEHOLDER } from "../../../utils/nameInput";
 
 const navSections = [
   { id: "what-are-wisdom-teeth", label: "WHAT ARE WISDOM TEETH?" },
@@ -79,9 +80,9 @@ const WisdomTeethPage = () => {
                 <div className="space-y-4">
                   <input
                     type="text"
-                    placeholder="Name"
+                    placeholder={NAME_PLACEHOLDER}
                     value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    onChange={(e) => setForm({ ...form, name: filterName(e.target.value) })}
                     className="w-full px-4 py-3 rounded-full border border-gray-300 outline-none focus:border-[#003366] transition-colors"
                     style={{ fontSize: "16px", fontFamily: "'Poppins', sans-serif" }}
                   />

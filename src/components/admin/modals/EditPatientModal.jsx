@@ -22,6 +22,7 @@ import {
   Avatar,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import { filterName, NAME_PLACEHOLDER } from "../../../utils/nameInput";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
@@ -118,7 +119,12 @@ const EditPatientModal = ({ open, onClose, patient, onSuccess }) => {
    * Handle input change
    */
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    // Person-name fields accept letters, spaces and dots only
+    const value =
+      name === "name" || name === "emergencyContact.name"
+        ? filterName(e.target.value)
+        : e.target.value;
 
     // Handle nested fields
     if (name.includes(".")) {
@@ -327,6 +333,7 @@ const EditPatientModal = ({ open, onClose, patient, onSuccess }) => {
               fullWidth
               label="Full Name"
               name="name"
+              placeholder={NAME_PLACEHOLDER}
               value={formData.name}
               onChange={handleChange}
               error={!!errors.name}
@@ -510,6 +517,7 @@ const EditPatientModal = ({ open, onClose, patient, onSuccess }) => {
               fullWidth
               label="Contact Name"
               name="emergencyContact.name"
+              placeholder="Enter contact name"
               value={formData.emergencyContact.name}
               onChange={handleChange}
               size="small"

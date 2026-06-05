@@ -10,6 +10,7 @@ import { useAuthStore } from "../../store/auth.store";
 import { CircularProgress } from "@mui/material";
 import { toast } from "react-toastify";
 import ReCAPTCHA from "react-google-recaptcha";
+import { filterName } from "../../utils/nameInput";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
@@ -224,7 +225,8 @@ const BookAppointment = () => {
   };
 
   const handleChange = (field) => (e) => {
-    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = field === "name" ? filterName(e.target.value) : e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // Date field: reject past dates (manual typing / picker), reset to today.
