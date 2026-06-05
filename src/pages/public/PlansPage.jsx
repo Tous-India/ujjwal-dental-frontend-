@@ -189,9 +189,6 @@ const PlansPage = () => {
 
           {/* Compact intro — 3 quick benefits (keeps plan cards near the top) */}
           <div className="max-w-4xl mx-auto mb-10">
-            <h2 className="text-[#003366] text-[22px] md:text-[24px] font-bold text-center mb-5">
-              What is the Ujjwal Dental Health Plan?
-            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 {
@@ -312,7 +309,7 @@ const PlansPage = () => {
           {/* Full philosophy — below the cards so plans/prices come first */}
           <div className="max-w-3xl mx-auto text-center mt-14">
             <h2 className="text-[#003366] text-[24px] font-bold mb-4">
-              More about our Health Plans
+              What is the Ujjwal Dental Health Plan?
             </h2>
             <div className="text-gray-600 text-base space-y-4" style={{ lineHeight: 1.8 }}>
               <p>
