@@ -64,6 +64,7 @@ import {
 } from "../../../api/admin/patients.api";
 import EditAppointmentModal from "./EditAppointmentModal";
 import RecordPaymentModal from "./RecordPaymentModal";
+import AssignMembershipModal from "./AssignMembershipModal";
 
 /**
  * Tab Panel Component
@@ -143,7 +144,7 @@ const statusColors = {
 /**
  * Overview Tab Content
  */
-const OverviewTab = ({ patient }) => {
+const OverviewTab = ({ patient, onAssignMembership, onViewCoupons }) => {
   const {
     phone,
     email,
@@ -159,6 +160,14 @@ const OverviewTab = ({ patient }) => {
     membershipHistory,
     notes,
   } = patient;
+
+  const paymentMethodLabels = {
+    cash: "Cash",
+    card: "Card",
+    upi: "UPI",
+    bank_transfer: "Bank Transfer",
+    online: "Online",
+  };
 
   return (
     <Grid container spacing={4}>
@@ -256,7 +265,26 @@ const OverviewTab = ({ patient }) => {
           </Box>
         </Box>
 
-        <SectionHeader title="Membership" icon={CardMembershipIcon} />
+        <Box className="flex items-center justify-between mb-3 mt-4">
+          <Box className="flex items-center gap-2">
+            <CardMembershipIcon className="text-blue-600" fontSize="small" />
+            <Typography
+              variant="subtitle2"
+              className="font-semibold text-gray-700 uppercase tracking-wide"
+            >
+              Membership
+            </Typography>
+          </Box>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={onAssignMembership}
+            sx={{ fontSize: "0.7rem" }}
+          >
+            Assign Membership
+          </Button>
+        </Box>
         <Box className="bg-gray-50 rounded-lg p-4">
           {membership?.status ? (
             <>
@@ -270,17 +298,32 @@ const OverviewTab = ({ patient }) => {
                   color={membership.status === "active" ? "success" : "default"}
                 />
               </Box>
-              <Typography variant="caption" className="text-gray-500 block">
-                Discount: {membership.discountPercent}%
-              </Typography>
+              {membership.discountPercent != null && membership.discountPercent > 0 && (
+                <Typography variant="caption" className="text-gray-500 block">
+                  Discount: {membership.discountPercent}%
+                </Typography>
+              )}
               <Typography variant="caption" className="text-gray-500 block">
                 Valid: {formatDate(membership.startDate)} - {formatDate(membership.expiryDate)}
               </Typography>
+              {membership.amountPaid != null && (
+                <Typography variant="caption" className="text-gray-500 block">
+                  Amount paid: {formatCurrency(membership.amountPaid)}
+                  {membership.paymentMethod
+                    ? ` (${paymentMethodLabels[membership.paymentMethod] || membership.paymentMethod})`
+                    : ""}
+                </Typography>
+              )}
+              {membership.notes && (
+                <Typography variant="caption" className="text-gray-500 block">
+                  Notes: {membership.notes}
+                </Typography>
+              )}
               <Button
                 size="small"
                 variant="outlined"
                 startIcon={<CardGiftcardIcon />}
-                onClick={() => setCouponsModalOpen(true)}
+                onClick={onViewCoupons}
                 sx={{ mt: 1, fontSize: "0.7rem" }}
               >
                 View Coupons
@@ -711,6 +754,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
   const [activeTab, setActiveTab] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [couponsModalOpen, setCouponsModalOpen] = useState(false);
+  const [assignMembershipOpen, setAssignMembershipOpen] = useState(false);
 
   // Reset tab when modal opens
   useEffect(() => {
@@ -789,7 +833,11 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
       {/* Content */}
       <DialogContent className="p-6" style={{ minHeight: "400px" }}>
         <TabPanel value={activeTab} index={0}>
-          <OverviewTab patient={patient} />
+          <OverviewTab
+            patient={patient}
+            onAssignMembership={() => setAssignMembershipOpen(true)}
+            onViewCoupons={() => setCouponsModalOpen(true)}
+          />
         </TabPanel>
         <TabPanel value={activeTab} index={1}>
           <AppointmentsTab
@@ -885,6 +933,14 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         onClose={() => setCouponsModalOpen(false)}
         patientId={patient?._id}
         patientName={patient?.name}
+      />
+
+      {/* Assign Membership Modal */}
+      <AssignMembershipModal
+        open={assignMembershipOpen}
+        onClose={() => setAssignMembershipOpen(false)}
+        patient={patient}
+        onSuccess={handleRefresh}
       />
     </Dialog>
   );

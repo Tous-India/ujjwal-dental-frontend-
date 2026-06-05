@@ -91,6 +91,16 @@ export const assignMembership = (data) =>
   api.post("/memberships/assign", data).then((res) => res.data);
 
 /**
+ * Manually assign a membership to a patient (no payment gateway).
+ * Supports inactive/discontinued plans and fully custom plan names.
+ * @param {Object} data - { patientId, planId?, planName?, startDate, endDate,
+ *                          amountPaid, paymentMethod, notes }
+ * @returns {Promise}
+ */
+export const assignManualMembership = (data) =>
+  api.post("/memberships/assign-manual", data).then((res) => res.data);
+
+/**
  * Renew patient's membership
  * @param {string} patientId - Patient ID
  * @returns {Promise}

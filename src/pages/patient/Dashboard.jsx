@@ -29,11 +29,13 @@ import EventIcon from "@mui/icons-material/Event";
 import PaymentIcon from "@mui/icons-material/Payment";
 import DescriptionIcon from "@mui/icons-material/Description";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import { useNavigate } from "react-router-dom";
 import { useMyAppointments } from "../../hooks/patient/useMyAppointments";
 import { useMyPayments } from "../../hooks/patient/useMyPayments";
 import { useMyReports } from "../../hooks/patient/useMyReports";
 import { useMyTreatments } from "../../hooks/patient/useMyTreatments";
+import { useMyMembership } from "../../hooks/patient/useMemberships";
 
 const formatDate = (date) => {
   if (!date) return "-";
@@ -54,8 +56,16 @@ const Dashboard = () => {
   const { data: paymentsData, isLoading: loadingPay } = useMyPayments({ limit: 5 });
   const { data: reportsData, isLoading: loadingRep } = useMyReports();
   const { data: treatmentsData, isLoading: loadingTreat } = useMyTreatments({ limit: 5 });
+  const { data: membershipData, isLoading: loadingMembership } = useMyMembership();
 
   const firstName = patient?.name?.split(" ")[0] || "Patient";
+
+  // Active membership (if any)
+  const membership = membershipData?.data?.currentMembership || null;
+  const hasActiveMembership =
+    membership &&
+    membership.status === "active" &&
+    (!membership.expiryDate || new Date(membership.expiryDate) >= new Date());
 
   // Extract counts
   const allAppointments = appointmentsData?.data?.appointments || appointmentsData?.data || [];
@@ -322,6 +332,80 @@ const Dashboard = () => {
                   />
                 </ListItem>
               </List>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Membership */}
+        <Grid size={{ xs: 12 }}>
+          <Card>
+            <CardContent>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <CardMembershipIcon sx={{ color: "#ed6c02" }} />
+                  <Typography variant="h6" fontWeight="bold">
+                    Your Membership
+                  </Typography>
+                </Box>
+                {!hasActiveMembership && !loadingMembership && (
+                  <Button size="small" onClick={() => navigate("/membership-plans")}>
+                    View Plans
+                  </Button>
+                )}
+              </Box>
+
+              {loadingMembership ? (
+                <Box sx={{ textAlign: "center", py: 3 }}>
+                  <CircularProgress size={28} />
+                </Box>
+              ) : hasActiveMembership ? (
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: "#fff7ed",
+                    borderRadius: 2,
+                    border: "1px solid #fed7aa",
+                  }}
+                >
+                  <Box className="flex items-center justify-between mb-2">
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {membership.planName}
+                    </Typography>
+                    <Chip label="Active" size="small" color="success" />
+                  </Box>
+                  {membership.discountPercent > 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      Discount: {membership.discountPercent}% on treatments
+                    </Typography>
+                  )}
+                  <Typography variant="body2" color="text.secondary">
+                    Valid till: {formatDate(membership.expiryDate)}
+                  </Typography>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    textAlign: "center",
+                    py: 4,
+                    bgcolor: "#f5f5f5",
+                    borderRadius: 1,
+                  }}
+                >
+                  <CardMembershipIcon
+                    sx={{ fontSize: 48, color: "text.disabled", mb: 1 }}
+                  />
+                  <Typography color="text.secondary">
+                    No active membership
+                  </Typography>
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
