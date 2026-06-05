@@ -7,7 +7,6 @@ import { Outlet } from "react-router-dom";
 import { Box } from "@mui/material";
 import PublicHeader from "./PublicHeader";
 import PublicFooter from "./PublicFooter";
-import PopupEnquiryForm from "./PopupEnquiryForm";
 
 const PublicLayout = () => {
   return (
@@ -17,7 +16,6 @@ const PublicLayout = () => {
         <Outlet />
       </Box>
       <PublicFooter />
-      <PopupEnquiryForm />
     </Box>
   );
 };

@@ -33,3 +33,20 @@ export const getAdminProfile = () =>
  */
 export const logoutAdmin = () =>
   api.post("/auth/logout").then((res) => res.data);
+
+/**
+ * Request a password reset link for an admin account
+ * @param {string} email - Admin email
+ * @returns {Promise}
+ */
+export const forgotAdminPassword = (email) =>
+  api.post("/auth/forgot-password", { email }).then((res) => res.data);
+
+/**
+ * Reset an admin password using a token from the reset email
+ * @param {string} token - Reset token from the email link
+ * @param {string} newPassword - New password
+ * @returns {Promise}
+ */
+export const resetAdminPassword = (token, newPassword) =>
+  api.post("/auth/reset-password", { token, newPassword }).then((res) => res.data);

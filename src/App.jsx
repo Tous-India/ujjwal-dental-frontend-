@@ -49,6 +49,7 @@ const DoctorProfilePage = lazy(() => import("./pages/public/DoctorProfilePage"))
 
 // Admin pages
 const AdminLogin = lazy(() => import("./pages/admin/Login"));
+const AdminResetPassword = lazy(() => import("./pages/admin/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminPatients = lazy(() => import("./pages/admin/Patients"));
 const AdminAppointments = lazy(() => import("./pages/admin/Appointments"));
@@ -170,6 +171,9 @@ const App = () => {
 
         {/* Admin Public route - Login */}
         <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* Admin Public route - Reset Password (from emailed reset link) */}
+        <Route path="/admin/reset-password" element={<AdminResetPassword />} />
 
         {/* Admin Protected routes */}
         <Route element={<AdminProtectedRoute />}>

@@ -38,6 +38,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import { useAdminAuth } from "../../hooks/admin/useAdminAuth";
 import { useAdminStore } from "../../store/admin.store";
+import { forgotAdminPassword } from "../../api/admin/auth.api";
 
 const AdminLogin = () => {
   // Form state
@@ -45,6 +46,12 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // Forgot-password view state (toggled in-place, no separate route)
+  const [view, setView] = useState("login"); // "login" | "forgot"
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   // Validation state
   const [errors, setErrors] = useState({});
@@ -109,6 +116,41 @@ const AdminLogin = () => {
     setShowPassword(!showPassword);
   };
 
+  /**
+   * Submit the forgot-password request
+   */
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!forgotEmail || !/\S+@\S+\.\S+/.test(forgotEmail)) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+
+    setIsSendingReset(true);
+    try {
+      await forgotAdminPassword(forgotEmail);
+      setResetSent(true);
+    } catch (err) {
+      // Endpoint intentionally doesn't reveal whether the email exists; surface
+      // a generic failure only if the request itself errors.
+      const message =
+        err.response?.data?.message || "Something went wrong. Please try again.";
+      toast.error(message);
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
+  /**
+   * Return to the login form, resetting the forgot-password view
+   */
+  const backToLogin = () => {
+    setView("login");
+    setResetSent(false);
+    setForgotEmail("");
+  };
+
   return (
     <Box className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md shadow-xl">
@@ -119,14 +161,17 @@ const AdminLogin = () => {
               <MedicalServicesIcon className="text-blue-600 text-3xl" />
             </Box>
             <Typography variant="h4" className="font-bold text-gray-800 mb-2">
-              Admin Login
+              {view === "forgot" ? "Reset Password" : "Admin Login"}
             </Typography>
             <Typography variant="body2" className="text-gray-500">
-              Sign in to access the admin panel
+              {view === "forgot"
+                ? "Enter your email and we'll send you a reset link"
+                : "Sign in to access the admin panel"}
             </Typography>
           </Box>
 
           {/* Login Form */}
+          {view === "login" && (
           <form onSubmit={handleSubmit}>
             {/* Email Field */}
             <TextField
@@ -221,7 +266,86 @@ const AdminLogin = () => {
                 "Sign In"
               )}
             </Button>
+
+            {/* Forgot Password link */}
+            <Box className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setView("forgot")}
+                disabled={isLoggingIn}
+                className="text-[14px] text-accent hover:underline bg-transparent border-none cursor-pointer"
+              >
+                Forgot Password?
+              </button>
+            </Box>
           </form>
+          )}
+
+          {/* Forgot Password Form */}
+          {view === "forgot" && (
+          <Box>
+            {resetSent ? (
+              <Box className="text-center">
+                <Typography variant="body1" className="text-green-600 font-medium mb-2">
+                  If this email exists, a reset link has been sent
+                </Typography>
+                <Typography variant="body2" className="text-gray-500">
+                  Please check your inbox and follow the link to reset your
+                  password.
+                </Typography>
+              </Box>
+            ) : (
+              <form onSubmit={handleForgotSubmit}>
+                <TextField
+                  fullWidth
+                  label="Email Address"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  disabled={isSendingReset}
+                  className="mb-4"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon className="text-gray-400" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  placeholder="admin@example.com"
+                />
+
+                <Button
+                  fullWidth
+                  variant="contained"
+                  type="submit"
+                  disabled={isSendingReset}
+                  size="large"
+                  className="bg-accent hover:opacity-90 py-3 text-base font-medium mt-4"
+                >
+                  {isSendingReset ? (
+                    <Box className="flex items-center gap-2">
+                      <CircularProgress size={20} color="inherit" />
+                      <span>Sending...</span>
+                    </Box>
+                  ) : (
+                    "Send Reset Link"
+                  )}
+                </Button>
+              </form>
+            )}
+
+            {/* Back to Login link */}
+            <Box className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={backToLogin}
+                className="text-[14px] text-accent hover:underline bg-transparent border-none cursor-pointer"
+              >
+                ← Back to Login
+              </button>
+            </Box>
+          </Box>
+          )}
 
           {/* Footer */}
           <Box className="mt-6 text-center">
