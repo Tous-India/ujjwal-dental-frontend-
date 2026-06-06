@@ -138,7 +138,7 @@ const columns = [
           size="small"
           label={value === "treatment" ? "Treatment" : "OPD"}
           color={value === "treatment" ? "warning" : "info"}
-          title={row?.treatmentId?.name || ""}
+          title={row?.treatmentId?.name || row?.treatmentName || ""}
         />
         {row?.appointmentType === "emergency" && (
           <Chip size="small" label="Emergency" sx={{ bgcolor: "#dc2626", color: "#fff", fontWeight: 700 }} />

@@ -105,9 +105,15 @@ const initialFormState = {
   // Visit type & treatment fields
   visitType: "opd", // "opd" | "treatment"
   treatment: null, // selected treatment object (for treatment visits)
+  treatmentName: "", // custom treatment name (only when "Other" is selected)
   fee: "", // treatment fee (editable)
   feeNotes: "",
 };
+
+// Sentinel option appended to the Treatment dropdown for one-off custom
+// treatments not in Treatment Master. _id "other" signals the backend to store
+// a custom name + manual fee instead of looking up a catalog entry.
+const OTHER_TREATMENT = { _id: "other", name: "Other (custom treatment)", price: null };
 
 const formatCurrency = (val) => `₹${(Number(val) || 0).toLocaleString("en-IN")}`;
 
@@ -321,6 +327,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         setErrors((prev) => ({ ...prev, treatment: "Select a treatment" }));
         return;
       }
+      if (formData.treatment?._id === "other" && !formData.treatmentName.trim()) {
+        setErrors((prev) => ({ ...prev, treatmentName: "Enter the treatment name" }));
+        return;
+      }
       if (!formData.isFree && (!Number(formData.fee) || Number(formData.fee) <= 0)) {
         setErrors((prev) => ({ ...prev, fee: "Enter a valid fee" }));
         return;
@@ -348,7 +358,13 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       opdFeePaid: formData.isFree, // Mark as paid if free
       ...(formData.visitType === "treatment"
         ? {
+            // "other" is a sentinel — backend stores treatmentName + manual fee
+            // instead of looking up a Treatment Master entry.
             treatmentId: formData.treatment?._id,
+            treatmentName:
+              formData.treatment?._id === "other"
+                ? formData.treatmentName.trim()
+                : undefined,
             fee: formData.isFree ? 0 : Number(formData.fee),
             feeNotes: formData.feeNotes || undefined,
           }
@@ -610,7 +626,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                     visitType: e.target.value,
                     // reset treatment fields when switching back to OPD
                     ...(e.target.value === "opd"
-                      ? { treatment: null, fee: "", feeNotes: "" }
+                      ? { treatment: null, treatmentName: "", fee: "", feeNotes: "" }
                       : {}),
                   }))
                 }
@@ -661,20 +677,25 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             <>
               <Grid size={{ xs: 6, sm: 6, md: 4 }}>
                 <Autocomplete
-                  options={treatments}
+                  options={[...treatments, OTHER_TREATMENT]}
                   getOptionLabel={(o) =>
                     o ? `${o.name}${o.price ? ` — ₹${o.price}` : ""}` : ""
                   }
                   value={formData.treatment}
                   isOptionEqualToValue={(opt, val) => opt._id === val?._id}
-                  onChange={(_, value) =>
+                  onChange={(_, value) => {
+                    const isOther = value?._id === "other";
                     setFormData((prev) => ({
                       ...prev,
                       treatment: value,
-                      // auto-fill fee from treatment price (editable)
-                      fee: value?.price ?? prev.fee,
-                    }))
-                  }
+                      // "Other": no preset price — clear the fee so the admin
+                      // types it manually. Normal: auto-fill from treatment price.
+                      fee: isOther ? "" : value?.price ?? prev.fee,
+                      // Drop any custom name when switching back to a normal treatment.
+                      treatmentName: isOther ? prev.treatmentName : "",
+                    }));
+                    setErrors((prev) => ({ ...prev, treatment: "", treatmentName: "", fee: "" }));
+                  }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -688,6 +709,22 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                   )}
                 />
               </Grid>
+              {formData.treatment?._id === "other" && (
+                <Grid size={{ xs: 6, sm: 6, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    label="Treatment name"
+                    name="treatmentName"
+                    value={formData.treatmentName}
+                    onChange={handleChange}
+                    required
+                    size="small"
+                    error={!!errors.treatmentName}
+                    helperText={errors.treatmentName || "Enter the custom treatment name"}
+                    placeholder="e.g., Custom procedure"
+                  />
+                </Grid>
+              )}
               <Grid size={{ xs: 6, sm: 6, md: 4 }}>
                 <TextField
                   fullWidth
@@ -702,6 +739,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                   helperText={
                     formData.isFree
                       ? "Fee waived for free appointment"
+                      : formData.treatment?._id === "other"
+                      ? "Enter the fee for this custom treatment"
                       : "Auto-filled from treatment price — editable per patient"
                   }
                 />
@@ -782,7 +821,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               <Box className="flex justify-between items-center py-1">
                 <Typography variant="caption" className="text-gray-600">
                   {formData.visitType === "treatment"
-                    ? formData.treatment?.name || "Treatment fee"
+                    ? formData.treatment?._id === "other"
+                      ? formData.treatmentName.trim() || "Custom treatment"
+                      : formData.treatment?.name || "Treatment fee"
                     : "OPD / Consultation fee"}
                 </Typography>
                 {discountPercent > 0 && !formData.isFree ? (
