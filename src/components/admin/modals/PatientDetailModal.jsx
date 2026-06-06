@@ -54,6 +54,8 @@ import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import ScienceIcon from "@mui/icons-material/Science";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import LockResetIcon from "@mui/icons-material/LockReset";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import AddIcon from "@mui/icons-material/Add";
 import {
   getPatientAppointments,
@@ -62,9 +64,12 @@ import {
   getPatientReports,
   getPatientTests,
 } from "../../../api/admin/patients.api";
+import { getBillingStats } from "../../../api/admin/billing.api";
 import EditAppointmentModal from "./EditAppointmentModal";
 import RecordPaymentModal from "./RecordPaymentModal";
 import AssignMembershipModal from "./AssignMembershipModal";
+import ResetPasswordDialog from "./ResetPasswordDialog";
+import FollowUpReminderModal from "./FollowUpReminderModal";
 
 /**
  * Tab Panel Component
@@ -85,8 +90,11 @@ const InfoRow = ({ icon: Icon, label, value, color = "text-gray-600" }) => (
       <Typography variant="caption" className="text-gray-500 block">
         {label}
       </Typography>
-      <Typography variant="body2" className="font-medium">
-        {value || "-"}
+      <Typography
+        variant="body2"
+        className={value ? "font-medium" : "text-gray-400"}
+      >
+        {value || "—"}
       </Typography>
     </Box>
   </Box>
@@ -96,7 +104,7 @@ const InfoRow = ({ icon: Icon, label, value, color = "text-gray-600" }) => (
  * Section header component
  */
 const SectionHeader = ({ title, icon: Icon }) => (
-  <Box className="flex items-center gap-2 mb-3 mt-4">
+  <Box className="flex items-center gap-2 mb-2">
     {Icon && <Icon className="text-blue-600" fontSize="small" />}
     <Typography
       variant="subtitle2"
@@ -173,120 +181,136 @@ const OverviewTab = ({ patient, onAssignMembership, onViewCoupons }) => {
     <Grid container spacing={4}>
       {/* Left Column */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <SectionHeader title="Personal Information" icon={PersonIcon} />
-        <Box className="bg-gray-50 rounded-lg p-4">
-          <InfoRow icon={PhoneIcon} label="Phone" value={phone} color="text-blue-600" />
-          <InfoRow icon={EmailIcon} label="Email" value={email} color="text-blue-600" />
-          <InfoRow
-            icon={PersonIcon}
-            label="Gender"
-            value={gender ? gender.charAt(0).toUpperCase() + gender.slice(1) : null}
-          />
-          <InfoRow
-            icon={CakeIcon}
-            label="Date of Birth"
-            value={dateOfBirth ? `${formatDate(dateOfBirth)} (${calculatedAge} years)` : null}
-          />
-        </Box>
+        <Box className="space-y-5">
+          <Box>
+            <SectionHeader title="Personal Information" icon={PersonIcon} />
+            <Box className="bg-gray-50 rounded-lg p-4">
+              <InfoRow icon={PhoneIcon} label="Phone" value={phone} color="text-blue-600" />
+              <InfoRow icon={EmailIcon} label="Email" value={email} color="text-blue-600" />
+              <InfoRow
+                icon={PersonIcon}
+                label="Gender"
+                value={gender ? gender.charAt(0).toUpperCase() + gender.slice(1) : null}
+              />
+              <InfoRow
+                icon={CakeIcon}
+                label="Date of Birth"
+                value={dateOfBirth ? `${formatDate(dateOfBirth)} (${calculatedAge} years)` : null}
+              />
+            </Box>
+          </Box>
 
-        <SectionHeader title="Address" icon={LocationOnIcon} />
-        <Box className="bg-gray-50 rounded-lg p-4">
-          {address ? (
-            <Typography variant="body2">
-              {[address.street, address.city, address.state, address.pincode]
-                .filter(Boolean)
-                .join(", ") || "-"}
-            </Typography>
-          ) : (
-            <Typography variant="body2" className="text-gray-400">
-              No address provided
-            </Typography>
-          )}
-        </Box>
+          <Box>
+            <SectionHeader title="Address" icon={LocationOnIcon} />
+            <Box className="bg-gray-50 rounded-lg p-4">
+              {address ? (
+                <Typography variant="body2">
+                  {[address.street, address.city, address.state, address.pincode]
+                    .filter(Boolean)
+                    .join(", ") || "—"}
+                </Typography>
+              ) : (
+                <Typography variant="body2" className="text-gray-400">
+                  No address provided
+                </Typography>
+              )}
+            </Box>
+          </Box>
 
-        <SectionHeader title="Emergency Contact" icon={ContactPhoneIcon} />
-        <Box className="bg-gray-50 rounded-lg p-4">
-          {emergencyContact?.name ? (
-            <>
-              <Typography variant="body2" className="font-medium">
-                {emergencyContact.name}
-              </Typography>
-              <Typography variant="body2" className="text-gray-600">
-                {emergencyContact.phone} ({emergencyContact.relation || "Contact"})
-              </Typography>
-            </>
-          ) : (
-            <Typography variant="body2" className="text-gray-400">
-              No emergency contact
-            </Typography>
-          )}
+          <Box>
+            <SectionHeader title="Emergency Contact" icon={ContactPhoneIcon} />
+            <Box className="bg-gray-50 rounded-lg p-4">
+              {emergencyContact?.name ? (
+                <>
+                  <Typography variant="body2" className="font-medium">
+                    {emergencyContact.name}
+                  </Typography>
+                  <Typography variant="body2" className="text-gray-600">
+                    {emergencyContact.phone} ({emergencyContact.relation || "Contact"})
+                  </Typography>
+                </>
+              ) : (
+                <Typography variant="body2" className="text-gray-400">
+                  No emergency contact
+                </Typography>
+              )}
+            </Box>
+          </Box>
         </Box>
       </Grid>
 
       {/* Right Column */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <SectionHeader title="Medical Information" icon={LocalHospitalIcon} />
-        <Box className="bg-gray-50 rounded-lg p-4">
-          <InfoRow label="Blood Group" value={bloodGroup} />
-          <Box className="py-2">
-            <Typography variant="caption" className="text-gray-500 block mb-1">
-              Allergies
-            </Typography>
-            {allergies?.length > 0 ? (
-              <Box className="flex flex-wrap gap-1">
-                {allergies.map((allergy, idx) => (
-                  <Chip
-                    key={idx}
-                    label={allergy}
-                    size="small"
-                    color="error"
-                    variant="outlined"
-                    icon={<WarningAmberIcon />}
-                  />
-                ))}
+        <Box className="space-y-5">
+          <Box>
+            <SectionHeader title="Medical Information" icon={LocalHospitalIcon} />
+            <Box className="bg-gray-50 rounded-lg p-4">
+              <InfoRow label="Blood Group" value={bloodGroup} />
+              <Box className="py-2">
+                <Typography variant="caption" className="text-gray-500 block mb-1">
+                  Allergies
+                </Typography>
+                {allergies?.length > 0 ? (
+                  <Box className="flex flex-wrap gap-1">
+                    {allergies.map((allergy, idx) => (
+                      <Chip
+                        key={idx}
+                        label={allergy}
+                        size="small"
+                        color="error"
+                        variant="outlined"
+                        icon={<WarningAmberIcon />}
+                      />
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography variant="body2" className="text-gray-400">
+                    No known allergies
+                  </Typography>
+                )}
               </Box>
-            ) : (
-              <Typography variant="body2">No known allergies</Typography>
-            )}
-          </Box>
-          <Box className="py-2">
-            <Typography variant="caption" className="text-gray-500 block mb-1">
-              Medical History
-            </Typography>
-            {medicalHistory?.length > 0 ? (
-              <Box className="flex flex-wrap gap-1">
-                {medicalHistory.map((condition, idx) => (
-                  <Chip key={idx} label={condition} size="small" variant="outlined" />
-                ))}
+              <Box className="py-2">
+                <Typography variant="caption" className="text-gray-500 block mb-1">
+                  Medical History
+                </Typography>
+                {medicalHistory?.length > 0 ? (
+                  <Box className="flex flex-wrap gap-1">
+                    {medicalHistory.map((condition, idx) => (
+                      <Chip key={idx} label={condition} size="small" variant="outlined" />
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography variant="body2" className="text-gray-400">
+                    No medical history recorded
+                  </Typography>
+                )}
               </Box>
-            ) : (
-              <Typography variant="body2">No medical history recorded</Typography>
-            )}
+            </Box>
           </Box>
-        </Box>
 
-        <Box className="flex items-center justify-between mb-3 mt-4">
-          <Box className="flex items-center gap-2">
-            <CardMembershipIcon className="text-blue-600" fontSize="small" />
-            <Typography
-              variant="subtitle2"
-              className="font-semibold text-gray-700 uppercase tracking-wide"
-            >
-              Membership
-            </Typography>
-          </Box>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={onAssignMembership}
-            sx={{ fontSize: "0.7rem" }}
-          >
-            Assign Membership
-          </Button>
-        </Box>
-        <Box className="bg-gray-50 rounded-lg p-4">
-          {membership?.status ? (
+          <Box>
+            <Box className="flex items-center justify-between mb-2">
+              <Box className="flex items-center gap-2">
+                <CardMembershipIcon className="text-blue-600" fontSize="small" />
+                <Typography
+                  variant="subtitle2"
+                  className="font-semibold text-gray-700 uppercase tracking-wide"
+                >
+                  Membership
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={onAssignMembership}
+                sx={{ fontSize: "0.7rem" }}
+              >
+                Assign Membership
+              </Button>
+            </Box>
+            <Box className="bg-gray-50 rounded-lg p-4">
+              {membership?.status ? (
             <>
               <Box className="flex items-center justify-between mb-2">
                 <Typography variant="body2" className="font-medium">
@@ -334,16 +358,18 @@ const OverviewTab = ({ patient, onAssignMembership, onViewCoupons }) => {
               No active membership
             </Typography>
           )}
-        </Box>
-
-        {notes && (
-          <>
-            <SectionHeader title="Notes" />
-            <Box className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-              <Typography variant="body2">{notes}</Typography>
             </Box>
-          </>
-        )}
+          </Box>
+
+          {notes && (
+            <Box>
+              <SectionHeader title="Notes" />
+              <Box className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                <Typography variant="body2">{notes}</Typography>
+              </Box>
+            </Box>
+          )}
+        </Box>
       </Grid>
     </Grid>
   );
@@ -568,7 +594,7 @@ const TestsTab = ({ patientId }) => {
  * Payments Tab Content
  */
 const PaymentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
-  const [data, setData] = useState({ payments: [], summary: null });
+  const [data, setData] = useState({ payments: [], invoiceStats: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
@@ -576,10 +602,17 @@ const PaymentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
   const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getPatientPayments(patientId, { limit: 50 });
+      // Payment-history rows (the list) + the invoice-based money summary.
+      // The summary reuses the SAME invoice aggregation the Billing page uses
+      // (getBillingStats), scoped to this patient & all-time, so the balances
+      // match across screens instead of being computed from payment records.
+      const [paymentsRes, statsRes] = await Promise.all([
+        getPatientPayments(patientId, { limit: 50 }),
+        getBillingStats({ patient: patientId }),
+      ]);
       setData({
-        payments: res.data?.payments || [],
-        summary: res.data?.summary || null,
+        payments: paymentsRes.data?.payments || [],
+        invoiceStats: statsRes.data?.stats || null,
       });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load payments");
@@ -600,7 +633,7 @@ const PaymentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
   if (loading) return <Box className="text-center py-8"><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
 
-  const { payments, summary } = data;
+  const { payments, invoiceStats } = data;
 
   return (
     <>
@@ -620,32 +653,33 @@ const PaymentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
         </Button>
       </Box>
 
-      {/* Payment Summary */}
-      {summary && (
+      {/* Summary — computed from the patient's INVOICES (same source as the
+          Billing page), so balances agree across screens. */}
+      {invoiceStats && (
         <Box className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <Box className="bg-purple-50 rounded-lg p-4 text-center">
+            <Typography variant="h6" className="font-numbers font-bold text-purple-600">
+              {formatCurrency(invoiceStats.totalAmount)}
+            </Typography>
+            <Typography variant="caption" className="text-gray-600">Total Amount</Typography>
+          </Box>
           <Box className="bg-green-50 rounded-lg p-4 text-center">
             <Typography variant="h6" className="font-numbers font-bold text-green-600">
-              {formatCurrency(summary.totalPaid)}
+              {formatCurrency(invoiceStats.totalPaid)}
             </Typography>
             <Typography variant="caption" className="text-gray-600">Total Paid</Typography>
           </Box>
           <Box className="bg-red-50 rounded-lg p-4 text-center">
             <Typography variant="h6" className="font-numbers font-bold text-red-600">
-              {formatCurrency(summary.totalPending)}
+              {formatCurrency(invoiceStats.totalDue)}
             </Typography>
             <Typography variant="caption" className="text-gray-600">Pending</Typography>
           </Box>
           <Box className="bg-blue-50 rounded-lg p-4 text-center">
             <Typography variant="h6" className="font-numbers font-bold text-blue-600">
-              {summary.totalPayments || 0}
+              {invoiceStats.totalInvoices || 0}
             </Typography>
-            <Typography variant="caption" className="text-gray-600">Total Payments</Typography>
-          </Box>
-          <Box className="bg-purple-50 rounded-lg p-4 text-center">
-            <Typography variant="h6" className="font-numbers font-bold text-purple-600">
-              {formatCurrency(summary.totalAmount)}
-            </Typography>
-            <Typography variant="caption" className="text-gray-600">Total Amount</Typography>
+            <Typography variant="caption" className="text-gray-600">Invoices</Typography>
           </Box>
         </Box>
       )}
@@ -755,6 +789,8 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
   const [refreshKey, setRefreshKey] = useState(0);
   const [couponsModalOpen, setCouponsModalOpen] = useState(false);
   const [assignMembershipOpen, setAssignMembershipOpen] = useState(false);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
 
   // Reset tab when modal opens
   useEffect(() => {
@@ -830,8 +866,13 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         </Tabs>
       </Box>
 
-      {/* Content */}
-      <DialogContent className="p-6" style={{ minHeight: "400px" }}>
+      {/* Content — scrolls within the dialog; the pinned footer below stays clear.
+          overflowY forced so content never hides behind the action buttons. */}
+      <DialogContent
+        className="p-6"
+        style={{ minHeight: "400px" }}
+        sx={{ overflowY: "auto !important" }}
+      >
         <TabPanel value={activeTab} index={0}>
           <OverviewTab
             patient={patient}
@@ -873,9 +914,26 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         </Box>
       </DialogContent>
 
-      {/* Actions */}
-      <DialogActions className="p-4 bg-gray-50 justify-between">
-        <Box className="flex gap-2">
+      {/* Actions — pinned footer, clearly separated with a top divider */}
+      <DialogActions
+        className="p-4 bg-gray-50 justify-between"
+        sx={{ borderTop: 1, borderColor: "divider", flexWrap: "wrap", rowGap: 1 }}
+      >
+        <Box className="flex gap-2 flex-wrap">
+          <Button
+            variant="outlined"
+            startIcon={<LockResetIcon />}
+            onClick={() => setResetPasswordOpen(true)}
+          >
+            Reset Password
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<EventRepeatIcon />}
+            onClick={() => setFollowUpOpen(true)}
+          >
+            Add Follow-up Reminder
+          </Button>
           {onDelete && isActive && (
             <Button
               variant="outlined"
@@ -910,7 +968,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
             </>
           )}
         </Box>
-        <Box className="flex gap-2">
+        <Box className="flex gap-2 flex-wrap">
           <Button onClick={onClose} color="inherit">
             Close
           </Button>
@@ -941,6 +999,20 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         onClose={() => setAssignMembershipOpen(false)}
         patient={patient}
         onSuccess={handleRefresh}
+      />
+
+      {/* Reset / Set Password */}
+      <ResetPasswordDialog
+        open={resetPasswordOpen}
+        onClose={() => setResetPasswordOpen(false)}
+        patient={patient}
+      />
+
+      {/* Follow-up Reminder (reminder only — no payment) */}
+      <FollowUpReminderModal
+        open={followUpOpen}
+        onClose={() => setFollowUpOpen(false)}
+        patient={patient}
       />
     </Dialog>
   );

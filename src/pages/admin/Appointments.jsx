@@ -33,6 +33,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import DataTable from "../../components/common/DataTable";
 import { useAppointments, useAppointmentMutations } from "../../hooks/admin/useAppointments";
+import { useBillingMutations } from "../../hooks/admin/useBilling";
 import {
   getFeeSettings,
   updateFeeSettings,
@@ -105,6 +106,16 @@ const columns = [
     minWidth: 100,
   },
   {
+    field: "tokenNumber",
+    headerName: "Token",
+    minWidth: 80,
+    render: (value) => (
+      <Typography variant="body2" className="font-numbers font-medium">
+        {value ? `#${value}` : "-"}
+      </Typography>
+    ),
+  },
+  {
     field: "type",
     headerName: "Type",
     minWidth: 110,
@@ -116,6 +127,44 @@ const columns = [
         className="capitalize"
       />
     ),
+  },
+  {
+    field: "visitType",
+    headerName: "Visit Type",
+    minWidth: 150,
+    render: (value, row) => (
+      <Box className="flex items-center gap-1 flex-wrap">
+        <Chip
+          size="small"
+          label={value === "treatment" ? "Treatment" : "OPD"}
+          color={value === "treatment" ? "warning" : "info"}
+          title={row?.treatmentId?.name || ""}
+        />
+        {row?.appointmentType === "emergency" && (
+          <Chip size="small" label="Emergency" sx={{ bgcolor: "#dc2626", color: "#fff", fontWeight: 700 }} />
+        )}
+      </Box>
+    ),
+  },
+  {
+    field: "fee",
+    headerName: "Fee",
+    minWidth: 100,
+    render: (_, row) => {
+      if (row?.isFree) {
+        return (
+          <Typography variant="body2" className="font-numbers text-gray-500">
+            Free
+          </Typography>
+        );
+      }
+      const amount = row?.invoice?.grandTotal ?? row?.fee ?? row?.opdFee ?? 0;
+      return (
+        <Typography variant="body2" className="font-numbers font-medium">
+          ₹{(amount || 0).toLocaleString("en-IN")}
+        </Typography>
+      );
+    },
   },
   {
     field: "status",
@@ -131,21 +180,29 @@ const columns = [
     ),
   },
   {
-    field: "opdFeePaid",
+    field: "paymentStatus",
     headerName: "Payment",
-    minWidth: 100,
-    render: (value, row) => {
-      // Show "Free" badge if appointment is free
+    minWidth: 120,
+    render: (_, row) => {
       if (row?.isFree) {
-        return (
-          <Chip size="small" label="Free" color="info" variant="outlined" />
-        );
+        return <Chip size="small" label="Free" color="info" variant="outlined" />;
       }
+      const ps = row?.invoice?.paymentStatus;
+      if (ps) {
+        const map = {
+          paid: { label: "Paid", color: "success" },
+          partial: { label: "Partially Paid", color: "warning" },
+          unpaid: { label: "Unpaid", color: "error" },
+        };
+        const cfg = map[ps] || { label: ps, color: "default" };
+        return <Chip size="small" label={cfg.label} color={cfg.color} variant="outlined" />;
+      }
+      // Fallback for legacy appointments without an invoice
       return (
         <Chip
           size="small"
-          label={value ? "Paid" : "Pending"}
-          color={value ? "success" : "warning"}
+          label={row?.opdFeePaid ? "Paid" : "Unpaid"}
+          color={row?.opdFeePaid ? "success" : "error"}
           variant="outlined"
         />
       );
@@ -154,24 +211,51 @@ const columns = [
 ];
 
 // Function to get columns with action handlers
-const getColumns = (onDeleteRow) => [
+const getColumns = (onDeleteRow, onMarkPaid, markingId) => [
   ...columns,
   {
     field: "_actions",
     headerName: "Actions",
-    minWidth: 80,
-    render: (_, row) => (
-      <IconButton
-        size="small"
-        color="error"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDeleteRow(row);
-        }}
-      >
-        <DeleteIcon fontSize="small" />
-      </IconButton>
-    ),
+    minWidth: 160,
+    render: (_, row) => {
+      const inv = row?.invoice;
+      const canMarkPaid = inv && inv.paymentStatus !== "paid" && !row?.isFree;
+      return (
+        <Box className="flex items-center gap-1">
+          {canMarkPaid && (
+            <Button
+              size="small"
+              variant="outlined"
+              color="success"
+              disabled={markingId === row._id}
+              startIcon={
+                markingId === row._id ? (
+                  <CircularProgress size={14} />
+                ) : (
+                  <CurrencyRupeeIcon fontSize="small" />
+                )
+              }
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkPaid(row);
+              }}
+            >
+              Mark Paid
+            </Button>
+          )}
+          <IconButton
+            size="small"
+            color="error"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteRow(row);
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      );
+    },
   },
 ];
 
@@ -192,12 +276,11 @@ const filterOptions = [
     ],
   },
   {
-    key: "type",
-    label: "Type",
+    key: "appointmentType",
+    label: "Urgency",
     options: [
       { value: "regular", label: "Regular" },
       { value: "emergency", label: "Emergency" },
-      { value: "follow_up", label: "Follow Up" },
     ],
   },
 ];
@@ -219,6 +302,36 @@ const Appointments = () => {
 
   // Delete mutation
   const { deleteAppointment, isDeleting: isDeletingAppointment } = useAppointmentMutations();
+
+  // "Mark Paid" — records the linked invoice's balance as paid
+  const { recordPayment } = useBillingMutations();
+  const [markingId, setMarkingId] = useState(null);
+
+  const handleMarkPaid = (row) => {
+    const inv = row?.invoice;
+    if (!inv?._id) {
+      toast.error("No invoice linked to this appointment");
+      return;
+    }
+    const balance = inv.balanceDue ?? inv.grandTotal ?? 0;
+    if (balance <= 0) {
+      toast.info("Invoice already settled");
+      return;
+    }
+    setMarkingId(row._id);
+    recordPayment(
+      { id: inv._id, data: { amount: balance } },
+      {
+        onSuccess: () => {
+          toast.success("Payment recorded — invoice marked paid");
+          refetch();
+        },
+        onError: (err) =>
+          toast.error(err.response?.data?.message || "Failed to mark paid"),
+        onSettled: () => setMarkingId(null),
+      }
+    );
+  };
 
   // Fee settings state
   const [feeSettings, setFeeSettings] = useState({
@@ -440,7 +553,7 @@ const Appointments = () => {
 
       {/* Table */}
       <DataTable
-        columns={getColumns((row) => setConfirmDelete(row))}
+        columns={getColumns((row) => setConfirmDelete(row), handleMarkPaid, markingId)}
         data={appointments}
         loading={isLoading}
         searchPlaceholder="Search patient name or phone..."

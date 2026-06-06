@@ -19,6 +19,7 @@ import {
   Autocomplete,
   Divider,
   Paper,
+  Chip,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import Grid from "@mui/material/Grid";
@@ -31,14 +32,26 @@ import { useClinics } from "../../../hooks/admin/useClinics";
 import { useBillingMutations } from "../../../hooks/admin/useBilling";
 
 /**
- * Item type options
+ * Line-item category options
  */
 const itemTypeOptions = [
   { value: "treatment", label: "Treatment" },
-  { value: "test", label: "Test" },
-  { value: "opd_fee", label: "OPD Fee" },
+  { value: "surgery", label: "Surgery" },
   { value: "membership", label: "Membership" },
+  { value: "test", label: "Test" },
+  { value: "medicine", label: "Medicine" },
+  { value: "opd_fee", label: "OPD Fee" },
   { value: "other", label: "Other" },
+];
+
+/**
+ * Payment method options for the initial payment captured on create
+ */
+const paymentMethodOptions = [
+  { value: "cash", label: "Cash" },
+  { value: "card", label: "Card" },
+  { value: "upi", label: "UPI" },
+  { value: "online", label: "Online" },
 ];
 
 /**
@@ -75,6 +88,8 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
     clinic: "",
     items: [{ ...blankItem }],
     discountPercent: 0,
+    amountPaid: "",
+    paymentMethod: "cash",
     notes: "",
     terms: "",
   });
@@ -101,6 +116,8 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
         clinic: clinics[0]?._id || "",
         items: [{ ...blankItem }],
         discountPercent: 0,
+        amountPaid: "",
+        paymentMethod: "cash",
         notes: "",
         terms: "",
       });
@@ -164,6 +181,16 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
   const discountAmount = (subtotal * (Number(formData.discountPercent) || 0)) / 100;
   const grandTotal = subtotal - discountAmount + totalTax;
 
+  // Auto-derived payment status (mirrors the backend's calculateTotals logic)
+  const amountPaidNum = Number(formData.amountPaid) || 0;
+  const balanceDue = Math.max(0, grandTotal - amountPaidNum);
+  const computedPaymentStatus =
+    grandTotal > 0 && amountPaidNum >= grandTotal
+      ? { label: "Paid", color: "success" }
+      : amountPaidNum > 0
+      ? { label: "Partially Paid", color: "warning" }
+      : { label: "Unpaid", color: "error" };
+
   // Submit
   const handleSubmit = async () => {
     if (!formData.patient) return toast.error("Please select a patient");
@@ -205,6 +232,8 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
         discount: {
           percentage: Number(formData.discountPercent) || 0,
         },
+        amountPaid: amountPaidNum,
+        ...(amountPaidNum > 0 ? { paymentMethod: formData.paymentMethod } : {}),
         notes: formData.notes || undefined,
         terms: formData.terms || undefined,
       };
@@ -245,7 +274,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
       </DialogTitle>
 
       {/* Content */}
-      <DialogContent className="p-6 mt-4">
+      <DialogContent className="p-6 mt-2">
         <Grid container spacing={3}>
           {/* Patient Search */}
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -347,7 +376,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     <TextField
                       select
                       fullWidth
-                      label="Type"
+                      label="Category"
                       value={item.itemType}
                       onChange={(e) =>
                         handleItemChange(index, "itemType", e.target.value)
@@ -506,6 +535,66 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                 </Box>
               </Paper>
             </Box>
+          </Grid>
+
+          {/* Payment (optional, captured at creation) */}
+          <Grid size={{ xs: 12 }}>
+            <Divider className="my-2" />
+            <Typography variant="subtitle1" className="font-semibold mb-3">
+              Payment
+            </Typography>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Amount Paid (₹)"
+                  type="number"
+                  value={formData.amountPaid}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, amountPaid: e.target.value }))
+                  }
+                  size="small"
+                  inputProps={{ min: 0 }}
+                  helperText="Leave blank/0 if unpaid"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Payment Method"
+                  value={formData.paymentMethod}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, paymentMethod: e.target.value }))
+                  }
+                  size="small"
+                  disabled={amountPaidNum <= 0}
+                >
+                  {paymentMethodOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Box className="flex items-center gap-2">
+                  <Typography variant="body2" className="text-gray-600">
+                    Status:
+                  </Typography>
+                  <Chip
+                    label={computedPaymentStatus.label}
+                    color={computedPaymentStatus.color}
+                    size="small"
+                  />
+                  {amountPaidNum > 0 && balanceDue > 0 && (
+                    <Typography variant="caption" className="font-numbers text-gray-500">
+                      Balance ₹{balanceDue.toLocaleString("en-IN")}
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+            </Grid>
           </Grid>
 
           {/* Overall Discount */}

@@ -429,6 +429,9 @@ const PlansPage = () => {
               <p className="text-[13px] text-gray-400 mt-2 text-center">
                 Login details will be emailed to you after purchase.
               </p>
+              <p className="text-[12px] text-gray-500 mt-1 text-center">
+                Payments processed by Healing Fairy Health Care Pvt. Ltd.
+              </p>
             </div>
 
             {/* Terms & Conditions accordion (collapsed by default) */}

@@ -8,7 +8,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
-import { requestOtp, loginWithPassword } from "../../api/auth.api";
+import { requestOtp, loginWithPassword, forgotPassword } from "../../api/auth.api";
 import { CircularProgress } from "@mui/material";
 import { toast } from "react-toastify";
 import Visibility from "@mui/icons-material/Visibility";
@@ -37,6 +37,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
 
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -99,6 +100,29 @@ const Login = () => {
     }
   };
 
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+
+    const validEmail = validateEmail();
+    if (!validEmail) return;
+
+    setLoading(true);
+    try {
+      await forgotPassword(validEmail);
+      toast.success(
+        "If an account exists for this email, a password reset link has been sent.",
+      );
+      setForgotMode(false);
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message ||
+          "Failed to send reset link. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       <title>Patient Login | Ujjwal Dental Clinic</title>
@@ -151,6 +175,8 @@ const Login = () => {
 
           <h1 className="text-[#003366] text-2xl font-bold">Patient Portal</h1>
 
+          {!forgotMode && (
+          <>
           {/* Tab switcher (pill style) */}
           <div className="flex gap-2 mt-5 mb-6">
             <button
@@ -251,6 +277,59 @@ const Login = () => {
               </button>
               <p className="text-[13px] text-gray-400 text-center mt-3">
                 Use the password provided by the clinic staff
+              </p>
+            </form>
+          )}
+
+          {/* Forgot password link */}
+          <p className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => setForgotMode(true)}
+              className="text-[13px] text-accent font-semibold hover:text-accent-dark cursor-pointer bg-transparent border-0"
+            >
+              Forgot Password?
+            </button>
+          </p>
+          </>
+          )}
+
+          {/* Forgot password view */}
+          {forgotMode && (
+            <form onSubmit={handleForgotSubmit} className="mt-6">
+              <h2 className="text-[#003366] text-lg font-bold mb-1">
+                Reset your password
+              </h2>
+              <p className="text-[14px] text-gray-600 mb-4">
+                Enter your registered email and we'll send you a reset link.
+              </p>
+              <input
+                type="email"
+                className={fieldCls}
+                placeholder="Enter your registered email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-5 flex items-center justify-center bg-accent hover:bg-accent-dark disabled:opacity-70 text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <CircularProgress size={22} sx={{ color: "#fff" }} />
+                ) : (
+                  "Send Reset Link"
+                )}
+              </button>
+              <p className="text-center mt-3">
+                <button
+                  type="button"
+                  onClick={() => setForgotMode(false)}
+                  className="text-[13px] text-gray-500 hover:text-[#003366] cursor-pointer bg-transparent border-0"
+                >
+                  ← Back to login
+                </button>
               </p>
             </form>
           )}

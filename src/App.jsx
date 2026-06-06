@@ -18,14 +18,17 @@ import AdminLayout from "./components/admin/AdminLayout";
 // Patient Auth pages
 const Login = lazy(() => import("./pages/auth/Login"));
 const VerifyOtp = lazy(() => import("./pages/auth/VerifyOtp"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 
 // Patient pages
 const Dashboard = lazy(() => import("./pages/patient/Dashboard"));
 const Appointments = lazy(() => import("./pages/patient/Appointments"));
 const AppointmentDetail = lazy(() => import("./pages/patient/AppointmentDetail"));
 const Payments = lazy(() => import("./pages/patient/Payments"));
+const Invoices = lazy(() => import("./pages/patient/Invoices"));
 const Reports = lazy(() => import("./pages/patient/Reports"));
 const Treatments = lazy(() => import("./pages/patient/Treatments"));
+const BookTreatment = lazy(() => import("./pages/patient/BookTreatment"));
 const Membership = lazy(() => import("./pages/patient/Membership"));
 const Profile = lazy(() => import("./pages/patient/Profile"));
 const PatientNotifications = lazy(() => import("./pages/patient/Notifications"));
@@ -46,6 +49,7 @@ const TermsPage = lazy(() => import("./pages/public/TermsPage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/public/PrivacyPolicyPage"));
 const BookAppointmentPage = lazy(() => import("./pages/public/BookAppointmentPage"));
 const DoctorProfilePage = lazy(() => import("./pages/public/DoctorProfilePage"));
+const DoctorProfile = lazy(() => import("./pages/public/DoctorProfile"));
 
 // Admin pages
 const AdminLogin = lazy(() => import("./pages/admin/Login"));
@@ -55,6 +59,7 @@ const AdminPatients = lazy(() => import("./pages/admin/Patients"));
 const AdminAppointments = lazy(() => import("./pages/admin/Appointments"));
 const AdminTreatments = lazy(() => import("./pages/admin/Treatments"));
 const AdminTests = lazy(() => import("./pages/admin/Tests"));
+const AdminLab = lazy(() => import("./pages/admin/Lab"));
 const AdminPayments = lazy(() => import("./pages/admin/Payments"));
 const AdminReports = lazy(() => import("./pages/admin/Reports"));
 const AdminMemberships = lazy(() => import("./pages/admin/Memberships"));
@@ -134,6 +139,7 @@ const App = () => {
           <Route path="/book-appointment" element={<BookAppointmentPage />} />
           <Route path="/membership-plans" element={<PlansPage />} />
           <Route path="/membership-plans/:id" element={<PlanDetailPage />} />
+          <Route path="/doctors/ujjwal-prem" element={<DoctorProfile />} />
           <Route path="/doctors/:slug" element={<DoctorProfilePage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
@@ -146,6 +152,7 @@ const App = () => {
         {/* Patient Auth routes (standalone pages) */}
         <Route path="/login" element={<Login />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Patient Protected routes */}
         <Route element={<ProtectedRoute />}>
@@ -156,8 +163,10 @@ const App = () => {
             <Route path="appointments" element={<Appointments />} />
             <Route path="appointments/:id" element={<AppointmentDetail />} />
             <Route path="payments" element={<Payments />} />
+            <Route path="invoices" element={<Invoices />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="treatments" element={<Treatments />} />
+            <Route path="my-treatments" element={<Treatments />} />
+            <Route path="book-treatment" element={<BookTreatment />} />
             <Route path="membership" element={<Membership />} />
             {/* <Route path="membership-plans" element={<MembershipPlans />} /> */}
             <Route path="profile" element={<Profile />} />
@@ -188,6 +197,7 @@ const App = () => {
             <Route path="appointments" element={<AdminAppointments />} />
             <Route path="treatments" element={<AdminTreatments />} />
             <Route path="tests" element={<AdminTests />} />
+            <Route path="lab" element={<AdminLab />} />
             <Route path="payments" element={<AdminPayments />} />
             <Route path="billing" element={<AdminBilling />} />
             <Route path="notifications" element={<AdminNotifications />} />

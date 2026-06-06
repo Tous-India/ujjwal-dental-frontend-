@@ -49,18 +49,18 @@ const treatmentCards = [
 ];
 
 const doctors = [
-  { name: "Dr. Ujjwal Prem", subtitle: "MDS (Oral and Maxillofacial Surgeon)", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg" },
-  { name: "Dr. Alisha Dogra", subtitle: "BDS — Bachelor of Dental Surgery", experience: "5 Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
+  { name: "Dr. Ujjwal Prem", subtitle: "MDS (Oral and Maxillofacial Surgeon)", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg", to: "/doctors/ujjwal-prem" },
+  { name: "Dr. Alisha Dogra", subtitle: "BDS — Bachelor of Dental Surgery", experience: "5+ Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
   {
     name: "Dr. Ajay Kaushik",
-    experience: "7 Yrs Experience",
+    experience: "15+ Yrs Experience",
     subtitle: "MDS — Orthodontics & Dentofacial Orthopaedics",
     lead: false,
     img: "/doctors/ajay.webp",
   },
   {
     name: "Dr. Shivani Sharma",
-    experience: "15 Yrs Experience",
+    experience: "15+ Yrs Experience",
     subtitle: "MDS — Periodontist",
     lead: false,
     img: "/doctors/shivani.webp",
@@ -385,8 +385,9 @@ const HomePage = () => {
             className="text-center text-gray-500 mb-12 max-w-3xl mx-auto w-[100%] md:w-[45%]"
             style={{ fontSize: "1rem" }}
           >
-            We are committed to providing the best dental experience with modern
-            technology and compassionate care
+            Ujjwal Dental Clinic, a unit of Healing Fairy Health Care Pvt. Ltd., is
+            committed to providing the best dental experience with modern technology
+            and compassionate care
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -715,10 +716,13 @@ const HomePage = () => {
               }}
               className="px-1 pt-2 pb-4 !items-stretch"
             >
-              {doctors.map((doc) => (
+              {doctors.map((doc) => {
+                const CardTag = doc.to ? Link : "div";
+                return (
                 <SwiperSlide key={doc.name} className="h-auto">
-                  <div
-                    className={`h-full bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
+                  <CardTag
+                    {...(doc.to ? { to: doc.to } : {})}
+                    className={`block no-underline h-full bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
                       doc.lead ? "border-t-4 border-[#e88a1a]" : ""
                     }`}
                   >
@@ -750,9 +754,10 @@ const HomePage = () => {
                       )}
                       <p className="font-numbers text-gray-500 text-sm mt-1">{doc.experience}</p>
                     </div>
-                  </div>
+                  </CardTag>
                 </SwiperSlide>
-              ))}
+                );
+              })}
             </Swiper>
           </div>
         </div>

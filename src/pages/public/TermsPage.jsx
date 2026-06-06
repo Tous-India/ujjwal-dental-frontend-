@@ -30,8 +30,11 @@ const TermsPage = () => {
           <h1 className="text-[#003366] text-3xl font-bold mb-2">
             Terms &amp; Conditions
           </h1>
-          <p className="text-gray-400 text-[14px] mb-10">
+          <p className="text-gray-400 text-[14px] mb-2">
             Last updated: June 2, 2026
+          </p>
+          <p className="text-gray-500 text-[14px] mb-10">
+            Ujjwal Dental Clinic is operated by Healing Fairy Health Care Pvt. Ltd.
           </p>
 
           <p className="text-gray-700 text-[15px] leading-[1.8] mb-8">

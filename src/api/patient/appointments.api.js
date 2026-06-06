@@ -19,9 +19,11 @@ export const getMyAppointments = (phone) =>
  * @param {string} date - yyyy-mm-dd
  * @returns {Promise}
  */
-export const getAvailableSlots = (clinicId, date) =>
+export const getAvailableSlots = (clinicId, date, bookingType) =>
   api
-    .get(`/appointments/available-slots`, { params: { clinic: clinicId, date } })
+    .get(`/appointments/available-slots`, {
+      params: { clinic: clinicId, date, ...(bookingType ? { bookingType } : {}) },
+    })
     .then((res) => res.data);
 
 /**

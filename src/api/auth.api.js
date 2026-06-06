@@ -53,3 +53,29 @@ export const loginWithPassword = (email, password) =>
 
 export const logoutPatient = () =>
   api.post("/auth/patient/logout").then((res) => res.data);
+
+/**
+ * Request a password reset link (works for patients and admins server-side;
+ * patients receive a link to the public /reset-password page).
+ * @param {string} email
+ */
+export const forgotPassword = (email) =>
+  api.post("/auth/forgot-password", { email }).then((res) => res.data);
+
+/**
+ * Reset password using the emailed token.
+ * @param {string} token
+ * @param {string} newPassword
+ */
+export const resetPassword = (token, newPassword) =>
+  api.post("/auth/reset-password", { token, newPassword }).then((res) => res.data);
+
+/**
+ * Change the logged-in patient's password.
+ * @param {string} currentPassword
+ * @param {string} newPassword
+ */
+export const changePatientPassword = (currentPassword, newPassword) =>
+  api
+    .post("/auth/patient/change-password", { currentPassword, newPassword })
+    .then((res) => res.data);

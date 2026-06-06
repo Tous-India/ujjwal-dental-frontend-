@@ -16,11 +16,14 @@ import { useMyAppointments } from "../hooks/patient/useMyAppointments";
 import { useMyPayments } from "../hooks/patient/useMyPayments";
 import { useMyReports } from "../hooks/patient/useMyReports";
 import { useMyTreatments } from "../hooks/patient/useMyTreatments";
+import { useMyInvoices } from "../hooks/patient/useMyInvoices";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import EventIcon from "@mui/icons-material/Event";
 import PaymentIcon from "@mui/icons-material/Payment";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import DescriptionIcon from "@mui/icons-material/Description";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import PersonIcon from "@mui/icons-material/Person";
@@ -52,6 +55,13 @@ const navItems = [
     badgeColor: "#f59e0b",
   },
   {
+    title: "Invoices",
+    path: "/invoices",
+    icon: <ReceiptLongIcon />,
+    badgeKey: "invoices",
+    badgeColor: "#e06c00",
+  },
+  {
     title: "Reports",
     path: "/reports",
     icon: <DescriptionIcon />,
@@ -60,10 +70,15 @@ const navItems = [
   },
   {
     title: "Treatments",
-    path: "/treatments",
+    path: "/my-treatments",
     icon: <MedicalServicesIcon />,
     badgeKey: "treatments",
     badgeColor: "#8b5cf6",
+  },
+  {
+    title: "Book Treatment",
+    path: "/book-treatment",
+    icon: <AddShoppingCartIcon />,
   },
   {
     title: "My Membership",
@@ -105,6 +120,7 @@ const PatientSidebar = ({ open, onClose }) => {
   const { data: paymentsData } = useMyPayments();
   const { data: reportsData } = useMyReports();
   const { data: treatmentsData } = useMyTreatments();
+  const { data: invoicesData } = useMyInvoices();
 
   const allAppointments = appointmentsData?.data?.appointments || appointmentsData?.data || [];
   const upcomingCount = Array.isArray(allAppointments)
@@ -116,6 +132,7 @@ const PatientSidebar = ({ open, onClose }) => {
     payments: paymentsData?.pagination?.total || 0,
     reports: reportsData?.data?.reports?.length || 0,
     treatments: treatmentsData?.data?.treatments?.length || treatmentsData?.data?.length || 0,
+    invoices: invoicesData?.pagination?.total || 0,
   };
 
   // Track seen counts

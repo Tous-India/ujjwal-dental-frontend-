@@ -10,11 +10,10 @@
  * - View payment details
  */
 import { useState } from "react";
-import { Box, Typography, Chip, Avatar, Button, TextField, Paper, IconButton } from "@mui/material";
+import { Box, Typography, Chip, Avatar, Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import ClearIcon from "@mui/icons-material/Clear";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import DataTable from "../../components/common/DataTable";
+import CompactFilterBar from "../../components/common/CompactFilterBar";
 import { usePayments } from "../../hooks/admin/usePayments";
 import AddPaymentModal from "../../components/admin/modals/AddPaymentModal";
 import PaymentDetailModal from "../../components/admin/modals/PaymentDetailModal";
@@ -282,65 +281,27 @@ const Payments = () => {
         </Button>
       </Box>
 
-      {/* Date Filter Section */}
-      <Paper className="p-4 mb-4">
-        <Box className="flex flex-wrap items-center gap-4">
-          <Box className="flex items-center gap-2">
-            <CalendarTodayIcon className="text-gray-500" fontSize="small" />
-            <Typography variant="body2" className="text-gray-600 font-medium">
-              Date Filter:
-            </Typography>
-          </Box>
-          <TextField
-            type="date"
-            size="small"
-            label="From Date"
-            value={fromDate}
-            onChange={handleFromDateChange}
-            slotProps={{ inputLabel: { shrink: true } }}
-            className="min-w-[160px]"
-          />
-          <TextField
-            type="date"
-            size="small"
-            label="To Date"
-            value={toDate}
-            onChange={handleToDateChange}
-            slotProps={{ inputLabel: { shrink: true } }}
-            className="min-w-[160px]"
-          />
-          {(fromDate || toDate) && (
-            <IconButton
-              size="small"
-              onClick={handleClearDates}
-              className="text-gray-500 hover:text-red-500"
-              title="Clear dates"
-            >
-              <ClearIcon fontSize="small" />
-            </IconButton>
-          )}
-          {(fromDate || toDate) && (
-            <Chip
-              label={`${fromDate || "Start"} → ${toDate || "End"}`}
-              size="small"
-              variant="outlined"
-              onDelete={handleClearDates}
-              className="ml-2"
-            />
-          )}
-        </Box>
-      </Paper>
+      {/* Filters — single compact row */}
+      <CompactFilterBar
+        fromDate={fromDate}
+        toDate={toDate}
+        onFromChange={handleFromDateChange}
+        onToChange={handleToDateChange}
+        onClearDates={handleClearDates}
+        search={search}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search by payment number or patient..."
+        filters={filterOptions}
+        filterValues={filters}
+        onFilterChange={handleFilterChange}
+        onRefresh={refetch}
+      />
 
       {/* Data Table */}
       <DataTable
         columns={columns}
         data={payments}
         loading={isLoading}
-        searchPlaceholder="Search by payment number or patient..."
-        onSearch={handleSearch}
-        filters={filterOptions}
-        filterValues={filters}
-        onFilterChange={handleFilterChange}
         pagination={{
           page,
           limit,
@@ -351,7 +312,6 @@ const Payments = () => {
             setPage(1);
           },
         }}
-        onRefresh={refetch}
         onRowClick={handleRowClick}
         emptyMessage="No payments found"
       />

@@ -62,7 +62,7 @@ const navItems = [
   { label: "Enquiries", path: "/admin/enquiries", icon: ContactPhoneIcon, badgeKey: "enquiries", badgeColor: "#ef4444" },
   { label: "Appointments", path: "/admin/appointments", icon: EventIcon, badgeKey: "appointments", badgeColor: "#3b82f6" },
   { label: "Treatments", path: "/admin/treatments", icon: MedicalServicesIcon },
-  { label: "Tests", path: "/admin/tests", icon: BiotechIcon },
+  { label: "Lab", path: "/admin/lab", icon: BiotechIcon },
   { label: "Payments", path: "/admin/payments", icon: PaymentIcon, badgeKey: "payments", badgeColor: "#f59e0b" },
   { label: "Billing", path: "/admin/billing", icon: ReceiptLongIcon },
   { label: "Reports", path: "/admin/reports", icon: AssessmentIcon },

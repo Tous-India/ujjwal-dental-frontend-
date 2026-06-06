@@ -7,7 +7,14 @@
  */
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../../store/auth.store";
-import { CircularProgress } from "@mui/material";
+import {
+  CircularProgress,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+} from "@mui/material";
 import { toast } from "react-toastify";
 import ReCAPTCHA from "react-google-recaptcha";
 import { filterName } from "../../utils/nameInput";
@@ -118,6 +125,9 @@ const BookAppointment = () => {
   // Transient validation message for the date field (e.g. past date reset)
   const [dateError, setDateError] = useState("");
 
+  // Regular vs Emergency urgency (drives the fee + stored bookingType)
+  const [bookingType, setBookingType] = useState("regular");
+
   // Form data
   const [formData, setFormData] = useState({
     clinic: "",
@@ -184,7 +194,10 @@ const BookAppointment = () => {
       return;
     }
     let active = true;
-    getAvailableSlots(formData.clinic, formData.date)
+    // Capacity depends on bookingType (emergency may take a 3rd seat), so this
+    // refetches when the Regular/Emergency radio changes. Switching back to
+    // Regular re-evaluates and clears a now-invalid (emergency-only) slot pick.
+    getAvailableSlots(formData.clinic, formData.date, bookingType)
       .then((res) => {
         if (!active) return;
         const slots = res?.data?.availableSlots || [];
@@ -202,16 +215,13 @@ const BookAppointment = () => {
     return () => {
       active = false;
     };
-  }, [formData.clinic, formData.date]);
+  }, [formData.clinic, formData.date, bookingType]);
 
-  // Get OPD fee based on appointment type
-  const getOpdFee = () => {
-    const reason = appointmentReasons.find((r) => r.value === formData.reason);
-    const isEmergency = reason?.type === "emergency";
-    return isEmergency
+  // Get OPD fee based on the Regular/Emergency toggle
+  const getOpdFee = () =>
+    bookingType === "emergency"
       ? feeSettings.opdFeeEmergency
       : feeSettings.opdFeeRegular;
-  };
 
   const getMinDate = () => {
     // Allow booking from today onwards (past time slots are filtered out below).
@@ -311,9 +321,7 @@ const BookAppointment = () => {
       }
 
       const opdFee = getOpdFee();
-      const isEmergency =
-        appointmentReasons.find((r) => r.value === formData.reason)?.type ===
-        "emergency";
+      const isEmergency = bookingType === "emergency";
 
       // Create Razorpay order (isOnlineBooking allows creating order without patient).
       // The server prices the order authoritatively from settings; isEmergency tells
@@ -372,6 +380,7 @@ const BookAppointment = () => {
               timeSlot: formData.time,
               reason: reason?.label || formData.reason,
               type: reason?.type || "regular",
+              bookingType,
               captchaToken: captchaToken,
             });
 
@@ -444,6 +453,7 @@ const BookAppointment = () => {
   const resetForm = () => {
     setSuccess(false);
     setActiveStep(0);
+    setBookingType("regular");
     setFormData({
       clinic: clinics[0]?._id || "",
       date: "",
@@ -624,6 +634,57 @@ const BookAppointment = () => {
                   </h2>
 
                   <div className="space-y-5">
+                    {/* Appointment type (Regular / Emergency) — drives fee + slot
+                        capacity. Shown before date/time so slot availability can
+                        reflect the chosen type. */}
+                    <FormControl fullWidth>
+                      <FormLabel
+                        id="booking-type-label"
+                        sx={{
+                          fontSize: "15px",
+                          fontWeight: 500,
+                          color: "#4b5563",
+                          mb: 0.5,
+                          "&.Mui-focused": { color: "#4b5563" },
+                        }}
+                      >
+                        Appointment type
+                      </FormLabel>
+                      <RadioGroup
+                        aria-labelledby="booking-type-label"
+                        value={bookingType}
+                        onChange={(e) => setBookingType(e.target.value)}
+                        sx={{ gap: 0.5 }}
+                      >
+                        <FormControlLabel
+                          value="regular"
+                          sx={{ my: 0 }}
+                          control={<Radio size="small" sx={{ "&.Mui-checked": { color: "#f57c00" } }} />}
+                          label={
+                            <span style={{ whiteSpace: "nowrap" }}>
+                              Regular{" "}
+                              <span className="font-numbers text-gray-500">
+                                ({formatCurrency(feeSettings.opdFeeRegular)})
+                              </span>
+                            </span>
+                          }
+                        />
+                        <FormControlLabel
+                          value="emergency"
+                          sx={{ my: 0 }}
+                          control={<Radio size="small" sx={{ "&.Mui-checked": { color: "#dc2626" } }} />}
+                          label={
+                            <span style={{ whiteSpace: "nowrap" }}>
+                              Emergency{" "}
+                              <span className="font-numbers text-red-600">
+                                ({formatCurrency(feeSettings.opdFeeEmergency)})
+                              </span>
+                            </span>
+                          }
+                        />
+                      </RadioGroup>
+                    </FormControl>
+
                     <div>
                       <label className={labelCls}>Select Clinic</label>
                       <select
@@ -868,13 +929,16 @@ const BookAppointment = () => {
                   {/* OPD Fee Card */}
                   <div className="bg-orange-50 border-l-4 border-accent rounded-lg px-4 py-3 mb-4 flex justify-between items-center">
                     <div>
-                      <p className="text-[15px] font-semibold text-gray-800">
+                      <p className="text-[15px] font-semibold text-gray-800 flex items-center gap-2">
                         OPD Fee
+                        {bookingType === "emergency" && (
+                          <span className="inline-block bg-red-600 text-white rounded-full px-2 py-0.5 text-[11px] font-bold">
+                            Emergency
+                          </span>
+                        )}
                       </p>
                       <p className="text-[13px] text-gray-500">
-                        {appointmentReasons.find(
-                          (r) => r.value === formData.reason,
-                        )?.type === "emergency"
+                        {bookingType === "emergency"
                           ? "Emergency Appointment"
                           : "Regular Appointment"}
                       </p>
@@ -909,6 +973,9 @@ const BookAppointment = () => {
                       ? "Processing..."
                       : `Pay ${formatCurrency(getOpdFee())} & Book`}
                   </button>
+                  <p className="text-[12px] text-gray-500 mt-2 text-center">
+                    Payments processed by Healing Fairy Health Care Pvt. Ltd.
+                  </p>
                 </div>
               )}
 

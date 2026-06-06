@@ -159,7 +159,8 @@ const Appointments = () => {
                     <TableCell>Clinic</TableCell>
                     <TableCell>Token</TableCell>
                     <TableCell>Reason</TableCell>
-                    <TableCell>OPD Fee</TableCell>
+                    <TableCell>Visit Type</TableCell>
+                    <TableCell>Fee</TableCell>
                     <TableCell>Payment</TableCell>
                     <TableCell>Status</TableCell>
                   </TableRow>
@@ -201,16 +202,52 @@ const Appointments = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">
-                          {apt.isFree ? "Free" : `₹${apt.opdFee || 0}`}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                          {apt.visitType === "treatment" ? (
+                            <Chip
+                              label={apt.treatmentId?.name || "Treatment"}
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                            />
+                          ) : (
+                            <Chip label="OPD" size="small" color="info" variant="outlined" />
+                          )}
+                          {apt.appointmentType === "emergency" && (
+                            <Chip
+                              label="Emergency"
+                              size="small"
+                              sx={{ bgcolor: "#dc2626", color: "#fff", fontWeight: 700 }}
+                            />
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" className="font-numbers">
+                          {apt.isFree
+                            ? "Free"
+                            : `₹${(apt.invoice?.grandTotal ?? apt.fee ?? apt.opdFee ?? 0).toLocaleString("en-IN")}`}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          label={apt.opdFeePaid ? "Paid" : "Unpaid"}
-                          size="small"
-                          color={apt.opdFeePaid ? "success" : "warning"}
-                        />
+                        {(() => {
+                          if (apt.isFree) {
+                            return <Chip label="Free" size="small" color="info" variant="outlined" />;
+                          }
+                          const ps = apt.invoice?.paymentStatus;
+                          const map = {
+                            paid: { label: "Paid", color: "success" },
+                            partial: { label: "Partially Paid", color: "warning" },
+                            unpaid: { label: "Unpaid", color: "error" },
+                          };
+                          const cfg = ps
+                            ? map[ps] || { label: ps, color: "default" }
+                            : {
+                                label: apt.opdFeePaid ? "Paid" : "Unpaid",
+                                color: apt.opdFeePaid ? "success" : "error",
+                              };
+                          return <Chip label={cfg.label} size="small" color={cfg.color} />;
+                        })()}
                       </TableCell>
                       <TableCell>
                         <Chip

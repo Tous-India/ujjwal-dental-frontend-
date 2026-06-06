@@ -58,10 +58,19 @@ const paymentStatusConfig = {
 
 const itemTypeLabels = {
   treatment: "Treatment",
+  surgery: "Surgery",
   test: "Test",
   opd_fee: "OPD Fee",
   membership: "Membership",
+  medicine: "Medicine",
   other: "Other",
+};
+
+const paymentMethodLabels = {
+  cash: "Cash",
+  card: "Card",
+  upi: "UPI",
+  online: "Online",
 };
 
 const formatCurrency = (val) =>
@@ -305,7 +314,7 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
                   <TableRow className="bg-gray-50">
                     <TableCell className="font-semibold">#</TableCell>
                     <TableCell className="font-semibold">Description</TableCell>
-                    <TableCell className="font-semibold">Type</TableCell>
+                    <TableCell className="font-semibold">Category</TableCell>
                     <TableCell align="right" className="font-semibold">
                       Qty
                     </TableCell>
@@ -335,19 +344,19 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
                           variant="outlined"
                         />
                       </TableCell>
-                      <TableCell align="right">{item.quantity}</TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" className="font-numbers">{item.quantity}</TableCell>
+                      <TableCell align="right" className="font-numbers">
                         {formatCurrency(item.unitPrice)}
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" className="font-numbers">
                         {item.discount?.percentage
                           ? `${item.discount.percentage}%`
                           : "-"}
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" className="font-numbers">
                         {formatCurrency(item.taxAmount)}
                       </TableCell>
-                      <TableCell align="right" className="font-medium">
+                      <TableCell align="right" className="font-numbers font-medium">
                         {formatCurrency(item.total)}
                       </TableCell>
                     </TableRow>
@@ -381,6 +390,11 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
                     {formatCurrency(inv?.amountPaid)}
                   </span>
                 </InfoRow>
+                {inv?.paymentMethod && (
+                  <InfoRow label="Payment Method">
+                    {paymentMethodLabels[inv.paymentMethod] || inv.paymentMethod}
+                  </InfoRow>
+                )}
                 <Divider className="my-1" />
                 <InfoRow label="Balance Due">
                   <span
@@ -391,6 +405,11 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
                 </InfoRow>
               </Paper>
             </Box>
+
+            {/* Legal company line */}
+            <Typography variant="caption" className="block text-center text-gray-500 mb-4">
+              Ujjwal Dental Clinic — A unit of Healing Fairy Health Care Pvt. Ltd.
+            </Typography>
 
             {/* Notes */}
             {inv?.notes && (

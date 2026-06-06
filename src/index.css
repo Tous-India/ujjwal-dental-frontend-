@@ -1,5 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 /* ============ GLOBAL OVERFLOW / SIZING GUARDS ============ */
@@ -109,8 +109,21 @@ td,
   padding-top: 30px !important;
 }
 
+/* App-wide default font: Inter for everything (body, numbers, ₹, inputs,
+   tables, modals, dropdowns), DM Sans for headings only. This REPLACES the old
+   global "DM Sans !important" rule that forced DM Sans everywhere and kept
+   overriding number/price fonts. Inter is clean for both text and figures. */
 * {
-  font-family: "DM Sans", sans-serif !important;
+  font-family: "Inter", "DM Sans", sans-serif !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "DM Sans", "Inter", sans-serif !important;
 }
 
 /* Sensible base typography. Component/Tailwind classes control specific sizes;

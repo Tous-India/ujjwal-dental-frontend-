@@ -13,8 +13,6 @@ import {
   Chip,
   Avatar,
   Button,
-  TextField,
-  Paper,
   IconButton,
   Card,
   CardContent,
@@ -23,13 +21,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import Grid from "@mui/material/Grid";
-import ClearIcon from "@mui/icons-material/Clear";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import InboxIcon from "@mui/icons-material/Inbox";
 import FiberNewIcon from "@mui/icons-material/FiberNew";
 import PhoneCallbackIcon from "@mui/icons-material/PhoneCallback";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DataTable from "../../components/common/DataTable";
+import CompactFilterBar from "../../components/common/CompactFilterBar";
 import { useEnquiries, useEnquiryStats, useEnquiryMutations } from "../../hooks/admin/useEnquiries";
 import EnquiryDetailModal from "../../components/admin/modals/EnquiryDetailModal";
 
@@ -271,36 +268,27 @@ const Enquiries = () => {
         </Grid>
       </Grid>
 
-      {/* Date Filter */}
-      <Paper className="p-4 mb-4">
-        <Box className="flex flex-wrap items-center gap-4">
-          <Box className="flex items-center gap-2">
-            <CalendarTodayIcon className="text-gray-500" fontSize="small" />
-            <Typography variant="body2" className="text-gray-600 font-medium">Date Filter:</Typography>
-          </Box>
-          <TextField type="date" size="small" label="From" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(1); }} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 250 }} />
-          <TextField type="date" size="small" label="To" value={toDate} onChange={(e) => { setToDate(e.target.value); setPage(1); }} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 250 }} />
-          {(fromDate || toDate) && (
-            <>
-              <IconButton size="small" onClick={handleClearDates} className="text-gray-500 hover:text-red-500">
-                <ClearIcon fontSize="small" />
-              </IconButton>
-              <Chip label={`${fromDate || "Start"} → ${toDate || "End"}`} size="small" variant="outlined" onDelete={handleClearDates} />
-            </>
-          )}
-        </Box>
-      </Paper>
+      {/* Filters — single compact row */}
+      <CompactFilterBar
+        fromDate={fromDate}
+        toDate={toDate}
+        onFromChange={(e) => { setFromDate(e.target.value); setPage(1); }}
+        onToChange={(e) => { setToDate(e.target.value); setPage(1); }}
+        onClearDates={handleClearDates}
+        search={search}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search by name, phone, email, or lead #..."
+        filters={filterOptions}
+        filterValues={filters}
+        onFilterChange={handleFilterChange}
+        onRefresh={refetch}
+      />
 
       {/* Data Table */}
       <DataTable
         columns={getColumns((row) => setConfirmDelete(row))}
         data={enquiries}
         loading={isLoading}
-        searchPlaceholder="Search by name, phone, email, or lead #..."
-        onSearch={handleSearch}
-        filters={filterOptions}
-        filterValues={filters}
-        onFilterChange={handleFilterChange}
         pagination={{
           page,
           limit,
@@ -308,7 +296,6 @@ const Enquiries = () => {
           onPageChange: setPage,
           onLimitChange: (newLimit) => { setLimit(newLimit); setPage(1); },
         }}
-        onRefresh={refetch}
         onRowClick={handleRowClick}
         emptyMessage="No enquiries found"
       />

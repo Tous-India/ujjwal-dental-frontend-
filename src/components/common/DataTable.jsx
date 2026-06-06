@@ -205,7 +205,11 @@ const DataTable = ({
 
   return (
     <Paper className="w-full">
-      {/* Search and Filters Bar */}
+      {/* Search and Filters Bar — only when there's at least one control to show
+          (callers that pass none, e.g. when they render their own filter row,
+          get no empty toolbar). Backward-compatible: pages passing search/filters/
+          refresh render exactly as before. */}
+      {(onSearch || filters.length > 0 || onRefresh) && (
       <Box className="p-4 border-b border-gray-200">
         <Box className="flex flex-wrap gap-4 items-center">
           {/* Search Input */}
@@ -257,6 +261,7 @@ const DataTable = ({
           )}
         </Box>
       </Box>
+      )}
 
       {/* Table */}
       {/* bg-white on both the scroll container and the table so the white

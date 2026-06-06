@@ -70,6 +70,17 @@ export const reactivatePatient = (id) =>
   api.patch(`/patients/${id}/reactivate`).then((res) => res.data);
 
 /**
+ * Set or reset a patient's password (admin). Pass { generate: true } to have the
+ * server create a one-time temporary password (returned once), or { newPassword }
+ * to set a specific one. Never returns or exposes the existing password.
+ * @param {string} id - Patient ID
+ * @param {Object} data - { newPassword } | { generate: true }
+ * @returns {Promise}
+ */
+export const resetPatientPassword = (id, data) =>
+  api.patch(`/patients/${id}/reset-password`, data).then((res) => res.data);
+
+/**
  * Get patient profile with summary
  * @param {string} id - Patient ID
  * @returns {Promise}

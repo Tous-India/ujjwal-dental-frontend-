@@ -150,6 +150,9 @@ const ContactPage = () => {
                   <br />
                   Villa 445, A Block, Parsvnath City, Sonipat, Haryana 131001
                 </a>
+                <p className="text-gray-500 text-[13px] mt-3 pt-3 border-t border-gray-100">
+                  Operated by Healing Fairy Health Care Pvt. Ltd.
+                </p>
               </InfoCard>
 
               <InfoCard icon={<AccessTimeIcon />} title="Hours">

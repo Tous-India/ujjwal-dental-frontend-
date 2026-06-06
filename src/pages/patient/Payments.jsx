@@ -222,6 +222,11 @@ const Payments = () => {
                             size="small"
                             variant="outlined"
                           />
+                          {(payment.treatmentType?.name || payment.treatmentName) && (
+                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                              {payment.treatmentType?.name || payment.treatmentName}
+                            </Typography>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Chip

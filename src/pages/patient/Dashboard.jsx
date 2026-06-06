@@ -32,10 +32,11 @@ import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import { useNavigate } from "react-router-dom";
 import { useMyAppointments } from "../../hooks/patient/useMyAppointments";
-import { useMyPayments } from "../../hooks/patient/useMyPayments";
+import { useMyBillingSummary } from "../../hooks/patient/useMyInvoices";
 import { useMyReports } from "../../hooks/patient/useMyReports";
 import { useMyTreatments } from "../../hooks/patient/useMyTreatments";
 import { useMyMembership } from "../../hooks/patient/useMemberships";
+import UpcomingFollowUps from "../../components/patient/UpcomingFollowUps";
 
 const formatDate = (date) => {
   if (!date) return "-";
@@ -53,7 +54,7 @@ const Dashboard = () => {
 
   // Fetch real data for stats
   const { data: appointmentsData, isLoading: loadingApts } = useMyAppointments();
-  const { data: paymentsData, isLoading: loadingPay } = useMyPayments({ limit: 5 });
+  const { data: billingSummaryData, isLoading: loadingPay } = useMyBillingSummary();
   const { data: reportsData, isLoading: loadingRep } = useMyReports();
   const { data: treatmentsData, isLoading: loadingTreat } = useMyTreatments({ limit: 5 });
   const { data: membershipData, isLoading: loadingMembership } = useMyMembership();
@@ -71,8 +72,10 @@ const Dashboard = () => {
   const allAppointments = appointmentsData?.data?.appointments || appointmentsData?.data || [];
   const appointmentCount = Array.isArray(allAppointments) ? allAppointments.length : 0;
 
-  const paymentsSummary = paymentsData?.data?.summary || {};
-  const pendingAmount = paymentsSummary.totalPending || 0;
+  // Pending Amount = total outstanding balance across this patient's invoices
+  // (same invoice-based source as the admin Billing page: sum of balanceDue).
+  const billingStats = billingSummaryData?.data?.stats || {};
+  const pendingAmount = billingStats.totalDue || 0;
 
   const reports = reportsData?.data?.reports || [];
   const reportCount = Array.isArray(reports) ? reports.length : 0;
@@ -121,7 +124,7 @@ const Dashboard = () => {
       value: loadingTreat ? null : treatmentCount,
       icon: <MedicalServicesIcon />,
       color: "#9c27b0",
-      path: "/treatments",
+      path: "/my-treatments",
     },
   ];
 
@@ -410,6 +413,11 @@ const Dashboard = () => {
           </Card>
         </Grid>
 
+        {/* Upcoming Follow-up Reminders (no payment) */}
+        <Grid size={{ xs: 12 }}>
+          <UpcomingFollowUps />
+        </Grid>
+
         {/* Quick Actions */}
         <Grid size={{ xs: 12 }}>
           <Card>
@@ -442,7 +450,7 @@ const Dashboard = () => {
                 <Button
                   variant="outlined"
                   startIcon={<MedicalServicesIcon />}
-                  onClick={() => navigate("/treatments")}
+                  onClick={() => navigate("/my-treatments")}
                 >
                   Treatment History
                 </Button>

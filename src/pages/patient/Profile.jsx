@@ -2,6 +2,7 @@ import { useState } from "react";
 import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import { useAuthStore } from "../../store/auth.store";
 import { updatePatientProfile } from "../../api/patient/patients.api";
+import { changePatientPassword } from "../../api/auth.api";
 import {
   Box,
   Card,
@@ -13,12 +14,17 @@ import {
   Avatar,
   Divider,
   CircularProgress,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import PersonIcon from "@mui/icons-material/Person";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 /**
  * Patient Profile Page
@@ -31,6 +37,38 @@ const Profile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Change-password state
+  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!pw.current || !pw.next || !pw.confirm) {
+      toast.error("All password fields are required");
+      return;
+    }
+    if (pw.next.length < 10 || !/[A-Za-z]/.test(pw.next) || !/[0-9]/.test(pw.next)) {
+      toast.error(
+        "New password must be at least 10 characters and include a letter and a number",
+      );
+      return;
+    }
+    if (pw.next !== pw.confirm) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      await changePatientPassword(pw.current, pw.next);
+      toast.success("Password updated successfully");
+      setPw({ current: "", next: "", confirm: "" });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update password");
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -332,6 +370,85 @@ const Profile = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Change Password */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <LockIcon color="action" fontSize="small" />
+            <Typography variant="h6" fontWeight="bold">
+              Change Password
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Update the password you use for password login. OTP login always
+            works regardless of your password.
+          </Typography>
+
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                fullWidth
+                label="Current Password"
+                type={showPw ? "text" : "password"}
+                value={pw.current}
+                onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))}
+                disabled={pwLoading}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPw((s) => !s)}
+                        edge="end"
+                        size="small"
+                        aria-label={showPw ? "Hide passwords" : "Show passwords"}
+                      >
+                        {showPw ? (
+                          <VisibilityOffIcon fontSize="small" />
+                        ) : (
+                          <VisibilityIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                fullWidth
+                label="New Password"
+                type={showPw ? "text" : "password"}
+                value={pw.next}
+                onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
+                disabled={pwLoading}
+                helperText="Min 10 chars, a letter & a number"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                fullWidth
+                label="Confirm New Password"
+                type={showPw ? "text" : "password"}
+                value={pw.confirm}
+                onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))}
+                disabled={pwLoading}
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+            <Button
+              variant="contained"
+              startIcon={pwLoading ? <CircularProgress size={20} /> : <LockIcon />}
+              onClick={handleChangePassword}
+              disabled={pwLoading}
+            >
+              {pwLoading ? "Updating..." : "Update Password"}
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 };

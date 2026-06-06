@@ -13,16 +13,11 @@ import {
   Chip,
   Avatar,
   Button,
-  TextField,
-  Paper,
-  IconButton,
   Card,
   CardContent,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
-import ClearIcon from "@mui/icons-material/Clear";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import SmsIcon from "@mui/icons-material/Sms";
@@ -34,6 +29,7 @@ import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import InfoIcon from "@mui/icons-material/Info";
 import DataTable from "../../components/common/DataTable";
+import CompactFilterBar from "../../components/common/CompactFilterBar";
 import {
   useAdminNotifications,
   useNotificationStats,
@@ -323,69 +319,33 @@ const Notifications = () => {
         </Grid>
       </Grid>
 
-      {/* Date Filter */}
-      <Paper className="p-4 mb-4">
-        <Box className="flex flex-wrap items-center gap-4">
-          <Box className="flex items-center gap-2">
-            <CalendarTodayIcon className="text-gray-500" fontSize="small" />
-            <Typography variant="body2" className="text-gray-600 font-medium">
-              Date Filter:
-            </Typography>
-          </Box>
-          <TextField
-            type="date"
-            size="small"
-            label="From"
-            value={fromDate}
-            onChange={(e) => {
-              setFromDate(e.target.value);
-              setPage(1);
-            }}
-            slotProps={{ inputLabel: { shrink: true } }}
-            className="min-w-[160px]"
-          />
-          <TextField
-            type="date"
-            size="small"
-            label="To"
-            value={toDate}
-            onChange={(e) => {
-              setToDate(e.target.value);
-              setPage(1);
-            }}
-            slotProps={{ inputLabel: { shrink: true } }}
-            className="min-w-[160px]"
-          />
-          {(fromDate || toDate) && (
-            <>
-              <IconButton
-                size="small"
-                onClick={handleClearDates}
-                className="text-gray-500 hover:text-red-500"
-              >
-                <ClearIcon fontSize="small" />
-              </IconButton>
-              <Chip
-                label={`${fromDate || "Start"} → ${toDate || "End"}`}
-                size="small"
-                variant="outlined"
-                onDelete={handleClearDates}
-              />
-            </>
-          )}
-        </Box>
-      </Paper>
+      {/* Filters — single compact row */}
+      <CompactFilterBar
+        fromDate={fromDate}
+        toDate={toDate}
+        onFromChange={(e) => {
+          setFromDate(e.target.value);
+          setPage(1);
+        }}
+        onToChange={(e) => {
+          setToDate(e.target.value);
+          setPage(1);
+        }}
+        onClearDates={handleClearDates}
+        search={search}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search notifications..."
+        filters={filterOptions}
+        filterValues={filters}
+        onFilterChange={handleFilterChange}
+        onRefresh={refetch}
+      />
 
       {/* Data Table */}
       <DataTable
         columns={columns}
         data={notifications}
         loading={isLoading}
-        searchPlaceholder="Search notifications..."
-        onSearch={handleSearch}
-        filters={filterOptions}
-        filterValues={filters}
-        onFilterChange={handleFilterChange}
         pagination={{
           page,
           limit,
@@ -396,7 +356,6 @@ const Notifications = () => {
             setPage(1);
           },
         }}
-        onRefresh={refetch}
         emptyMessage="No notifications found"
       />
 

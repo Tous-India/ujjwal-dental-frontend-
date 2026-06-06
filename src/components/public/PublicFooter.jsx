@@ -55,7 +55,10 @@ const PublicFooter = () => {
             <p className="text-white font-bold text-[18px] leading-tight">
               UJJWAL DENTAL
             </p>
-            <p className="text-gray-400 text-[12px] tracking-wide mb-4">
+            <p className="text-white/60 text-[13px] leading-snug mt-1">
+              A unit of Healing Fairy Health Care Pvt. Ltd.
+            </p>
+            <p className="text-gray-400 text-[12px] tracking-wide mb-4 mt-1">
               CARING FOR YOUR SMILE
             </p>
             <p className="text-gray-300 text-sm leading-relaxed mb-5">
@@ -174,7 +177,7 @@ const PublicFooter = () => {
       <div className="border-t border-gray-700">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-gray-400 text-[13px]">
-            © 2026 Ujjwal Dental Clinic. All Rights Reserved.
+            © 2026 Healing Fairy Health Care Pvt. Ltd. All Rights Reserved.
           </p>
           <p className="text-gray-400 text-[13px]">
             Developed by{" "}

@@ -419,10 +419,16 @@ const Dashboard = () => {
                 </Box>
               ) : todayAppointments?.length > 0 ? (
                 <Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {todayAppointments.map((appointment) => (
+                  {todayAppointments.map((appointment) => {
+                    const isEmergency = appointment.appointmentType === "emergency";
+                    return (
                     <Box
                       key={appointment._id}
-                      className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 hover:shadow-sm transition-all cursor-pointer"
+                      className={`p-4 border rounded-xl hover:shadow-sm transition-all cursor-pointer ${
+                        isEmergency
+                          ? "border-gray-100 border-l-4 border-l-red-600 bg-red-50/40"
+                          : "border-gray-100 hover:border-gray-200"
+                      }`}
                       onClick={() => navigate("/admin/appointments")}
                     >
                       <Box className="flex items-center gap-3 mb-2">
@@ -430,24 +436,34 @@ const Dashboard = () => {
                           {appointment.patient?.name?.[0] || "P"}
                         </Avatar>
                         <Box className="flex-1 min-w-0">
-                          <Typography variant="body2" className="font-medium truncate">
+                          <Typography variant="body2" className="font-medium truncate flex items-center gap-1">
                             {appointment.patient?.name || "Unknown"}
+                            {isEmergency && (
+                              <span className="inline-block w-2 h-2 rounded-full bg-red-600 shrink-0" title="Emergency" />
+                            )}
                           </Typography>
                           <Typography variant="caption" className="text-gray-500">
                             {appointment.timeSlot || "-"}
                           </Typography>
                         </Box>
                       </Box>
-                      <Box className="flex justify-between items-center">
+                      <Box className="flex justify-between items-center gap-1">
                         <Typography variant="caption" className="text-gray-600 truncate max-w-[100px]">
                           {appointment.reason || "Checkup"}
                         </Typography>
-                        <span className={`${PILL_CLS} ${statusPill(appointment.status)}`}>
-                          {appointment.status?.replace("_", " ") || "scheduled"}
-                        </span>
+                        {isEmergency ? (
+                          <span className="rounded-full px-2 py-0.5 text-[11px] font-bold bg-red-600 text-white">
+                            Emergency
+                          </span>
+                        ) : (
+                          <span className={`${PILL_CLS} ${statusPill(appointment.status)}`}>
+                            {appointment.status?.replace("_", " ") || "scheduled"}
+                          </span>
+                        )}
                       </Box>
                     </Box>
-                  ))}
+                    );
+                  })}
                 </Box>
               ) : (
                 <Box className="text-center py-8">
