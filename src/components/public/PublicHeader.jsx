@@ -109,9 +109,10 @@ const PublicHeader = () => {
               <img
                 src={logo}
                 alt="Ujjwal Dental Clinic"
-                className="h-10 md:h-12 w-auto max-h-12 object-contain"
+                className="h-12 sm:h-14 lg:h-12 w-auto object-contain"
               />
-              <div className="hidden sm:block ml-2">
+              {/* Desktop name — unchanged */}
+              <div className="hidden lg:block ml-2">
                 <span
                   className="block font-extrabold text-[#0D1B4A] leading-tight text-[20px]"
                   style={{ fontWeight: 800 }}
@@ -128,6 +129,10 @@ const PublicHeader = () => {
                   CARING FOR YOUR SMILE
                 </span>
               </div>
+              {/* Mobile/tablet name — shown next to the larger logo */}
+              <span className="lg:hidden ml-2 font-medium text-[#0D1B4A] leading-tight whitespace-nowrap text-[15px] sm:text-[18px]">
+                Ujjwal Dental Clinic
+              </span>
             </NavLink>
 
             {/* Desktop Nav */}
@@ -353,13 +358,8 @@ const PublicHeader = () => {
               Book Appointment
             </NavLink>
 
-            {/* Mobile/tablet Book button (full nav + CTA shows at lg and up) */}
-            <NavLink
-              to="/book-appointment"
-              className="lg:hidden ml-auto mr-3 inline-flex items-center whitespace-nowrap bg-[#F57C00] text-white rounded-full font-semibold text-[13px] px-4 py-1.5 no-underline shrink-0 hover:bg-[#E06C00] transition-colors"
-            >
-              Book Now
-            </NavLink>
+            {/* Book Now removed on mobile/tablet — it now lives in the fixed
+                bottom action bar (see MobileBottomBar). */}
 
             <div className="menuIcon">
               {" "}
