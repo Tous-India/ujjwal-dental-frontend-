@@ -38,6 +38,11 @@ const UserLayout = () => {
         sx={{
           flexGrow: 1,
           p: 3,
+          // Allow this flex child to be narrower than its content so wide tables
+          // overflow their own scroll container (horizontal swipe) instead of
+          // stretching the page past the viewport (which body overflow-x:hidden
+          // would clip).
+          minWidth: 0,
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           // ml: { md: `${DRAWER_WIDTH}px` },
         }}

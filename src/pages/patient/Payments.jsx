@@ -24,6 +24,7 @@ import Grid from "@mui/material/Grid";
 import PaymentIcon from "@mui/icons-material/Payment";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useMyPayments } from "../../hooks/patient/useMyPayments";
+import { useMyBillingSummary } from "../../hooks/patient/useMyInvoices";
 
 const modeLabels = {
   cash: "Cash",
@@ -73,8 +74,13 @@ const Payments = () => {
   // Backend returns { data: { payments, summary }, pagination }
   const paymentsData = data?.data || {};
   const payments = paymentsData.payments || (Array.isArray(data?.data) ? data.data : []);
-  const summary = paymentsData.summary || {};
   const pagination = data?.pagination || { total: 0 };
+
+  // Balance/paid/total come from the SAME invoice-based aggregation the patient
+  // dashboard card and admin Billing use (backend Invoice.getStats), so this
+  // tab never diverges again. Pending = sum of invoice balanceDue (totalDue).
+  const { data: billingData } = useMyBillingSummary();
+  const stats = billingData?.data?.stats || {};
 
   return (
     <Box>
@@ -94,6 +100,23 @@ const Payments = () => {
           <Card>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <PaymentIcon color="primary" sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Total Billed
+                  </Typography>
+                  <Typography variant="h5" fontWeight="bold" className="font-numbers text-navy">
+                    {formatCurrency(stats.totalAmount)}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <AccountBalanceWalletIcon
                   color="success"
                   sx={{ fontSize: 40 }}
@@ -103,7 +126,7 @@ const Payments = () => {
                     Total Paid
                   </Typography>
                   <Typography variant="h5" fontWeight="bold" className="font-numbers text-green-600">
-                    {formatCurrency(summary.totalPaid)}
+                    {formatCurrency(stats.totalPaid)}
                   </Typography>
                 </Box>
               </Box>
@@ -120,24 +143,7 @@ const Payments = () => {
                     Pending Amount
                   </Typography>
                   <Typography variant="h5" fontWeight="bold" className="font-numbers text-orange-600">
-                    {formatCurrency(summary.totalPending)}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <PaymentIcon color="primary" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Transactions
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold">
-                    {pagination.total || 0}
+                    {formatCurrency(stats.totalDue)}
                   </Typography>
                 </Box>
               </Box>
@@ -181,7 +187,7 @@ const Payments = () => {
           ) : (
             <>
               <TableContainer component={Paper} elevation={0}>
-                <Table sx={{ bgcolor: "white" }}>
+                <Table sx={{ bgcolor: "white", minWidth: "max-content" }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: "#f5f5f5" }}>
                       <TableCell>Payment #</TableCell>

@@ -143,7 +143,7 @@ const Treatments = () => {
           ) : (
             <>
               <TableContainer component={Paper} elevation={0}>
-                <Table sx={{ bgcolor: "white" }}>
+                <Table sx={{ bgcolor: "white", minWidth: "max-content" }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: "#f5f5f5" }}>
                       <TableCell>Treatment</TableCell>

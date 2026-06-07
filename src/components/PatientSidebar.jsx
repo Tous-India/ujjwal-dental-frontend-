@@ -169,7 +169,9 @@ const PatientSidebar = ({ open, onClose }) => {
   const drawerContent = (
     <Box sx={{ overflow: "auto" }}>
       <Toolbar /> {/* Spacer for fixed header */}
-      <List sx={{ pt: 1 }}>
+      {/* Extra top gap so the first item sits cleanly below the header bar
+          instead of butting up against it. */}
+      <List sx={{ pt: 2.5 }}>
         {navItems.map((item) => {
           const isActive = !item.external && location.pathname === item.path;
 
