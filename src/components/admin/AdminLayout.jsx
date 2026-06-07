@@ -53,6 +53,11 @@ const AdminLayout = () => {
         component="main"
         sx={{
           flexGrow: 1,
+          // Allow this flex child to be narrower than its content so wide tables
+          // overflow their own scroll container (which scrolls horizontally)
+          // instead of stretching the page past the viewport and being clipped
+          // by body { overflow-x: hidden }.
+          minWidth: 0,
           width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` },
           minHeight: "100vh",
         }}

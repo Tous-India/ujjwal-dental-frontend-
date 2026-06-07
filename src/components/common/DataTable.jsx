@@ -267,7 +267,11 @@ const DataTable = ({
       {/* bg-white on both the scroll container and the table so the white
           background extends with horizontal scroll (no off-white gap). */}
       <TableContainer className="bg-white">
-        <Table sx={{ bgcolor: "white" }}>
+        {/* minWidth: max-content keeps each column's natural width so the table
+            OVERFLOWS the container on narrow screens (phones/tablets/foldables)
+            and the container scrolls horizontally, instead of cramming/wrapping
+            columns. On wide screens width:100% still fills as before. */}
+        <Table sx={{ bgcolor: "white", minWidth: "max-content" }}>
           <TableHead>
             <TableRow className="bg-gray-50">
               {columns.map((column) => (
