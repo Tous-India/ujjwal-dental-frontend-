@@ -129,10 +129,18 @@ const PublicHeader = () => {
                   CARING FOR YOUR SMILE
                 </span>
               </div>
-              {/* Mobile/tablet name — shown next to the larger logo */}
-              <span className="lg:hidden ml-2 font-medium text-[#0D1B4A] leading-tight whitespace-nowrap text-[15px] sm:text-[18px]">
-                Ujjwal Dental Clinic
-              </span>
+              {/* Mobile/tablet name — two-line lockup beside the larger logo */}
+              <div className="lg:hidden ml-2 leading-tight">
+                <span className="block font-bold text-[#0D1B4A] leading-none text-[18px] sm:text-[20px]">
+                  Ujjwal
+                </span>
+                <span
+                  className="block font-medium text-gray-500 leading-none mt-0.5 text-[10px] sm:text-[11px]"
+                  style={{ letterSpacing: "0.08em" }}
+                >
+                  DENTAL CLINIC
+                </span>
+              </div>
             </NavLink>
 
             {/* Desktop Nav */}
