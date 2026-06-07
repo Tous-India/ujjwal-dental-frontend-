@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Drawer, Collapse, IconButton } from "@mui/material";
+import { useAuthStore } from "../../store/auth.store";
 import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -10,70 +11,15 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import LoginIcon from "@mui/icons-material/Login";
 import logo from "../../../public/ujjwal-dental-logo.png";
 
-const treatments = [
-  { label: "Dental Implant", slug: "dental-implant" },
-  { label: "Root Canal Treatment Rct", slug: "root-canal-treatment-rct" },
-  { label: "Wisdom Teeth", slug: "wisdom-teeth" },
-  { label: "Clear Aligners", slug: "clear-aligners" },
-  { label: "Cosmatic Dental Bonding", slug: "cosmatic-dental-bonding" },
-  { label: "Laser Dentistry", slug: "laser-dentistry" },
-  { label: "Kids Dentistry", slug: "kids-dentistry" },
-  { label: "Dental Crowns And Bridges", slug: "dental-crowns-and-bridges" },
-  { label: "Gum Disease Treatment", slug: "gum-disease-treatment" },
-  { label: "Dental Filling", slug: "dental-filling" },
-  { label: "Dentures", slug: "dentures" },
-  { label: "Teeth Whitening", slug: "teeth-whitening" },
-  { label: "Mouth Ulcers", slug: "mouth-ulcers" },
-  { label: "Braces", slug: "braces" },
-  { label: "Smile Makeover", slug: "smile-makeover" },
-];
-
-const appointmentItems = [
-  {
-    label: "Book Appointment",
-    slug: "book-appointment",
-    path: "/book-appointment",
-  },
-  { label: "Track Appointment", slug: "track-appointment", path: "/login" },
-];
-
-const navItems = [
-  { label: "Home", path: "/" },
-  {
-    label: "Treatments",
-    path: "/treatments",
-    children: treatments,
-    menuKey: "treatments",
-  },
-  {
-    label: "Appointment",
-    path: "/book-appointment",
-    children: appointmentItems,
-    menuKey: "appointment",
-  },
-  { label: "Membership Plans", path: "/membership-plans" },
-  { label: "Contact Us", path: "/contact" },
-];
-
 const PublicHeader = () => {
   const location = useLocation();
-  const [openMenus, setOpenMenus] = useState({});
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  // Reuse the existing patient auth store (same Bearer-token auth used elsewhere).
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const patient = useAuthStore((state) => state.patient);
+  const logout = useAuthStore((state) => state.logout);
   const [mobileExpanded, setMobileExpanded] = useState({});
   const [showMenu, SetShowMenu] = useState(false);
-
-  const timeoutRefs = useRef({});
-
-  const handleMouseEnter = useCallback((key) => {
-    clearTimeout(timeoutRefs.current[key]);
-    setOpenMenus((prev) => ({ ...prev, [key]: true }));
-  }, []);
-
-  const handleMouseLeave = useCallback((key) => {
-    timeoutRefs.current[key] = setTimeout(() => {
-      setOpenMenus((prev) => ({ ...prev, [key]: false }));
-    }, 100);
-  }, []);
 
   const isActive = (path) => location.pathname === path;
   const isActiveRoute = (path) => location.pathname.startsWith(path);
@@ -341,6 +287,55 @@ const PublicHeader = () => {
                     </NavLink>
                   </li>
                 </ul>
+
+                {/* Auth actions — mobile drawer only (desktop has Login in the
+                    top bar). Reflects the patient auth state. */}
+                <div className="lg:hidden mt-4 pt-4 px-2.5 border-t border-gray-200">
+                  {isAuthenticated ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#0D1B4A] text-white font-semibold text-sm shrink-0">
+                          {patient?.name?.[0]?.toUpperCase() || "P"}
+                        </div>
+                        <span className="text-[#0D1B4A] font-semibold text-[15px] truncate">
+                          {patient?.name || "My Account"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeMobileMenu();
+                          navigate("/dashboard");
+                        }}
+                        className="block w-full text-center bg-[#F57C00] text-white rounded-full font-semibold text-[15px] py-2.5 mb-2.5 cursor-pointer hover:bg-[#E06C00] transition-colors"
+                      >
+                        Dashboard
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeMobileMenu();
+                          logout();
+                          navigate("/");
+                        }}
+                        className="block w-full text-center bg-transparent text-[#0D1B4A] border border-gray-300 rounded-full font-semibold text-[15px] py-2.5 cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeMobileMenu();
+                        navigate("/login");
+                      }}
+                      className="flex items-center justify-center gap-1.5 w-full bg-[#F57C00] text-white rounded-full font-semibold text-[15px] py-2.5 cursor-pointer hover:bg-[#E06C00] transition-colors"
+                    >
+                      <LoginIcon className="text-[18px]!" /> Login
+                    </button>
+                  )}
+                </div>
               </nav>
               <div>
                 <CloseIcon
