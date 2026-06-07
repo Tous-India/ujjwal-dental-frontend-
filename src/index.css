@@ -312,14 +312,23 @@ body {
     }
     position: fixed;
     background: white;
-    height: 100vh;
+    height: 100vh; /* fallback */
+    max-height: 100svh; /* keep the bottom within the visible viewport */
     width: 95%;
     z-index: 10;
     top: 0;
     left: 0;
     box-shadow: 0px 0px 20px -5px gray;
     transform: translateX(-110%);
-    transition: 0.5s;
+    transition: transform 0.5s;
+    /* Make the whole drawer scrollable so all items — including the bottom
+       Login/Dashboard/Logout section — are reachable when the nav list or the
+       Treatments submenu expands past the viewport height. */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Clear the phone home indicator + the fixed bottom action bar (~56px)
+       so the last item / Login isn't hidden behind them. */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
 
     .navdiv {
       width: 100%;

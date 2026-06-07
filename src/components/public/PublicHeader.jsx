@@ -129,10 +129,15 @@ const PublicHeader = () => {
                   CARING FOR YOUR SMILE
                 </span>
               </div>
-              {/* Mobile/tablet name — two-line lockup beside the larger logo */}
+              {/* Mobile/tablet name — two-line lockup beside the larger logo.
+                  "UJJWAL" is tracked wider so its width lines up with the
+                  "DENTAL CLINIC" line below, like a proper logo lockup. */}
               <div className="lg:hidden ml-2 leading-tight">
-                <span className="block font-bold text-[#0D1B4A] leading-none text-[18px] sm:text-[20px]">
-                  Ujjwal
+                <span
+                  className="block font-bold text-[#0D1B4A] leading-none text-[18px] sm:text-[20px]"
+                  style={{ letterSpacing: "0.2em" }}
+                >
+                  UJJWAL
                 </span>
                 <span
                   className="block font-medium text-gray-500 leading-none mt-0.5 text-[10px] sm:text-[11px]"
