@@ -94,3 +94,12 @@ export const getPatientPaymentSummary = (patientId) =>
  */
 export const deletePayment = (id) =>
   api.delete(`/payments/${id}`).then((res) => res.data);
+
+export const recordAdminPayment = (data) =>
+  api.post("/payments/admin/record-payment", data).then((res) => res.data);
+
+export const collectPayment = (data) =>
+  api.post("/payments/admin/collect", data).then((res) => res.data);
+
+export const reverseAdminPayment = (data) =>
+  api.post("/payments/admin/reverse-payment", data).then((res) => res.data);

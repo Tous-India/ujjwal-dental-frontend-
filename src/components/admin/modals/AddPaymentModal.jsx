@@ -23,6 +23,7 @@ import Grid from "@mui/material/Grid";
 import CloseIcon from "@mui/icons-material/Close";
 import PaymentIcon from "@mui/icons-material/Payment";
 import AddIcon from "@mui/icons-material/Add";
+import api from "../../../api/axios";
 import { searchPatients } from "../../../api/admin/patients.api";
 import { useClinics } from "../../../hooks/admin/useClinics";
 import { usePaymentMutations } from "../../../hooks/admin/usePayments";
@@ -65,6 +66,8 @@ const AddPaymentModal = ({ open, onClose, onSuccess }) => {
   const [patientSearch, setPatientSearch] = useState("");
   const [patientOptions, setPatientOptions] = useState([]);
   const [patientLoading, setPatientLoading] = useState(false);
+  const [dueAmount, setDueAmount] = useState(0);
+  const [fetchingDue, setFetchingDue] = useState(false);
 
   // Fetch clinics
   const { data: clinicsData } = useClinics();
@@ -94,6 +97,7 @@ const AddPaymentModal = ({ open, onClose, onSuccess }) => {
       });
       setPatientSearch("");
       setPatientOptions([]);
+      setDueAmount(0);
     }
   }, [open, clinics]);
 
@@ -209,8 +213,24 @@ const AddPaymentModal = ({ open, onClose, onSuccess }) => {
                 option ? `${option.name} - ${option.phone}` : ""
               }
               value={formData.patient}
-              onChange={(_, newValue) => {
-                setFormData((prev) => ({ ...prev, patient: newValue }));
+              onChange={async (_, newValue) => {
+                setFormData((prev) => ({ ...prev, patient: newValue, amount: "" }));
+                setDueAmount(0);
+                if (newValue && newValue._id) {
+                  setFetchingDue(true);
+                  try {
+                    const res = await api.get(`/billing/patient/${newValue._id}/pending-amount`);
+                    const due = res.data?.pendingAmount || 0;
+                    setDueAmount(due);
+                    if (due > 0) {
+                      setFormData((prev) => ({ ...prev, amount: String(due) }));
+                    }
+                  } catch (err) {
+                    console.error("[AddPayment] due fetch failed:", err);
+                  } finally {
+                    setFetchingDue(false);
+                  }
+                }
               }}
               onInputChange={(_, newInput) => {
                 setPatientSearch(newInput);
@@ -265,6 +285,15 @@ const AddPaymentModal = ({ open, onClose, onSuccess }) => {
               placeholder="e.g., 500"
               size="small"
               inputProps={{ min: 1 }}
+              helperText={
+                fetchingDue
+                  ? "Fetching due amount…"
+                  : dueAmount > 0
+                  ? `Total due: ₹${dueAmount.toLocaleString("en-IN")}`
+                  : formData.patient
+                  ? "No pending dues"
+                  : ""
+              }
             />
           </Grid>
 

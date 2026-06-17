@@ -8,6 +8,7 @@ import {
   getMembershipPlans,
   getMembershipPlan,
   getMyMembership,
+  getMyPlan,
   purchaseMembership,
 } from "../../api/patient/memberships.api";
 import { useAuthStore } from "../../store/auth.store";
@@ -48,6 +49,21 @@ export const useMyMembership = () => {
     enabled: !!patient?._id,
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
+  });
+};
+
+/**
+ * Hook for fetching the patient's own membership with full plan details.
+ * Uses patientProtect on the backend — no patientId needed in the URL.
+ * staleTime: 0 ensures the API is always called on mount (visible in Network tab).
+ */
+export const useMyPlan = () => {
+  const patient = useAuthStore((state) => state.patient);
+  return useQuery({
+    queryKey: ["patient", "my-plan"],
+    queryFn: getMyPlan,
+    enabled: !!patient,
+    staleTime: 0,
   });
 };
 

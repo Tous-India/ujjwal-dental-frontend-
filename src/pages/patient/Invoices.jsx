@@ -31,7 +31,10 @@ import {
 } from "@mui/material";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import CloseIcon from "@mui/icons-material/Close";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import Tooltip from "@mui/material/Tooltip";
 import { useMyInvoices } from "../../hooks/patient/useMyInvoices";
+import InvoicePreviewModal from "../../components/InvoicePreviewModal";
 
 const paymentStatusConfig = {
   unpaid: { color: "error", label: "Unpaid" },
@@ -228,6 +231,8 @@ const Invoices = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [selected, setSelected] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewInvoice, setPreviewInvoice] = useState(null);
 
   const { data, isLoading, error } = useMyInvoices({ page, limit });
 
@@ -288,6 +293,7 @@ const Invoices = () => {
                       <TableCell align="right">Paid</TableCell>
                       <TableCell align="right">Balance</TableCell>
                       <TableCell>Status</TableCell>
+                      <TableCell align="center">Preview</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -336,6 +342,21 @@ const Invoices = () => {
                           <TableCell>
                             <Chip label={pay.label} size="small" color={pay.color} />
                           </TableCell>
+                          <TableCell align="center">
+                            <Tooltip title="Preview Invoice">
+                              <IconButton
+                                size="small"
+                                sx={{ color: "#e06c00" }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewInvoice(invoice);
+                                  setPreviewOpen(true);
+                                }}
+                              >
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -365,6 +386,12 @@ const Invoices = () => {
         invoice={selected}
         open={!!selected}
         onClose={() => setSelected(null)}
+      />
+
+      <InvoicePreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        invoice={previewInvoice}
       />
     </Box>
   );

@@ -48,7 +48,7 @@ const navItems = [
     badgeColor: "#3b82f6",
   },
   {
-    title: "Payments",
+    title: "Payment History",
     path: "/payments",
     icon: <PaymentIcon />,
     badgeKey: "payments",

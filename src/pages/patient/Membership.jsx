@@ -1,10 +1,10 @@
 /**
- * Patient Membership Page (PORTAL)
+ * Patient Membership Page
  *
- * Shows the patient's current membership status within the portal layout.
- * Links to public membership plans page for purchasing/upgrading.
+ * Shows current membership status. Links to /membership-plans for browsing and buying plans.
  */
-import CouponGrid from "../../components/patient/CouponGrid";
+import { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -19,221 +19,275 @@ import Grid from "@mui/material/Grid";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import { Link } from "react-router-dom";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import CouponGrid from "../../components/patient/CouponGrid";
 import { useAuthStore } from "../../store/auth.store";
-import { useMyMembership } from "../../hooks/patient/useMemberships";
+import api from "../../api/axios";
 
-/**
- * Format currency
- */
-const formatCurrency = (amount) => {
-  return `₹${(amount || 0).toLocaleString("en-IN")}`;
-};
-
-/**
- * Format date
- */
-const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString("en-IN", {
+const fmtDate = (d) => {
+  if (!d) return "N/A";
+  return new Date(d).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
 };
 
-/**
- * Check if membership is active
- */
-const isMembershipActive = (membership) => {
-  if (!membership || !membership.endDate) return false;
-  return new Date(membership.endDate) > new Date();
+const getDaysRemaining = (expiryDate) => {
+  if (!expiryDate) return 0;
+  return Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
 };
 
 const Membership = () => {
-  const patient = useAuthStore((state) => state.patient);
-  const { data: membershipData, isLoading } = useMyMembership(patient?._id);
-  const membership = membershipData?.data?.membership;
-  const plan = membership?.plan;
-  const isActive = isMembershipActive(membership);
+  const { patient } = useAuthStore();
+  const navigate = useNavigate();
+  const plansRef = useRef(null);
+
+  const [membershipData, setMembershipData] = useState(null);
+  const [membershipLoading, setMembershipLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMembership = async () => {
+      try {
+        const patientId = patient?._id || patient?.id;
+        if (!patientId) {
+          setMembershipLoading(false);
+          return;
+        }
+        const res = await api.get(`/patients/${patientId}/membership`);
+        setMembershipData(res.data.data);
+      } catch (err) {
+        console.error("Membership fetch error:", err);
+      } finally {
+        setMembershipLoading(false);
+      }
+    };
+    fetchMembership();
+  }, [patient?._id]);
+
+  const membership = membershipData?.currentMembership;
+  const currentPlan = membership?.plan || null;
+
+  const isActive =
+    membership?.status === "active" && new Date(membership?.expiryDate) > new Date();
+  const daysRemaining = isActive ? getDaysRemaining(membership.expiryDate) : 0;
+  const hasExpired = membership && !isActive;
+
+  const handleScrollToPlans = () => {
+    plansRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <Box>
       {/* Page Header */}
-      <Box className="mb-6">
-        <Typography variant="h5" className="font-semibold">
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h5" fontWeight="bold">
           My Membership
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          View your membership status and benefits
+          View your current plan and explore available membership options
         </Typography>
       </Box>
 
-      {isLoading ? (
-        <Grid container spacing={3}>
+      {/* ── Current Membership Status ── */}
+      {membershipLoading ? (
+        <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Skeleton variant="rectangular" height={300} className="rounded-lg" />
+            <Skeleton variant="rectangular" height={260} sx={{ borderRadius: 2 }} />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Skeleton variant="rectangular" height={300} className="rounded-lg" />
+            <Skeleton variant="rectangular" height={260} sx={{ borderRadius: 2 }} />
           </Grid>
         </Grid>
-      ) : membership && plan ? (
-        <Grid container spacing={3}>
-          {/* Current Membership Card */}
+      ) : membership ? (
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {/* Plan Status Card */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card className="h-full">
+            <Card className="h-full overflow-hidden">
               <Box
-                className={`p-4 text-white ${
-                  isActive
-                    ? "bg-linear-to-r from-green-500 to-green-600"
-                    : "bg-linear-to-r from-gray-500 to-gray-600"
-                }`}
+                sx={{
+                  background: isActive
+                    ? "linear-gradient(to right, #16a34a, #15803d)"
+                    : "linear-gradient(to right, #6b7280, #4b5563)",
+                  p: 2.5,
+                  color: "white",
+                }}
               >
-                <Box className="flex items-center gap-2 mb-2">
+                <Box className="flex items-center gap-2 mb-1">
                   <CardMembershipIcon />
-                  <Typography variant="h6" className="font-bold">
-                    {plan.name}
+                  <Typography variant="h6" fontWeight="bold">
+                    {membership.planName || "Membership Plan"}
                   </Typography>
                   <Chip
                     size="small"
                     label={isActive ? "Active" : "Expired"}
-                    sx={{
-                      ml: "auto",
-                      bgcolor: "rgba(255,255,255,0.2)",
-                      color: "white",
-                    }}
+                    sx={{ ml: "auto", bgcolor: "rgba(255,255,255,0.2)", color: "white" }}
                   />
                 </Box>
-                <Typography variant="body2" className="opacity-80">
-                  {plan.type === "family" ? "Family Plan" : "Individual Plan"}
-                </Typography>
+                {isActive && (
+                  <Chip
+                    size="small"
+                    label={`${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} remaining`}
+                    sx={{ bgcolor: "#f59e0b", color: "white", fontWeight: 700, mt: 0.75 }}
+                  />
+                )}
+                {currentPlan && (currentPlan.discontinued === true || currentPlan.isActive === false) && (
+                  <Typography sx={{ fontSize: "11px", color: "rgba(255,255,255,0.85)", mt: 0.75, fontStyle: "italic" }}>
+                    This plan has been discontinued
+                  </Typography>
+                )}
               </Box>
 
-              <CardContent className="p-4">
-                {/* Membership Dates */}
-                <Box className="space-y-3 mb-4">
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ "& > *:not(:last-child)": { mb: 1.5 }, mb: 2.5 }}>
                   <Box className="flex items-center gap-2">
                     <CalendarTodayIcon fontSize="small" color="action" />
                     <Typography variant="body2">
                       <span className="text-gray-500">Started:</span>{" "}
-                      <span className="font-medium">{formatDate(membership.startDate)}</span>
+                      <strong>{fmtDate(membership.startDate)}</strong>
                     </Typography>
                   </Box>
                   <Box className="flex items-center gap-2">
                     <CalendarTodayIcon fontSize="small" color="action" />
                     <Typography variant="body2">
                       <span className="text-gray-500">Expires:</span>{" "}
-                      <span className="font-medium">{formatDate(membership.endDate)}</span>
+                      <strong>{fmtDate(membership.expiryDate)}</strong>
                     </Typography>
                   </Box>
                 </Box>
 
-                {!isActive && (
-                  <Alert severity="warning" className="mb-4">
-                    Your membership has expired. Renew to continue enjoying benefits.
+                {hasExpired && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    Your membership has expired. Renew below to restore your benefits.
                   </Alert>
                 )}
 
-                {/* Plan Price */}
-                <Box className="bg-gray-50 rounded-lg p-3 mb-4">
-                  <Typography variant="caption" color="text.secondary">
-                    Plan Value
-                  </Typography>
-                  <Typography variant="h5" className="font-bold text-green-600">
-                    <span className="font-numbers">{formatCurrency(plan.price)}</span>
-                    <Typography component="span" variant="body2" color="text.secondary">
-                      {" "}
-                      / {plan.duration || 12} months
+                {membership.discountPercent > 0 && (
+                  <Box sx={{ bgcolor: "#f0fdf4", borderRadius: 1.5, p: 1.5, mb: 2.5 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Member Discount
                     </Typography>
-                  </Typography>
-                </Box>
+                    <Typography variant="body1" fontWeight="bold" color="success.main">
+                      {membership.discountPercent}% off on treatments
+                    </Typography>
+                  </Box>
+                )}
 
-                {/* Renewal Button */}
-                <Button
-                  fullWidth
-                  variant="contained"
-                  component={Link}
-                  to="/membership-plans"
-                  startIcon={<ShoppingCartIcon />}
-                  className="bg-teal-600 hover:bg-teal-700"
-                >
-                  {isActive ? "Upgrade Plan" : "Renew Membership"}
-                </Button>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* Benefits Card */}
+          {/* Plan Details Card */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Card className="h-full">
-              <CardContent className="p-4">
-                <Typography variant="h6" className="font-semibold mb-4">
-                  Your Benefits
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Plan Details
                 </Typography>
 
-                {/* Discounts */}
-                {plan.discounts && (
-                  <Box className="bg-amber-50 rounded-lg p-4 mb-4">
-                    <Typography variant="subtitle2" className="font-semibold text-amber-700 mb-2">
-                      Member Discounts
-                    </Typography>
-                    <Box className="space-y-2">
-                      {plan.discounts.consultationDiscount > 0 && (
-                        <Box className="flex items-center gap-2">
-                          <CheckCircleIcon fontSize="small" className="text-green-500" />
-                          <Typography variant="body2">
-                            {plan.discounts.consultationDiscount}% off on consultations
-                          </Typography>
-                        </Box>
-                      )}
-                      {plan.discounts.treatmentDiscount > 0 && (
-                        <Box className="flex items-center gap-2">
-                          <CheckCircleIcon fontSize="small" className="text-green-500" />
-                          <Typography variant="body2">
-                            {plan.discounts.treatmentDiscount}% off on treatments
-                          </Typography>
+                {/* Key plan info rows */}
+                <Box sx={{ mb: 2 }}>
+                  {/* Plan Name row — custom to support Discontinued badge */}
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                    <Typography sx={{ color: "#666", fontSize: "13px" }}>Plan Name</Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography sx={{ fontWeight: 600, fontSize: "13px", textAlign: "right" }}>
+                        {membership.planName || "—"}
+                      </Typography>
+                      {currentPlan && (currentPlan.discontinued === true || currentPlan.isActive === false) && (
+                        <Box
+                          component="span"
+                          sx={{
+                            fontSize: "10px",
+                            fontWeight: 600,
+                            color: "#dc2626",
+                            backgroundColor: "#fef2f2",
+                            border: "1px solid #fecaca",
+                            borderRadius: "4px",
+                            padding: "1px 8px",
+                            letterSpacing: "0.5px",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Discontinued
                         </Box>
                       )}
                     </Box>
                   </Box>
-                )}
 
-                {/* Features */}
-                {plan.features && plan.features.length > 0 && (
-                  <Box>
-                    <Typography variant="subtitle2" className="font-semibold mb-2">
-                      Plan Features
-                    </Typography>
-                    <Box className="space-y-2">
-                      {plan.features.map((feature, idx) => (
-                        <Box key={idx} className="flex items-start gap-2">
-                          <CheckCircleIcon fontSize="small" className="text-green-500 mt-0.5" />
-                          <Typography variant="body2">{feature}</Typography>
-                        </Box>
-                      ))}
+                  {/* Remaining rows */}
+                  {[
+                    {
+                      label: "Price",
+                      value: currentPlan
+                        ? `₹${(currentPlan.price || 0).toLocaleString("en-IN")}`
+                        : "—",
+                    },
+                    {
+                      label: "Duration",
+                      value: currentPlan
+                        ? `${currentPlan.durationMonths || 12} months`
+                        : "—",
+                    },
+                    { label: "Purchased On", value: fmtDate(membership.startDate) },
+                    { label: "Expires On", value: fmtDate(membership.expiryDate) },
+                    ...(membership.discountPercent > 0
+                      ? [{ label: "Member Discount", value: `${membership.discountPercent}% off treatments` }]
+                      : []),
+                  ].map(({ label, value }) => (
+                    <Box
+                      key={label}
+                      sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+                    >
+                      <Typography sx={{ color: "#666", fontSize: "13px" }}>{label}</Typography>
+                      <Typography sx={{ fontWeight: 600, fontSize: "13px", textAlign: "right", ml: 2 }}>
+                        {value}
+                      </Typography>
                     </Box>
-                  </Box>
-                )}
+                  ))}
+                </Box>
 
-                {/* No features */}
-                {(!plan.features || plan.features.length === 0) && (
-                  <Typography variant="body2" color="text.secondary">
-                    Contact the clinic for detailed benefits information.
-                  </Typography>
+                {/* Features & Benefits */}
+                {(currentPlan?.features?.length > 0 || currentPlan?.benefits?.length > 0) && (
+                  <Box sx={{ borderTop: "1px solid #e5e7eb", pt: 2, mt: 2 }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: "14px", mb: 1.5 }}>
+                      Benefits
+                    </Typography>
+
+                    {/* features[] is an array of strings */}
+                    {currentPlan?.features?.map((f, i) => (
+                      <Box key={`f-${i}`} sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 1 }}>
+                        <CheckCircleIcon fontSize="small" sx={{ color: "#059669", mt: "1px", flexShrink: 0 }} />
+                        <Typography sx={{ fontSize: "13px", color: "#333" }}>{f}</Typography>
+                      </Box>
+                    ))}
+
+                    {/* benefits[] is an array of objects — use .description */}
+                    {currentPlan?.benefits?.map((b, i) => {
+                      const text =
+                        typeof b === "string"
+                          ? b
+                          : b?.description || b?.type || JSON.stringify(b);
+                      return (
+                        <Box key={`b-${i}`} sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 1 }}>
+                          <CheckCircleIcon fontSize="small" sx={{ color: "#059669", mt: "1px", flexShrink: 0 }} />
+                          <Typography sx={{ fontSize: "13px", color: "#333" }}>{text}</Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
                 )}
               </CardContent>
             </Card>
           </Grid>
         </Grid>
       ) : (
-        /* No Membership */
-        <Card>
-          <CardContent sx={{ textAlign: "center", py: 6 }}>
-            <CardMembershipIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+        /* No membership at all */
+        <Card sx={{ mb: 4 }}>
+          <CardContent sx={{ textAlign: "center", py: 5 }}>
+            <CardMembershipIcon sx={{ fontSize: 72, color: "text.disabled", mb: 2 }} />
+            <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
               No Active Membership
             </Typography>
             <Typography
@@ -241,38 +295,45 @@ const Membership = () => {
               color="text.secondary"
               sx={{ mb: 3, maxWidth: 400, mx: "auto" }}
             >
-              You don't have an active membership plan. Explore our membership options to enjoy
-              exclusive benefits and discounts on consultations and treatments.
+              You don't have a membership plan yet. Explore the options below to enjoy exclusive
+              benefits and discounts on treatments.
             </Typography>
             <Button
               variant="contained"
-              size="large"
-              component={Link}
-              to="/membership-plans"
-              startIcon={<ShoppingCartIcon />}
-              endIcon={<OpenInNewIcon />}
-              className="bg-teal-600 hover:bg-teal-700"
+              onClick={handleScrollToPlans}
+              startIcon={<ArrowDownwardIcon />}
+              sx={{ bgcolor: "#0d9488", "&:hover": { bgcolor: "#0f766e" } }}
             >
-              View Membership Plans
+              View Plans
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Help Section */}
-      <Card className="mt-6 bg-blue-50">
-        <CardContent className="p-4">
-          <Typography variant="subtitle2" className="font-semibold mb-1">
-            Need Help?
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            For membership inquiries, renewals, or upgrades, please contact our front desk or call
-            us at +91 98765 43210.
-          </Typography>
-        </CardContent>
-      </Card>
+      {/* ── View All Plans Button ── */}
+      <Box ref={plansRef} sx={{ textAlign: "center", mt: 4 }}>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={() => window.open("/membership-plans", "_blank")}
+          sx={{
+            backgroundColor: "#f59e0b",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: "15px",
+            textTransform: "none",
+            borderRadius: "10px",
+            px: 5,
+            py: 1.5,
+            "&:hover": { backgroundColor: "#d97706" },
+          }}
+           
+        >
+          View All Plans
+        </Button>
+      </Box>
 
-      {/* Coupon Cards Section */}
+      {/* Coupons */}
       <CouponGrid />
     </Box>
   );

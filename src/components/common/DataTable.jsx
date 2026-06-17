@@ -64,6 +64,7 @@ const DataTable = ({
   onRefresh,
   emptyMessage = "No data found",
   rowsPerPageOptions = [10, 25, 50],
+  getRowStyle,
 }) => {
   // Local search state
   const [searchTerm, setSearchTerm] = useState("");
@@ -298,6 +299,7 @@ const DataTable = ({
                   hover
                   onClick={() => onRowClick && onRowClick(row)}
                   className={onRowClick ? "cursor-pointer" : ""}
+                  style={getRowStyle ? getRowStyle(row) : undefined}
                 >
                   {columns.map((column) => (
                     <TableCell key={column.field} align={column.align || "left"}>

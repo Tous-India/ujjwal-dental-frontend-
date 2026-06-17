@@ -19,6 +19,10 @@ import {
   Button,
   Card,
   CardContent,
+  IconButton,
+  Tooltip,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -26,11 +30,15 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useQueryClient } from "@tanstack/react-query";
+import InvoicePreviewModal from "../../components/InvoicePreviewModal";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
 import { useInvoices, useBillingStats } from "../../hooks/admin/useBilling";
 import CreateInvoiceModal from "../../components/admin/modals/CreateInvoiceModal";
 import InvoiceDetailModal from "../../components/admin/modals/InvoiceDetailModal";
+import CollectPaymentModal from "../../components/admin/modals/CollectPaymentModal";
 
 /**
  * Status color/label maps
@@ -226,6 +234,8 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 );
 
 const Billing = () => {
+  const queryClient = useQueryClient();
+
   // State
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -238,6 +248,11 @@ const Billing = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewInvoice, setPreviewInvoice] = useState(null);
+  const [collectOpen, setCollectOpen] = useState(false);
+  const [collectInvoice, setCollectInvoice] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   // Fetch data
   const { data, isLoading, refetch } = useInvoices({
@@ -297,6 +312,73 @@ const Billing = () => {
 
   const formatCurrency = (val) =>
     `₹${(val || 0).toLocaleString("en-IN")}`;
+
+  const allColumns = [
+    // Replace the balanceDue column in-place with an enhanced version that includes the Collect button
+    ...columns.map((col) => {
+      if (col.field !== "balanceDue") return col;
+      return {
+        ...col,
+        minWidth: 170,
+        render: (value, row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography
+              variant="body2"
+              className={`font-numbers ${value > 0 ? "text-red-600 font-medium" : "text-gray-500"}`}
+            >
+              ₹{(value || 0).toLocaleString("en-IN")}
+            </Typography>
+            {value > 0 && row.paymentStatus !== "paid" && row.status !== "cancelled" && (
+              <Button
+                size="small"
+                variant="contained"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCollectInvoice(row);
+                  setCollectOpen(true);
+                }}
+                sx={{
+                  bgcolor: "#f59e0b",
+                  color: "#fff",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "11px",
+                  borderRadius: "6px",
+                  px: 1.5,
+                  py: 0.4,
+                  minWidth: "auto",
+                  lineHeight: 1.4,
+                  "&:hover": { bgcolor: "#d97706" },
+                }}
+              >
+                Collect
+              </Button>
+            )}
+          </Box>
+        ),
+      };
+    }),
+    {
+      field: "_id",
+      headerName: "Preview",
+      minWidth: 70,
+      align: "center",
+      render: (_value, row) => (
+        <Tooltip title="Preview Invoice">
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPreviewInvoice(row);
+              setPreviewOpen(true);
+            }}
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ),
+    },
+  ];
 
   return (
     <Box>
@@ -374,7 +456,7 @@ const Billing = () => {
 
       {/* Data Table */}
       <DataTable
-        columns={columns}
+        columns={allColumns}
         data={invoices}
         loading={isLoading}
         pagination={{
@@ -398,6 +480,13 @@ const Billing = () => {
         onSuccess={handleCreateSuccess}
       />
 
+      {/* Invoice Preview Modal */}
+      <InvoicePreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        invoice={previewInvoice}
+      />
+
       {/* Invoice Detail Modal */}
       <InvoiceDetailModal
         open={detailModalOpen}
@@ -408,6 +497,40 @@ const Billing = () => {
         invoice={selectedInvoice}
         onRefresh={refetch}
       />
+
+      {/* Collect Payment Modal */}
+      <CollectPaymentModal
+        open={collectOpen}
+        onClose={() => {
+          setCollectOpen(false);
+          setCollectInvoice(null);
+        }}
+        invoice={collectInvoice}
+        patient={collectInvoice?.patient}
+        onSuccess={(msg) => {
+          queryClient.invalidateQueries({ queryKey: ["admin", "billing"] });
+          queryClient.invalidateQueries({ queryKey: ["admin", "payments"] });
+          queryClient.invalidateQueries({ queryKey: ["admin", "unpaid-invoices"] });
+          refetch();
+          if (msg) setSnackbar({ open: true, message: msg, severity: "success" });
+        }}
+      />
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

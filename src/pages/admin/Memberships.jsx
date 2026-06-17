@@ -3,8 +3,9 @@
  *
  * Full CRUD management for membership plans.
  * Features:
- * - List all plans with DataTable
+ * - List all plans with DataTable (active, inactive, discontinued)
  * - Add, edit, delete plans via modals
+ * - Actions menu per row: Mark Active / Mark Inactive / Mark Discontinued / Edit / Delete
  * - Filter by type, tier, status
  */
 import React, { useState, useMemo } from "react";
@@ -17,8 +18,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DataTable from "../../components/common/DataTable";
 import {
   useMembershipPlans,
@@ -38,101 +43,6 @@ const tierColors = {
   platinum: "info",
 };
 
-/**
- * Table columns
- */
-const columns = [
-  {
-    field: "name",
-    headerName: "Plan Name",
-    minWidth: 180,
-    render: (value) => (
-      <Typography variant="body2" className="font-medium">
-        {value}
-      </Typography>
-    ),
-  },
-  {
-    field: "code",
-    headerName: "Code",
-    minWidth: 120,
-    render: (value) => (
-      <Typography variant="body2" className="font-mono text-gray-600">
-        {value}
-      </Typography>
-    ),
-  },
-  {
-    field: "type",
-    headerName: "Type",
-    minWidth: 110,
-    render: (value) => (
-      <Chip
-        label={value}
-        size="small"
-        variant="outlined"
-        color={value === "family" ? "secondary" : "primary"}
-        className="capitalize"
-      />
-    ),
-  },
-  {
-    field: "tier",
-    headerName: "Tier",
-    minWidth: 100,
-    render: (value) => (
-      <Chip
-        label={value}
-        size="small"
-        color={tierColors[value] || "default"}
-        className="capitalize"
-      />
-    ),
-  },
-  {
-    field: "price",
-    headerName: "Price",
-    minWidth: 120,
-    render: (_, row) => (
-      <Typography variant="body2" className="font-numbers font-semibold text-green-600">
-        {row.priceDisplay || `₹${row.price?.toLocaleString("en-IN")}`}
-      </Typography>
-    ),
-  },
-  {
-    field: "discountPercentage",
-    headerName: "Discount",
-    minWidth: 100,
-    render: (value) => (
-      <Chip label={`${value}%`} size="small" color="success" variant="outlined" />
-    ),
-  },
-  {
-    field: "durationMonths",
-    headerName: "Duration",
-    minWidth: 100,
-    render: (value) => `${value} months`,
-  },
-  {
-    field: "maxMembers",
-    headerName: "Members",
-    minWidth: 90,
-    render: (value) => value,
-  },
-  {
-    field: "isActive",
-    headerName: "Status",
-    minWidth: 100,
-    render: (value) => (
-      <Chip
-        label={value ? "Active" : "Inactive"}
-        size="small"
-        color={value ? "success" : "default"}
-      />
-    ),
-  },
-];
-
 const Memberships = () => {
   // Search and filter state
   const [search, setSearch] = useState("");
@@ -145,9 +55,13 @@ const Memberships = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  // React Query
-  const { data, isLoading, refetch } = useMembershipPlans();
-  const { deletePlan, isDeleting } = useMembershipMutations();
+  // Actions menu state
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuPlan, setMenuPlan] = useState(null);
+
+  // React Query — pass active:"all" so admin sees every plan (active, inactive, discontinued)
+  const { data, isLoading, refetch } = useMembershipPlans({ active: "all" });
+  const { deletePlan, updatePlan, isDeleting } = useMembershipMutations();
 
   const plans = data?.data?.plans || [];
 
@@ -163,15 +77,45 @@ const Memberships = () => {
 
       const matchesType = !filters.type || plan.type === filters.type;
       const matchesTier = !filters.tier || plan.tier === filters.tier;
-      const matchesStatus =
-        filters.isActive === undefined || String(plan.isActive) === filters.isActive;
+
+      let matchesStatus = true;
+      if (filters.status === "active") matchesStatus = plan.isActive && !plan.discontinued;
+      else if (filters.status === "inactive") matchesStatus = !plan.isActive && !plan.discontinued;
+      else if (filters.status === "discontinued") matchesStatus = !!plan.discontinued;
 
       return matchesSearch && matchesType && matchesTier && matchesStatus;
     });
   }, [plans, search, filters]);
 
   /**
-   * Handlers
+   * Actions menu handlers
+   */
+  const handleMenuOpen = (e, plan) => {
+    e.stopPropagation();
+    setAnchorEl(e.currentTarget);
+    setMenuPlan(plan);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuPlan(null);
+  };
+
+  const handleStatusChange = (updates) => {
+    if (!menuPlan) return;
+    updatePlan(
+      { id: menuPlan._id, data: updates },
+      {
+        onSuccess: () => {
+          handleMenuClose();
+          refetch();
+        },
+      }
+    );
+  };
+
+  /**
+   * Row / modal handlers
    */
   const handleRowClick = (plan) => {
     setSelectedPlan(plan);
@@ -201,6 +145,135 @@ const Memberships = () => {
       });
     }
   };
+
+  /**
+   * Table columns — defined inside component so Actions render can close over handlers
+   */
+  const columns = [
+    {
+      field: "name",
+      headerName: "Plan Name",
+      minWidth: 180,
+      render: (value) => (
+        <Typography variant="body2" className="font-medium">
+          {value}
+        </Typography>
+      ),
+    },
+    {
+      field: "code",
+      headerName: "Code",
+      minWidth: 120,
+      render: (value) => (
+        <Typography variant="body2" className="font-mono text-gray-600">
+          {value}
+        </Typography>
+      ),
+    },
+    {
+      field: "type",
+      headerName: "Type",
+      minWidth: 110,
+      render: (value) => (
+        <Chip
+          label={value}
+          size="small"
+          variant="outlined"
+          color={value === "family" ? "secondary" : "primary"}
+          className="capitalize"
+        />
+      ),
+    },
+    {
+      field: "tier",
+      headerName: "Tier",
+      minWidth: 100,
+      render: (value) => (
+        <Chip
+          label={value}
+          size="small"
+          color={tierColors[value] || "default"}
+          className="capitalize"
+        />
+      ),
+    },
+    {
+      field: "price",
+      headerName: "Price",
+      minWidth: 120,
+      render: (_, row) => (
+        <Typography variant="body2" className="font-numbers font-semibold text-green-600">
+          {row.priceDisplay || `₹${row.price?.toLocaleString("en-IN")}`}
+        </Typography>
+      ),
+    },
+    {
+      field: "discountPercentage",
+      headerName: "Discount",
+      minWidth: 100,
+      render: (value) => (
+        <Chip label={`${value}%`} size="small" color="success" variant="outlined" />
+      ),
+    },
+    {
+      field: "durationMonths",
+      headerName: "Duration",
+      minWidth: 100,
+      render: (value) => `${value} months`,
+    },
+    {
+      field: "maxMembers",
+      headerName: "Members",
+      minWidth: 90,
+      render: (value) => value,
+    },
+    {
+      field: "isActive",
+      headerName: "Status",
+      minWidth: 130,
+      render: (_, row) => {
+        if (row.discontinued) {
+          return (
+            <Chip
+              label="Discontinued"
+              size="small"
+              sx={{ backgroundColor: "#fef2f2", color: "#dc2626", fontWeight: 600, fontSize: "11px" }}
+            />
+          );
+        }
+        if (row.isActive) {
+          return (
+            <Chip
+              label="Active"
+              size="small"
+              sx={{ backgroundColor: "#ecfdf5", color: "#059669", fontWeight: 600, fontSize: "11px" }}
+            />
+          );
+        }
+        return (
+          <Chip
+            label="Inactive"
+            size="small"
+            sx={{ backgroundColor: "#f3f4f6", color: "#6b7280", fontWeight: 600, fontSize: "11px" }}
+          />
+        );
+      },
+    },
+    {
+      field: "_id",
+      headerName: "Actions",
+      minWidth: 70,
+      render: (_, row) => (
+        <IconButton
+          size="small"
+          onClick={(e) => handleMenuOpen(e, row)}
+          sx={{ color: "text.secondary" }}
+        >
+          <MoreVertIcon fontSize="small" />
+        </IconButton>
+      ),
+    },
+  ];
 
   return (
     <Box>
@@ -254,11 +327,12 @@ const Memberships = () => {
             ],
           },
           {
-            key: "isActive",
+            key: "status",
             label: "Status",
             options: [
-              { value: "true", label: "Active" },
-              { value: "false", label: "Inactive" },
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+              { value: "discontinued", label: "Discontinued" },
             ],
           },
         ]}
@@ -271,6 +345,56 @@ const Memberships = () => {
         onRefresh={refetch}
         emptyMessage="No membership plans found"
       />
+
+      {/* Per-row Actions Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+      >
+        {menuPlan && !menuPlan.discontinued && menuPlan.isActive && (
+          <MenuItem onClick={() => handleStatusChange({ isActive: false })}>
+            Mark Inactive
+          </MenuItem>
+        )}
+        {menuPlan && !menuPlan.discontinued && !menuPlan.isActive && (
+          <MenuItem onClick={() => handleStatusChange({ isActive: true, discontinued: false })}>
+            Mark Active
+          </MenuItem>
+        )}
+        {menuPlan && !menuPlan.discontinued && (
+          <MenuItem
+            onClick={() => handleStatusChange({ isActive: false, discontinued: true })}
+            sx={{ color: "error.main" }}
+          >
+            Mark Discontinued
+          </MenuItem>
+        )}
+        {menuPlan && menuPlan.discontinued && (
+          <MenuItem onClick={() => handleStatusChange({ isActive: true, discontinued: false })}>
+            Reactivate Plan
+          </MenuItem>
+        )}
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            handleEdit(menuPlan);
+          }}
+        >
+          Edit Plan
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            handleDelete(menuPlan);
+          }}
+          sx={{ color: "error.main" }}
+        >
+          Delete Plan
+        </MenuItem>
+      </Menu>
 
       {/* Add Plan Modal */}
       <AddMembershipModal
