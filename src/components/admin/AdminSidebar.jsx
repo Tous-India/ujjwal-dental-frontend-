@@ -154,7 +154,7 @@ const AdminSidebar = ({ open, onClose }) => {
       </Toolbar>
 
       {/* Navigation List */}
-      <List className="px-2 py-4">
+      <List className="px-4 py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -170,7 +170,7 @@ const AdminSidebar = ({ open, onClose }) => {
                   }
                 }}
                 className={`
-                  rounded-lg! transition-all duration-200 py-2.5! px-4!
+                  rounded-lg! transition-all duration-200 py-1! px-4!
                   ${
                     active
                       ? "bg-orange-50! text-accent! font-semibold!"
@@ -186,8 +186,11 @@ const AdminSidebar = ({ open, onClose }) => {
                 <ListItemText
                   primary={item.label}
                   primaryTypographyProps={{
-                    fontSize: "0.95rem",
-                    fontWeight: active ? 600 : 500,
+                    sx: {
+                      fontSize: "0.8rem",
+                      fontWeight: 500,
+                      opacity: "0.65 !important",
+                    },
                   }}
                 />
                 {item.badgeKey && badges[item.badgeKey] > 0 && !active && (

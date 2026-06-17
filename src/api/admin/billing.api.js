@@ -116,6 +116,12 @@ export const getOverdueInvoices = () =>
 export const getPatientPendingInvoices = (patientId) =>
   api.get(`/billing/patient/${patientId}/pending`).then((res) => res.data);
 
+export const getPatientPendingAmount = (patientId) =>
+  api.get(`/billing/patient/${patientId}/pending-amount`).then((res) => res.data);
+
+export const getPatientUnpaidInvoices = (patientId) =>
+  api.get(`/billing/patient/${patientId}/unpaid-invoices`).then((res) => res.data);
+
 /**
  * Delete invoice permanently (draft/cancelled only)
  * @param {string} id - Invoice ID

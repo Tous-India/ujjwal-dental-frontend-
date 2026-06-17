@@ -11,7 +11,11 @@ import {
   processRefund,
   getPaymentStats,
   deletePayment,
+  recordAdminPayment,
+  collectPayment,
+  reverseAdminPayment,
 } from "../../api/admin/payments.api";
+import { getPatientUnpaidInvoices } from "../../api/admin/billing.api";
 
 /**
  * Hook for fetching payments list
@@ -94,6 +98,63 @@ export const usePaymentMutations = () => {
 
     deletePayment: remove.mutate,
     isDeleting: remove.isPending,
+  };
+};
+
+/**
+ * Hook for fetching a patient's unpaid/partial invoices (for collect-payment flow)
+ * @param {string} patientId - Patient ID (query disabled when falsy)
+ */
+export const usePatientUnpaidInvoices = (patientId) => {
+  return useQuery({
+    queryKey: ["admin", "unpaid-invoices", patientId],
+    queryFn: () => getPatientUnpaidInvoices(patientId),
+    enabled: !!patientId,
+    staleTime: 30 * 1000,
+  });
+};
+
+/**
+ * Hook for admin-recorded payment mutations (record cash/UPI/card + reversal + per-invoice collect)
+ */
+export const useAdminPaymentMutations = () => {
+  const queryClient = useQueryClient();
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin", "payments"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "billing"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "unpaid-invoices"] });
+    queryClient.invalidateQueries({ queryKey: ["patient"] });
+  };
+
+  const record = useMutation({
+    mutationFn: recordAdminPayment,
+    onSuccess: invalidateAll,
+  });
+
+  const collect = useMutation({
+    mutationFn: collectPayment,
+    onSuccess: invalidateAll,
+  });
+
+  const reverse = useMutation({
+    mutationFn: reverseAdminPayment,
+    onSuccess: invalidateAll,
+  });
+
+  return {
+    recordPayment: record.mutateAsync,
+    isRecording: record.isPending,
+    recordError: record.error,
+
+    collectPayment: collect.mutateAsync,
+    isCollecting: collect.isPending,
+    collectError: collect.error,
+
+    reversePayment: reverse.mutateAsync,
+    isReversing: reverse.isPending,
+    reverseError: reverse.error,
   };
 };
 

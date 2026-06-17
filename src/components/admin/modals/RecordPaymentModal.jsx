@@ -57,6 +57,8 @@ const RecordPaymentModal = ({ open, onClose, patient, onSuccess }) => {
     notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dueAmount, setDueAmount] = useState(0);
+  const [fetchingDue, setFetchingDue] = useState(false);
 
   // Fetch clinics
   const { data: clinicsData } = useClinics();
@@ -80,8 +82,29 @@ const RecordPaymentModal = ({ open, onClose, patient, onSuccess }) => {
         referenceNumber: "",
         notes: "",
       });
+      setDueAmount(0);
     }
   }, [open]);
+
+  // Auto-fetch patient's total pending due when modal opens
+  useEffect(() => {
+    if (!open || !patient?._id) return;
+    setFetchingDue(true);
+    api
+      .get(`/billing/patient/${patient._id}/pending-amount`)
+      .then((res) => {
+        const due = res.data?.pendingAmount || 0;
+        setDueAmount(due);
+        if (due > 0) {
+          setFormData((prev) => ({ ...prev, amount: String(due) }));
+        }
+      })
+      .catch((err) => {
+        console.error("[RecordPayment] due fetch failed:", err);
+        setDueAmount(0);
+      })
+      .finally(() => setFetchingDue(false));
+  }, [open, patient?._id]);
 
   const handleChange = (field) => (e) => {
     setFormData((prev) => ({
@@ -179,6 +202,13 @@ const RecordPaymentModal = ({ open, onClose, patient, onSuccess }) => {
               placeholder="e.g., 500"
               size="small"
               inputProps={{ min: 1 }}
+              helperText={
+                fetchingDue
+                  ? "Fetching due amount…"
+                  : dueAmount > 0
+                  ? `Total due: ₹${dueAmount.toLocaleString("en-IN")}`
+                  : "No pending dues"
+              }
             />
           </Grid>
 

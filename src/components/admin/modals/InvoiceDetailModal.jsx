@@ -37,6 +37,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { toast } from "react-toastify";
 import { useInvoice, useBillingMutations } from "../../../hooks/admin/useBilling";
+import { downloadInvoicePDF } from "../../../utils/downloadInvoicePDF";
 
 /**
  * Status config
@@ -612,12 +613,12 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
             </>
           )}
 
-          {/* Paid - PDF only */}
-          {inv?.status === "paid" && (
+          {/* Download PDF — available for all non-draft statuses */}
+          {inv?.status && inv.status !== "draft" && (
             <Button
               variant="outlined"
               startIcon={<PictureAsPdfIcon />}
-              onClick={() => window.open(`/api/billing/invoices/${inv._id}/pdf`, "_blank")}
+              onClick={() => downloadInvoicePDF(inv)}
             >
               Download PDF
             </Button>

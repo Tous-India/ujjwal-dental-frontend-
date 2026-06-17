@@ -1,9 +1,10 @@
 /**
  * Patient Payments Page
  *
- * Shows payment history with summary cards
+ * Shows payment history with summary cards.
+ * Allows paying pending invoice balances via Razorpay.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -19,12 +20,27 @@ import {
   TableRow,
   TablePagination,
   Paper,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import PaymentIcon from "@mui/icons-material/Payment";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import CloseIcon from "@mui/icons-material/Close";
 import { useMyPayments } from "../../hooks/patient/useMyPayments";
 import { useMyBillingSummary } from "../../hooks/patient/useMyInvoices";
+import { useAuthStore } from "../../store/auth.store";
+import {
+  createPendingOrder,
+  verifyPendingPayment,
+} from "../../api/patient/payments.api";
 
 const modeLabels = {
   cash: "Cash",
@@ -65,29 +81,200 @@ const formatDate = (date) => {
 
 const formatCurrency = (val) => `₹${(val || 0).toLocaleString("en-IN")}`;
 
+/* ── Pay Pending Modal ──────────────────────────────────────────────── */
+
+const PayPendingModal = ({ open, onClose, pendingAmount, onPaymentSuccess }) => {
+  const patient = useAuthStore((s) => s.patient);
+  const [enteredAmount, setEnteredAmount] = useState(pendingAmount || 0);
+  const [loading, setLoading] = useState(false);
+  const [inputError, setInputError] = useState("");
+
+  // Sync input when modal opens or pendingAmount changes
+  useEffect(() => {
+    if (open) {
+      setEnteredAmount(pendingAmount || 0);
+      setInputError("");
+    }
+  }, [open, pendingAmount]);
+
+  const handleAmountChange = (e) => {
+    const val = Number(e.target.value);
+    setEnteredAmount(val);
+    if (!val || val <= 0) {
+      setInputError("Amount must be greater than 0");
+    } else if (val > pendingAmount) {
+      setInputError(`Amount cannot exceed ₹${pendingAmount.toLocaleString("en-IN")}`);
+    } else {
+      setInputError("");
+    }
+  };
+
+  const handlePay = async () => {
+    if (!enteredAmount || enteredAmount <= 0 || enteredAmount > pendingAmount) return;
+    setLoading(true);
+
+    try {
+      // Step 1: Create Razorpay order
+      const orderData = await createPendingOrder(enteredAmount);
+
+      // Step 2: Open Razorpay checkout
+      const options = {
+        key: orderData.data.keyId,
+        amount: Math.round(orderData.data.amount * 100),
+        currency: "INR",
+        name: "Ujjwal Dental Clinic",
+        description: "Pending Amount Payment",
+        order_id: orderData.data.orderId,
+        handler: async (paymentResponse) => {
+          try {
+            await verifyPendingPayment({
+              razorpay_order_id: paymentResponse.razorpay_order_id,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
+              razorpay_signature: paymentResponse.razorpay_signature,
+              amount: enteredAmount,
+            });
+            onPaymentSuccess(enteredAmount);
+            onClose();
+          } catch {
+            // verify failure is surfaced via onPaymentSuccess(null) to show error
+            onPaymentSuccess(null);
+          }
+        },
+        prefill: {
+          name: patient?.name || "",
+          email: patient?.email || "",
+          contact: patient?.phone || "",
+        },
+        theme: { color: "#f59e0b" },
+        modal: {
+          ondismiss: () => setLoading(false),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", () => setLoading(false));
+      rzp.open();
+    } catch (err) {
+      console.error("[PayPending] order creation failed:", err);
+      setLoading(false);
+      onPaymentSuccess(null);
+    }
+  };
+
+  const isInvalid =
+    !enteredAmount || enteredAmount <= 0 || enteredAmount > pendingAmount || !!inputError;
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          pb: 1,
+        }}
+      >
+        Pay Pending Amount
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ pt: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Total Pending:{" "}
+          <strong style={{ color: "#f59e0b" }}>
+            {formatCurrency(pendingAmount)}
+          </strong>
+        </Typography>
+
+        <TextField
+          label="Enter amount to pay"
+          type="number"
+          fullWidth
+          value={enteredAmount}
+          onChange={handleAmountChange}
+          inputProps={{ min: 1, max: pendingAmount, step: 1 }}
+          error={!!inputError}
+          helperText={
+            inputError ||
+            `You can pay any amount up to ${formatCurrency(pendingAmount)}`
+          }
+          disabled={loading}
+        />
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button variant="outlined" color="inherit" onClick={onClose} disabled={loading}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={handlePay}
+          disabled={isInvalid || loading}
+          sx={{
+            bgcolor: "#f59e0b",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: "14px",
+            borderRadius: "8px",
+            py: 1,
+            "&:hover": { bgcolor: "#d97706" },
+            "&:disabled": { bgcolor: "#fcd34d" },
+          }}
+          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
+        >
+          {loading
+            ? "Processing…"
+            : `Pay ${formatCurrency(enteredAmount || 0)}`}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+/* ── Main Page ──────────────────────────────────────────────────────── */
+
 const Payments = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [payModalOpen, setPayModalOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  const { data, isLoading, error } = useMyPayments({ page, limit });
+  const { data, isLoading, error, refetch } = useMyPayments({ page, limit });
+  const { data: billingData, refetch: refetchBilling } = useMyBillingSummary();
 
-  // Backend returns { data: { payments, summary }, pagination }
   const paymentsData = data?.data || {};
   const payments = paymentsData.payments || (Array.isArray(data?.data) ? data.data : []);
   const pagination = data?.pagination || { total: 0 };
-
-  // Balance/paid/total come from the SAME invoice-based aggregation the patient
-  // dashboard card and admin Billing use (backend Invoice.getStats), so this
-  // tab never diverges again. Pending = sum of invoice balanceDue (totalDue).
-  const { data: billingData } = useMyBillingSummary();
   const stats = billingData?.data?.stats || {};
+  const pendingAmount = stats.totalDue || 0;
+
+  const handlePaymentSuccess = (amount) => {
+    if (amount) {
+      setSnackbar({
+        open: true,
+        message: `Payment of ${formatCurrency(amount)} successful!`,
+        severity: "success",
+      });
+      refetch();
+      refetchBilling();
+    } else {
+      setSnackbar({
+        open: true,
+        message: "Payment verification failed. Please contact support.",
+        severity: "error",
+      });
+    }
+  };
 
   return (
     <Box>
       {/* Page Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Payments
+          Payment History
         </Typography>
         <Typography variant="body1" color="text.secondary">
           View your payment history and pending amounts
@@ -113,14 +300,12 @@ const Payments = () => {
             </CardContent>
           </Card>
         </Grid>
+
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <AccountBalanceWalletIcon
-                  color="success"
-                  sx={{ fontSize: 40 }}
-                />
+                <AccountBalanceWalletIcon color="success" sx={{ fontSize: 40 }} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     Total Paid
@@ -133,18 +318,38 @@ const Payments = () => {
             </CardContent>
           </Card>
         </Grid>
+
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <PaymentIcon color="warning" sx={{ fontSize: 40 }} />
-                <Box>
+                <Box sx={{ flex: 1 }}>
                   <Typography variant="body2" color="text.secondary">
                     Pending Amount
                   </Typography>
                   <Typography variant="h5" fontWeight="bold" className="font-numbers text-orange-600">
-                    {formatCurrency(stats.totalDue)}
+                    {formatCurrency(pendingAmount)}
                   </Typography>
+                  {pendingAmount > 0 && (
+                    <Button
+                      size="small"
+                      onClick={() => setPayModalOpen(true)}
+                      sx={{
+                        mt: 1,
+                        bgcolor: "#f59e0b",
+                        color: "#fff",
+                        fontWeight: 600,
+                        fontSize: "14px",
+                        borderRadius: "8px",
+                        px: 3,
+                        py: 0.75,
+                        "&:hover": { bgcolor: "#d97706" },
+                      }}
+                    >
+                      Pay Now
+                    </Button>
+                  )}
                 </Box>
               </Box>
             </CardContent>
@@ -269,6 +474,30 @@ const Payments = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Pay Pending Modal */}
+      <PayPendingModal
+        open={payModalOpen}
+        onClose={() => setPayModalOpen(false)}
+        pendingAmount={pendingAmount}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+
+      {/* Success / Error Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

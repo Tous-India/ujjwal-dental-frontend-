@@ -12,3 +12,9 @@ import api from "../axios";
  */
 export const getMyPayments = (patientId, params = {}) =>
   api.get(`/patients/${patientId}/payments`, { params }).then((res) => res.data);
+
+export const createPendingOrder = (amount) =>
+  api.post("/payments/patient/create-pending-order", { amount }).then((res) => res.data);
+
+export const verifyPendingPayment = (data) =>
+  api.post("/payments/patient/verify-pending-payment", data).then((res) => res.data);

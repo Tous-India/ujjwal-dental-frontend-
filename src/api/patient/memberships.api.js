@@ -29,6 +29,13 @@ export const getMyMembership = (patientId) =>
   api.get(`/patients/${patientId}/membership`).then((res) => res.data);
 
 /**
+ * Get own current membership with full plan details (uses patient auth token, no patientId needed)
+ * @returns {Promise}
+ */
+export const getMyPlan = () =>
+  api.get("/memberships/my-plan").then((res) => res.data);
+
+/**
  * Create Razorpay order for membership payment
  * @param {Object} data - { amount, clinic, type }
  * @returns {Promise}
