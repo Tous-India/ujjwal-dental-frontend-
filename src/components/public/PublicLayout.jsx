@@ -8,6 +8,7 @@ import { Box } from "@mui/material";
 import PublicHeader from "./PublicHeader";
 import PublicFooter from "./PublicFooter";
 import MobileBottomBar from "./MobileBottomBar";
+import WhatsAppButton from "./WhatsAppButton";
 
 const PublicLayout = () => {
   return (
@@ -29,6 +30,7 @@ const PublicLayout = () => {
       </Box>
       <PublicFooter />
       <MobileBottomBar />
+      <WhatsAppButton />
     </Box>
   );
 };

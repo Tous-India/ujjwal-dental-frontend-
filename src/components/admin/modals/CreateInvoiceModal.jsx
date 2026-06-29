@@ -264,7 +264,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
           <Box className="flex items-center gap-2">
             <ReceiptLongIcon />
             <Typography variant="h6" className="font-bold">
-              Create Invoice
+              Create Invoice22
             </Typography>
           </Box>
           <IconButton onClick={handleClose} disabled={isCreating}>
@@ -274,7 +274,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
       </DialogTitle>
 
       {/* Content */}
-      <DialogContent className="p-6 mt-2">
+      <DialogContent className="p-6 mt-8">
         <Grid container spacing={3}>
           {/* Patient Search */}
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -350,7 +350,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
           {/* Items Section */}
           <Grid size={{ xs: 12 }}>
             <Divider className="my-2" />
-            <Box className="flex items-center justify-between mb-3">
+            <Box className="flex items-center justify-between mb-3 mt-3">
               <Typography variant="subtitle1" className="font-semibold">
                 Line Items
               </Typography>
@@ -372,7 +372,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
               >
                 <Grid container spacing={2} alignItems="center">
                   {/* Type */}
-                  <Grid size={{ xs: 12, sm: 2 }}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <TextField
                       select
                       fullWidth
@@ -392,7 +392,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Grid>
 
                   {/* Description */}
-                  <Grid size={{ xs: 12, sm: 3 }}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <TextField
                       fullWidth
                       label="Description *"
@@ -406,7 +406,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Grid>
 
                   {/* Qty */}
-                  <Grid size={{ xs: 6, sm: 1 }}>
+                  <Grid size={{ xs: 6, sm: 4 }}>
                     <TextField
                       fullWidth
                       label="Qty"
@@ -421,7 +421,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Grid>
 
                   {/* Unit Price */}
-                  <Grid size={{ xs: 6, sm: 2 }}>
+                  <Grid size={{ xs: 6, sm: 4 }}>
                     <TextField
                       fullWidth
                       label="Price (₹) *"
@@ -436,7 +436,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Grid>
 
                   {/* Discount */}
-                  <Grid size={{ xs: 6, sm: 1.5 }}>
+                  <Grid size={{ xs: 6, sm: 4 }}>
                     <TextField
                       fullWidth
                       label="Disc %"
@@ -451,7 +451,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Grid>
 
                   {/* Tax */}
-                  <Grid size={{ xs: 6, sm: 1.5 }}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <TextField
                       fullWidth
                       label="Tax %"
@@ -522,7 +522,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Box>
                 )}
                 <Divider className="my-2" />
-                <Box className="flex justify-between">
+                <Box className="flex justify-between mt-1">
                   <Typography variant="subtitle2" className="font-bold">
                     Grand Total:
                   </Typography>
@@ -538,7 +538,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
           </Grid>
 
           {/* Payment (optional, captured at creation) */}
-          <Grid size={{ xs: 12 }}>
+          {/* <Grid size={{ xs: 12 }}>
             <Divider className="my-2" />
             <Typography variant="subtitle1" className="font-semibold mb-3">
               Payment
@@ -595,10 +595,10 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                 </Box>
               </Grid>
             </Grid>
-          </Grid>
+          </Grid> */}
 
           {/* Overall Discount */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          {/* <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Overall Discount %"
@@ -614,10 +614,10 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
               inputProps={{ min: 0, max: 100 }}
               helperText="Applied on subtotal"
             />
-          </Grid>
+          </Grid> */}
 
           {/* Notes */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          {/* <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Notes"
@@ -630,10 +630,10 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
               rows={2}
               placeholder="Internal notes..."
             />
-          </Grid>
+          </Grid> */}
 
           {/* Terms */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          {/* <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Terms & Conditions"
@@ -646,7 +646,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
               rows={2}
               placeholder="Payment terms..."
             />
-          </Grid>
+          </Grid> */}
         </Grid>
       </DialogContent>
 

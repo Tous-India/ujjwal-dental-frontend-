@@ -182,8 +182,16 @@ const filterOptions = [
   },
 ];
 
-const StatCard = ({ icon: Icon, label, value, color }) => (
-  <Card variant="outlined">
+const StatCard = ({ icon: Icon, label, value, color, onClick }) => (
+  <Card
+    variant="outlined"
+    onClick={onClick}
+    sx={onClick ? {
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      "&:hover": { transform: "translateY(-2px)", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" },
+    } : undefined}
+  >
     <CardContent className="flex items-center gap-3 py-3">
       <Box className={`p-2 rounded-lg ${color}`}>
         <Icon className="text-white" fontSize="small" />
@@ -255,16 +263,20 @@ const Enquiries = () => {
       {/* Stats */}
       <Grid container spacing={2} className="mb-4">
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon={InboxIcon} label="Total Enquiries" value={stats.total || 0} color="bg-teal-500" />
+          <StatCard icon={InboxIcon} label="Total Enquiries" value={stats.total || 0} color="bg-teal-500"
+            onClick={() => { setFilters({}); setPage(1); }} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon={FiberNewIcon} label="New" value={byStatus.new || 0} color="bg-blue-500" />
+          <StatCard icon={FiberNewIcon} label="New" value={byStatus.new || 0} color="bg-blue-500"
+            onClick={() => { setFilters({ status: "new" }); setPage(1); }} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon={PhoneCallbackIcon} label="Contacted" value={byStatus.contacted || 0} color="bg-indigo-500" />
+          <StatCard icon={PhoneCallbackIcon} label="Contacted" value={byStatus.contacted || 0} color="bg-indigo-500"
+            onClick={() => { setFilters({ status: "contacted" }); setPage(1); }} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon={CheckCircleIcon} label="Converted" value={byStatus.converted || 0} color="bg-green-500" />
+          <StatCard icon={CheckCircleIcon} label="Converted" value={byStatus.converted || 0} color="bg-green-500"
+            onClick={() => { setFilters({ status: "converted" }); setPage(1); }} />
         </Grid>
       </Grid>
 

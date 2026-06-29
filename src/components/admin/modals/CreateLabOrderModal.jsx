@@ -202,7 +202,7 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
         </Box>
       </DialogTitle>
 
-      <DialogContent className="p-6 mt-2">
+      <DialogContent className="p-6 mt-5">
         <Grid container spacing={3}>
           {/* Lab */}
           <Grid size={{ xs: 12, sm: 6 }}>

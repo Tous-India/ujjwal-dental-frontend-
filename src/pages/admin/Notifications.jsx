@@ -201,8 +201,16 @@ const filterOptions = [
 /**
  * Stat card component
  */
-const StatCard = ({ icon: Icon, label, value, color }) => (
-  <Card variant="outlined">
+const StatCard = ({ icon: Icon, label, value, color, onClick }) => (
+  <Card
+    variant="outlined"
+    onClick={onClick}
+    sx={onClick ? {
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      "&:hover": { transform: "translateY(-2px)", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" },
+    } : undefined}
+  >
     <CardContent className="flex items-center gap-3 py-3">
       <Box className={`p-2 rounded-lg ${color}`}>
         <Icon className="text-white" fontSize="small" />
@@ -291,6 +299,7 @@ const Notifications = () => {
             label="Total Sent"
             value={stats.total || 0}
             color="bg-blue-500"
+            onClick={() => { setFilters({}); setPage(1); }}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -299,6 +308,7 @@ const Notifications = () => {
             label="Read"
             value={stats.read || 0}
             color="bg-green-500"
+            onClick={() => { setFilters({ isRead: "true" }); setPage(1); }}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -307,6 +317,7 @@ const Notifications = () => {
             label="SMS Sent"
             value={stats.smsSent || 0}
             color="bg-purple-500"
+            onClick={() => { setFilters({ sendSms: "true" }); setPage(1); }}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -315,6 +326,7 @@ const Notifications = () => {
             label="Email Sent"
             value={stats.emailSent || 0}
             color="bg-orange-500"
+            onClick={() => { setFilters({ sendEmail: "true" }); setPage(1); }}
           />
         </Grid>
       </Grid>

@@ -32,8 +32,12 @@ import Grid from "@mui/material/Grid";
 import CloseIcon from "@mui/icons-material/Close";
 import EventIcon from "@mui/icons-material/Event";
 import AddIcon from "@mui/icons-material/Add";
+import DownloadIcon from "@mui/icons-material/Download";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import AppointmentSlipPreviewModal from "../../AppointmentSlipPreviewModal";
 import { useAppointmentMutations } from "../../../hooks/admin/useAppointments";
-import { searchPatients } from "../../../api/admin/patients.api";
+import { searchPatients, createPatient } from "../../../api/admin/patients.api";
+import api from "../../../api/axios";
 import { getClinics } from "../../../api/admin/clinics.api";
 import { getFeeSettings } from "../../../api/admin/settings.api";
 import { getAvailableSlots } from "../../../api/admin/appointments.api";
@@ -87,13 +91,17 @@ const timeSlots = [
   "18:30",
 ];
 
-/**
- * Initial form state
- */
-const initialFormState = {
+// Sentinel option appended to the Treatment dropdown for one-off custom
+// treatments not in Treatment Master.
+const OTHER_TREATMENT = { _id: "other", name: "Other (custom treatment)", price: null };
+
+const formatCurrency = (val) => `₹${(Number(val) || 0).toLocaleString("en-IN")}`;
+
+// Factory so every reset gets today's date fresh (not the module-load date).
+const getInitialFormState = () => ({
   patient: null,
   clinic: null,
-  date: "",
+  date: todayStr(),
   timeSlot: "",
   type: "regular",
   appointmentType: "regular", // urgency: "regular" | "emergency"
@@ -104,21 +112,13 @@ const initialFormState = {
   isFree: false,
   // Visit type & treatment fields
   visitType: "opd", // "opd" | "treatment"
-  treatment: null, // selected treatment object (for treatment visits)
-  treatmentName: "", // custom treatment name (only when "Other" is selected)
-  fee: "", // treatment fee (editable)
-  feeNotes: "",
-};
-
-// Sentinel option appended to the Treatment dropdown for one-off custom
-// treatments not in Treatment Master. _id "other" signals the backend to store
-// a custom name + manual fee instead of looking up a catalog entry.
-const OTHER_TREATMENT = { _id: "other", name: "Other (custom treatment)", price: null };
-
-const formatCurrency = (val) => `₹${(Number(val) || 0).toLocaleString("en-IN")}`;
+  treatment: null,
+  treatmentName: "",
+  fee: "",
+});
 
 const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
-  const [formData, setFormData] = useState(initialFormState);
+  const [formData, setFormData] = useState(getInitialFormState());
   const [patientSearch, setPatientSearch] = useState("");
   const [patientOptions, setPatientOptions] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -135,6 +135,18 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
   // null = not fetched yet (no clinic+date); otherwise array of open "HH:MM" slots
   const [availableSlots, setAvailableSlots] = useState(null);
   const { createAppointment, isCreating } = useAppointmentMutations();
+
+  // Appointment data after successful booking (drives success banner + slip download)
+  const [bookedAppointment, setBookedAppointment] = useState(null);
+
+  // FIX 1: Add patient inline state
+  const [showAddPatient, setShowAddPatient] = useState(false);
+  const [newPatient, setNewPatient] = useState({ name: "", phone: "", email: "" });
+  const [addingPatient, setAddingPatient] = useState(false);
+
+  // FIX 3: Payment method state
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [slipPreviewOpen, setSlipPreviewOpen] = useState(false);
 
   // Active-membership discount for the selected patient (server re-verifies it).
   const membership = formData.patient?.membership;
@@ -233,6 +245,18 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
     fetchTreatments();
   }, [open]);
 
+  // FIX 2: Auto-select Delhi Road clinic once the list loads
+  useEffect(() => {
+    if (clinics.length > 0 && !formData.clinic) {
+      const defaultClinic = clinics.find(
+        (c) =>
+          c.name?.toLowerCase().includes("delhi road") ||
+          c.name?.toLowerCase().includes("delhi"),
+      );
+      if (defaultClinic) setFormData((prev) => ({ ...prev, clinic: defaultClinic }));
+    }
+  }, [clinics]);
+
   // Update OPD fee when urgency (regular/emergency) changes
   useEffect(() => {
     if (formData.isFree) return; // Don't change if marked as free
@@ -246,6 +270,18 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       opdFee: newFee,
     }));
   }, [formData.appointmentType, feeSettings, formData.isFree]);
+
+  // Membership auto-free: active membership + OPD → automatically set free
+  useEffect(() => {
+    if (!open || !formData.patient) return;
+    const m = formData.patient.membership;
+    const isMember =
+      m?.status === "active" && (!m.expiryDate || new Date(m.expiryDate) > new Date());
+    if (isMember && formData.visitType === "opd") {
+      setFormData((prev) => ({ ...prev, isFree: true, opdFee: 0 }));
+      setPaymentMethod("free");
+    }
+  }, [formData.patient, formData.visitType, open]);
 
   /**
    * Search patients
@@ -317,9 +353,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
   };
 
   /**
-   * Handle form submit
+   * Handle form submit — accepts optional paymentOverrides (e.g. { opdFeePaid: true })
+   * injected after a successful Razorpay payment.
    */
-  const handleSubmit = () => {
+  const handleSubmit = (paymentOverrides = {}) => {
     if (!validateForm()) return;
 
     if (formData.visitType === "treatment") {
@@ -339,9 +376,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
 
     const appointmentData = {
       // Backend createAppointment expects `patientId` (existing patient) and
-      // requires `phone` in its top-level validation — send both. (Sending only
-      // `patient` left patientId/phone undefined, which made the backend reject
-      // with a misleading "Clinic, date and time slot are required" message.)
+      // requires `phone` in its top-level validation — send both.
       patientId: formData.patient._id,
       phone: formData.patient.phone,
       name: formData.patient.name,
@@ -356,22 +391,20 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       visitType: formData.visitType,
       isFree: formData.isFree,
       opdFeePaid: formData.isFree, // Mark as paid if free
+      paymentMethod: formData.isFree ? "free" : paymentMethod,
       ...(formData.visitType === "treatment"
         ? {
-            // "other" is a sentinel — backend stores treatmentName + manual fee
-            // instead of looking up a Treatment Master entry.
             treatmentId: formData.treatment?._id,
             treatmentName:
               formData.treatment?._id === "other"
                 ? formData.treatmentName.trim()
                 : undefined,
             fee: formData.isFree ? 0 : Number(formData.fee),
-            feeNotes: formData.feeNotes || undefined,
           }
         : {
-            // OPD: send opdFee so the backend uses the admin value
             opdFee: formData.isFree ? 0 : Number(formData.opdFee),
           }),
+      ...paymentOverrides,
     };
 
     createAppointment(appointmentData, {
@@ -380,10 +413,28 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         toast.success(
           token ? `Appointment booked — Token #${token}` : "Appointment booked",
         );
-        setFormData(initialFormState);
+        // Build slip object from formData (before reset) + server response
+        const slipData = {
+          ...response?.data,
+          date: formData.date,
+          timeSlot: formData.timeSlot,
+          clinic: formData.clinic,
+          reason: formData.reason,
+          patient: {
+            ...response?.data?.patient,
+            name: formData.patient?.name,
+            phone: formData.patient?.phone,
+            age: formData.patient?.age,
+            gender: formData.patient?.gender,
+            address: formData.patient?.address,
+          },
+        };
+        setBookedAppointment(slipData);
+        setFormData(getInitialFormState());
         setPatientOptions([]);
+        setPaymentMethod("cash");
         onSuccess?.(response);
-        onClose();
+        // Modal stays open to show success banner; user closes it manually
       },
       onError: (error) => {
         toast.error(
@@ -394,18 +445,86 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
   };
 
   /**
+   * FIX 4: Open Razorpay checkout, verify payment, then book appointment.
+   */
+  const handlePayOnline = async () => {
+    if (formData.visitType !== "opd") return;
+    if (!validateForm()) return;
+
+    try {
+      const res = await api.post("/payments/razorpay/create-order", {
+        type: "opd_fee",
+        patient: formData.patient._id,
+        clinic: formData.clinic._id,
+        isEmergency: formData.appointmentType === "emergency",
+      });
+
+      const { order, paymentId, key_id } = res.data.data;
+
+      const options = {
+        key: key_id,
+        amount: order.amount,
+        currency: "INR",
+        name: "Ujjwal Dental Clinic",
+        description: "OPD Consultation Fee",
+        order_id: order.id,
+        handler: async (paymentResponse) => {
+          try {
+            await api.post("/payments/razorpay/verify", {
+              razorpay_order_id: paymentResponse.razorpay_order_id,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
+              razorpay_signature: paymentResponse.razorpay_signature,
+              paymentId,
+            });
+            handleSubmit({ opdFeePaid: true });
+          } catch (err) {
+            console.error("Payment verify error:", err);
+            toast.error("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: formData.patient?.name,
+          email: formData.patient?.email || "",
+          contact: formData.patient?.phone,
+        },
+        theme: { color: "#f59e0b" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("Payment initiation error:", err);
+      const msg = err?.response?.data?.message || err?.message || "";
+      if (
+        msg.toLowerCase().includes("duplicate") ||
+        msg.toLowerCase().includes("e11000") ||
+        msg.toLowerCase().includes("paymentnumber")
+      ) {
+        toast.warning("Payment number conflict detected. Please try again.", { autoClose: 4000 });
+      } else {
+        toast.error(msg || "Failed to initiate payment", { autoClose: 4000 });
+      }
+    }
+  };
+
+  /**
    * Handle modal close
    */
   const handleClose = () => {
     if (!isCreating) {
-      setFormData(initialFormState);
+      setFormData(getInitialFormState());
       setPatientOptions([]);
       setErrors({});
+      setShowAddPatient(false);
+      setNewPatient({ name: "", phone: "", email: "" });
+      setPaymentMethod("cash");
+      setBookedAppointment(null);
       onClose();
     }
   };
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -432,20 +551,76 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       <DialogContent
         sx={{
           px: 2,
-          pt: 2.5,
-          pb: 2,
+          pt: 1.5,
+          pb: 1.5,
           "& .MuiFormHelperText-root": {
             fontSize: "0.7rem",
             lineHeight: 1.3,
             mt: 0.25,
+            mb: 0,
+            minHeight: 0,
+            visibility: "hidden",
           },
+          "& .MuiInputBase-root": { height: "40px", fontSize: "13px" },
+          "& .MuiInputBase-input": { fontSize: "13px", paddingTop: "5px", paddingBottom: "5px" },
+          "& .MuiInputLabel-root": { fontSize: "13px" },
+          "& .MuiAutocomplete-root .MuiInputBase-root": { height: "40px" },
+          "& .MuiAutocomplete-input": { paddingTop: "2px !important", paddingBottom: "2px !important" },
+          "& .MuiSelect-select": { paddingTop: "8px", paddingBottom: "8px" },
         }}
+        className="mt-5"
       >
+        {/* Success banner — shown after booking, replaces the form */}
+        {bookedAppointment && (
+          <Box
+            sx={{
+              border: "1px solid #d1fae5",
+              borderRadius: "10px",
+              backgroundColor: "#f0fdf4",
+              p: 3,
+              textAlign: "center",
+            }}
+          >
+            <CheckCircleIcon sx={{ fontSize: 48, color: "#059669", mb: 1 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "#065f46", mb: 0.5 }}>
+              Appointment Booked!
+            </Typography>
+            {bookedAppointment.tokenNumber && (
+              <Typography variant="body2" sx={{ color: "#047857", mb: 0.5 }}>
+                Token <strong>#{bookedAppointment.tokenNumber}</strong>
+              </Typography>
+            )}
+            {bookedAppointment.appointmentNumber && (
+              <Typography variant="body2" sx={{ color: "#6b7280", mb: 2 }}>
+                {bookedAppointment.appointmentNumber}
+              </Typography>
+            )}
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<DownloadIcon />}
+              onClick={() => setSlipPreviewOpen(true)}
+              sx={{
+                textTransform: "none",
+                borderColor: "#f59e0b",
+                color: "#f59e0b",
+                "&:hover": { borderColor: "#d97706", backgroundColor: "#fffbeb" },
+              }}
+            >
+              Preview & Download Slip
+            </Button>
+            <Typography variant="caption" sx={{ display: "block", color: "#9ca3af", mt: 2 }}>
+              Close this dialog to book another appointment.
+            </Typography>
+          </Box>
+        )}
+
         {/* mt on the container guarantees a gap below the purple header
             (MUI zeroes DialogContent padding-top right after DialogTitle). */}
-        <Grid container spacing={2} sx={{ mt: 1 }}>
+        {!bookedAppointment && (
+        <Grid container spacing={1.5} sx={{ mt: 1 }}>
           {/* Patient Search */}
-          <Grid size={{ xs: 12 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Autocomplete
               options={patientOptions}
               getOptionLabel={(option) => `${option.name} (${option.phone})`}
@@ -470,14 +645,189 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 />
               )}
               noOptionsText={
-                patientSearch.length < 2
-                  ? "Type at least 2 characters"
-                  : "No patients found"
+                patientSearch.length < 2 ? (
+                  "Type at least 2 characters"
+                ) : (
+                  <Box>
+                    <Typography sx={{ fontSize: "13px", color: "#666", mb: 1 }}>
+                      No patient found
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setShowAddPatient(true)}
+                      sx={{
+                        fontSize: "12px",
+                        textTransform: "none",
+                        color: "#f59e0b",
+                        borderColor: "#f59e0b",
+                      }}
+                    >
+                      + Add New Patient
+                    </Button>
+                  </Box>
+                )
               }
             />
+
           </Grid>
+
+          {/* Time Slot */}
+          <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+            <TextField
+              fullWidth
+              label="Time Slot"
+              name="timeSlot"
+              value={formData.timeSlot}
+              onChange={handleChange}
+              error={!!errors.timeSlot}
+              helperText={
+                errors.timeSlot ||
+                (Array.isArray(availableSlots)
+                  ? "Full or past slots are disabled"
+                  : "Select clinic and date first")
+              }
+              required
+              select
+              size="small"
+            >
+              <MenuItem value="">Select Time</MenuItem>
+              {timeSlots.map((slot) => {
+                // Disable if the slot is in the past today (client clock = IST)
+                // or full/unavailable per the backend.
+                const disabled =
+                  isPastSlotForDate(formData.date, slot) ||
+                  (Array.isArray(availableSlots) &&
+                    !availableSlots.includes(slot));
+                return (
+                  <MenuItem key={slot} value={slot} disabled={disabled}>
+                    {slot}
+                    {disabled ? " — unavailable" : ""}
+                  </MenuItem>
+                );
+              })}
+            </TextField>
+          </Grid>
+
+          {/* Type */}
+          <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+            <TextField
+              fullWidth
+              label="Appointment Type"
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              select
+              size="small"
+            >
+              {typeOptions.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          {/* Reason */}
+          <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+            <TextField
+              fullWidth
+              label="Reason for Visit"
+              name="reason"
+              value={formData.reason}
+              onChange={handleChange}
+              error={!!errors.reason}
+              helperText={errors.reason}
+              required
+              size="small"
+              placeholder="e.g., Tooth pain, Cleaning"
+            />
+          </Grid>
+
+          {showAddPatient && (
+            <Grid size={{ xs: 12 }}>
+              {/* FIX 1: Inline add-patient mini form */}
+              <Box
+                sx={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  p: 2,
+                  mt: 1,
+                  backgroundColor: "#fafafa",
+                }}
+              >
+                <Typography sx={{ fontSize: "13px", fontWeight: 600, mb: 1.5, color: "#1a1a1a" }}>
+                  Add New Patient
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+                  <TextField
+                    label="Full Name *"
+                    size="small"
+                    sx={{ flex: 1, minWidth: "140px" }}
+                    value={newPatient.name}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, name: e.target.value }))}
+                  />
+                  <TextField
+                    label="Phone *"
+                    size="small"
+                    sx={{ flex: 1, minWidth: "140px" }}
+                    value={newPatient.phone}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, phone: e.target.value }))}
+                    inputProps={{ maxLength: 10 }}
+                    placeholder="10-digit mobile"
+                  />
+                  <TextField
+                    label="Email"
+                    size="small"
+                    sx={{ flex: 1, minWidth: "140px" }}
+                    value={newPatient.email}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, email: e.target.value }))}
+                  />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disabled={!newPatient.name || !newPatient.phone || addingPatient}
+                    onClick={async () => {
+                      setAddingPatient(true);
+                      try {
+                        const result = await createPatient({
+                          name: newPatient.name,
+                          phone: newPatient.phone,
+                          email: newPatient.email || undefined,
+                        });
+                        const created = result.data?.patient || result.patient || result;
+                        setFormData((prev) => ({ ...prev, patient: created }));
+                        setShowAddPatient(false);
+                        setNewPatient({ name: "", phone: "", email: "" });
+                        toast.success(`Patient ${created.name} added`);
+                      } catch (err) {
+                        console.error("Add patient error:", err);
+                        toast.error(err.response?.data?.message || "Failed to add patient");
+                      }
+                      setAddingPatient(false);
+                    }}
+                    sx={{ backgroundColor: "#f59e0b", textTransform: "none", fontSize: "12px", whiteSpace: "nowrap", flexShrink: 0 }}
+                  >
+                    {addingPatient ? "Adding..." : "Add & Select"}
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => {
+                      setShowAddPatient(false);
+                      setNewPatient({ name: "", phone: "", email: "" });
+                    }}
+                    sx={{ textTransform: "none", fontSize: "12px", whiteSpace: "nowrap", flexShrink: 0 }}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
+              </Box>
+            </Grid>
+          )}
+
           {/* Clinic Selection */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
+          <Grid size={{ xs: 6, sm: 4, md: 4 }}>
             <Autocomplete
               options={clinics}
               getOptionLabel={(option) =>
@@ -521,8 +871,31 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               ))}
             </TextField>
           </Grid>
-          {/* Date */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
+          {/* Membership notice — OPD is free for active members */}
+          {isActiveMember && formData.visitType === "opd" && (
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  px: 1,
+                  py: 0.75,
+                  bgcolor: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: 1,
+                }}
+              >
+                <CheckCircleIcon sx={{ fontSize: 14, color: "#059669" }} />
+                <Typography variant="caption" sx={{ color: "#059669", fontWeight: 600 }}>
+                  Patient has active membership — OPD is free
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+
+          {/* Date — FIX 5: defaults to today via getInitialFormState */}
+          <Grid size={{ xs: 6, sm: 3, md: 3 }}>
             <TextField
               fullWidth
               label="Appointment Date"
@@ -539,78 +912,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             />
           </Grid>
 
-          {/* Time Slot */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-            <TextField
-              fullWidth
-              label="Time Slot"
-              name="timeSlot"
-              value={formData.timeSlot}
-              onChange={handleChange}
-              error={!!errors.timeSlot}
-              helperText={
-                errors.timeSlot ||
-                (Array.isArray(availableSlots)
-                  ? "Full or past slots are disabled"
-                  : "Select clinic and date first")
-              }
-              required
-              select
-              size="small"
-            >
-              <MenuItem value="">Select Time</MenuItem>
-              {timeSlots.map((slot) => {
-                // Disable if the slot is in the past today (client clock = IST)
-                // or full/unavailable per the backend.
-                const disabled =
-                  isPastSlotForDate(formData.date, slot) ||
-                  (Array.isArray(availableSlots) &&
-                    !availableSlots.includes(slot));
-                return (
-                  <MenuItem key={slot} value={slot} disabled={disabled}>
-                    {slot}
-                    {disabled ? " — unavailable" : ""}
-                  </MenuItem>
-                );
-              })}
-            </TextField>
-          </Grid>
-
-          {/* Type */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-            <TextField
-              fullWidth
-              label="Appointment Type"
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              select
-              size="small"
-            >
-              {typeOptions.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-
-          {/* Reason */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-            <TextField
-              fullWidth
-              label="Reason for Visit"
-              name="reason"
-              value={formData.reason}
-              onChange={handleChange}
-              error={!!errors.reason}
-              helperText={errors.reason}
-              required
-              size="small"
-              placeholder="e.g., Tooth pain, Cleaning"
-            />
-          </Grid>
-
           {/* Visit Type + Urgency — side by side, compact inline radios */}
           <Grid size={{ xs: 6, sm: 6, md: 4 }}>
             <FormControl>
@@ -620,16 +921,34 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               <RadioGroup
                 row
                 value={formData.visitType}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const newVisitType = e.target.value;
+                  if (newVisitType === "treatment") {
+                    setPaymentMethod("cash");
+                    // Membership OPD benefit doesn't apply to treatment; reset auto-free
+                    if (isActiveMember && formData.isFree) {
+                      const defaultFee =
+                        formData.appointmentType === "emergency"
+                          ? feeSettings.opdFeeEmergency
+                          : feeSettings.opdFeeRegular;
+                      setFormData((prev) => ({
+                        ...prev,
+                        visitType: "treatment",
+                        isFree: false,
+                        opdFee: defaultFee,
+                      }));
+                      return;
+                    }
+                  }
                   setFormData((prev) => ({
                     ...prev,
-                    visitType: e.target.value,
+                    visitType: newVisitType,
                     // reset treatment fields when switching back to OPD
-                    ...(e.target.value === "opd"
-                      ? { treatment: null, treatmentName: "", fee: "", feeNotes: "" }
+                    ...(newVisitType === "opd"
+                      ? { treatment: null, treatmentName: "", fee: "" }
                       : {}),
-                  }))
-                }
+                  }));
+                }}
                 sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.85rem" }, "& .MuiFormControlLabel-root": { mr: 1.5 } }}
               >
                 <FormControlLabel value="opd" control={<Radio size="small" />} label="OPD" />
@@ -678,9 +997,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               <Grid size={{ xs: 6, sm: 6, md: 4 }}>
                 <Autocomplete
                   options={[...treatments, OTHER_TREATMENT]}
-                  getOptionLabel={(o) =>
-                    o ? `${o.name}${o.price ? ` — ₹${o.price}` : ""}` : ""
-                  }
+                  getOptionLabel={(o) => (o ? o.name || "" : "")}
                   value={formData.treatment}
                   isOptionEqualToValue={(opt, val) => opt._id === val?._id}
                   onChange={(_, value) => {
@@ -688,10 +1005,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                     setFormData((prev) => ({
                       ...prev,
                       treatment: value,
-                      // "Other": no preset price — clear the fee so the admin
-                      // types it manually. Normal: auto-fill from treatment price.
                       fee: isOther ? "" : value?.price ?? prev.fee,
-                      // Drop any custom name when switching back to a normal treatment.
                       treatmentName: isOther ? prev.treatmentName : "",
                     }));
                     setErrors((prev) => ({ ...prev, treatment: "", treatmentName: "", fee: "" }));
@@ -725,37 +1039,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                   />
                 </Grid>
               )}
-              <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Fee (₹)"
-                  name="fee"
-                  type="number"
-                  value={formData.fee}
-                  onChange={handleChange}
-                  size="small"
-                  disabled={formData.isFree}
-                  error={!!errors.fee}
-                  helperText={
-                    formData.isFree
-                      ? "Fee waived for free appointment"
-                      : formData.treatment?._id === "other"
-                      ? "Enter the fee for this custom treatment"
-                      : "Auto-filled from treatment price — editable per patient"
-                  }
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  label="Fee Notes (optional)"
-                  name="feeNotes"
-                  value={formData.feeNotes}
-                  onChange={handleChange}
-                  size="small"
-                  placeholder="e.g., 2nd sitting, crown fitting"
-                />
-              </Grid>
             </>
           )}
 
@@ -776,6 +1059,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                         isFree,
                         opdFee: isFree ? 0 : defaultFee,
                       }));
+                      if (isFree) setPaymentMethod("cash");
                     }}
                     color="success"
                   />
@@ -794,30 +1078,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             </Box>
           </Grid>
 
-          {/* OPD Fee (OPD visits only) */}
-          {formData.visitType === "opd" && (
-            <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label={`OPD Fee (₹) - ${formData.appointmentType === "emergency" ? "Emergency" : "Regular"}`}
-                name="opdFee"
-                type="number"
-                value={formData.opdFee}
-                onChange={handleChange}
-                size="small"
-                disabled={formData.isFree || feeLoading}
-                helperText={
-                  formData.isFree
-                    ? "Fee waived for free appointment"
-                    : `Default: ₹${formData.appointmentType === "emergency" ? feeSettings.opdFeeEmergency : feeSettings.opdFeeRegular} (from settings)`
-                }
-              />
-            </Grid>
-          )}
 
-          {/* Fee Summary — compact */}
-          <Grid size={{ xs: 12 }}>
-            <Paper variant="outlined" className="p-3 bg-gray-50">
+          {/* Fee Summary */}
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Paper variant="outlined" className="p-2 bg-gray-50">
               <Box className="flex justify-between items-center py-1">
                 <Typography variant="caption" className="text-gray-600">
                   {formData.visitType === "treatment"
@@ -850,31 +1114,96 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </Box>
               )}
               <Divider className="my-2.5" />
-              <Box className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-0.5">
+
+              {/* FIX 3: Payment method toggle (hidden when free) */}
+              <Box className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-0.5 mt-2">
                 <Box className="flex items-center gap-1">
                   <Typography variant="caption" className="text-gray-500">Method:</Typography>
-                  <Chip size="small" variant="outlined" label="Pay at Clinic" sx={{ height: 20 }} />
-                </Box>
-                <Box className="flex items-center gap-1">
-                  <Typography variant="caption" className="text-gray-500">Status:</Typography>
-                  <Chip
-                    size="small"
-                    color={formData.isFree ? "info" : "warning"}
-                    label={formData.isFree ? "Free" : "Pending"}
-                    sx={{ height: 20 }}
-                  />
+                  {(isActiveMember && formData.visitType === "opd") ? (
+                    // Membership case: always show Free / Cash / Online so admin can override
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        variant={!formData.isFree && paymentMethod === "cash" ? "contained" : "outlined"}
+                        size="small"
+                        onClick={() => setPaymentMethod("cash")}
+                        sx={{
+                          textTransform: "none",
+                          fontSize: "11px",
+                          height: 24,
+                          minWidth: 0,
+                          px: 1.5,
+                          ...(!formData.isFree && paymentMethod === "cash"
+                            ? { backgroundColor: "#1e3a5f", color: "#fff", "&:hover": { backgroundColor: "#162d4a" } }
+                            : { borderColor: "#1e3a5f", color: "#1e3a5f" }),
+                        }}
+                      >
+                        Cash
+                      </Button>
+                      <Button
+                        variant={!formData.isFree && paymentMethod === "online" ? "contained" : "outlined"}
+                        size="small"
+                        onClick={() => setPaymentMethod("online")}
+                        sx={{
+                          textTransform: "none",
+                          fontSize: "11px",
+                          height: 24,
+                          minWidth: 0,
+                          px: 1.5,
+                          ...(!formData.isFree && paymentMethod === "online"
+                            ? { backgroundColor: "#059669", color: "#fff", "&:hover": { backgroundColor: "#047857" } }
+                            : { borderColor: "#059669", color: "#059669" }),
+                        }}
+                      >
+                        Online
+                      </Button>
+                    </Box>
+                  ) : formData.isFree ? (
+                    <Chip size="small" variant="outlined" label="Free" sx={{ height: 20 }} />
+                  ) : (
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        variant={paymentMethod === "cash" ? "contained" : "outlined"}
+                        size="small"
+                        onClick={() => setPaymentMethod("cash")}
+                        sx={{
+                          textTransform: "none",
+                          fontSize: "11px",
+                          height: 24,
+                          minWidth: 0,
+                          px: 1.5,
+                          ...(paymentMethod === "cash"
+                            ? { backgroundColor: "#1e3a5f", color: "#fff", "&:hover": { backgroundColor: "#162d4a" } }
+                            : { borderColor: "#1e3a5f", color: "#1e3a5f" }),
+                        }}
+                      >
+                        Cash
+                      </Button>
+                      <Button
+                        variant={paymentMethod === "online" ? "contained" : "outlined"}
+                        size="small"
+                        onClick={() => setPaymentMethod("online")}
+                        sx={{
+                          textTransform: "none",
+                          fontSize: "11px",
+                          height: 24,
+                          minWidth: 0,
+                          px: 1.5,
+                          ...(paymentMethod === "online"
+                            ? { backgroundColor: "#059669", color: "#fff", "&:hover": { backgroundColor: "#047857" } }
+                            : { borderColor: "#059669", color: "#059669" }),
+                        }}
+                      >
+                        Online
+                      </Button>
+                    </Box>
+                  )}
                 </Box>
               </Box>
-              {!formData.isFree && (
-                <Typography variant="caption" className="text-gray-400 block mt-2.5 pt-0.5" sx={{ fontSize: "0.7rem" }}>
-                  An invoice will be auto-created (unpaid), collected at the clinic.
-                </Typography>
-              )}
             </Paper>
           </Grid>
 
           {/* Notes */}
-          <Grid size={{ xs: 12 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               label="Notes"
@@ -882,12 +1211,13 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               value={formData.notes}
               onChange={handleChange}
               multiline
-              rows={2}
+              rows={1}
               size="small"
               placeholder="Additional notes..."
             />
           </Grid>
         </Grid>
+        )}
       </DialogContent>
 
       {/* Actions — slim sticky footer with a top divider */}
@@ -896,19 +1226,29 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         sx={{ borderTop: 1, borderColor: "divider" }}
       >
         <Button onClick={handleClose} color="inherit" disabled={isCreating}>
-          Cancel
+          {bookedAppointment ? "Close" : "Cancel"}
         </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={isCreating}
-          className="bg-indigo-600 hover:bg-indigo-700"
-          startIcon={isCreating ? <CircularProgress size={16} /> : <AddIcon />}
-        >
-          {isCreating ? "Booking..." : "Book Appointment"}
-        </Button>
+
+        {/* FIX 3 & 4: Conditional submit button (hidden after booking) */}
+        {!bookedAppointment && (
+          <Button
+            variant="contained"
+            onClick={() => handleSubmit()}
+            disabled={isCreating}
+            className="bg-indigo-600 hover:bg-indigo-700"
+            startIcon={isCreating ? <CircularProgress size={16} /> : <AddIcon />}
+          >
+            {isCreating ? "Booking..." : "Book Appointment"}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
+    <AppointmentSlipPreviewModal
+      open={slipPreviewOpen}
+      onClose={() => setSlipPreviewOpen(false)}
+      appointment={bookedAppointment}
+    />
+    </>
   );
 };
 
