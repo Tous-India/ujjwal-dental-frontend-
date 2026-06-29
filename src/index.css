@@ -457,3 +457,10 @@ body {
   }
 }
 
+input::placeholder{
+  font-size: 12px !important;
+  font-style: italic !important;
+}
+label{
+  font-size: 14px !important;  
+}

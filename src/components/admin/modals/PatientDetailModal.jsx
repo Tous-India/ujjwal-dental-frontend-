@@ -44,8 +44,6 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
-import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
-import PatientCouponsModal from "./PatientCouponsModal";
 import ContactPhoneIcon from "@mui/icons-material/ContactPhone";
 import EventIcon from "@mui/icons-material/Event";
 import PaymentIcon from "@mui/icons-material/Payment";
@@ -152,7 +150,7 @@ const statusColors = {
 /**
  * Overview Tab Content
  */
-const OverviewTab = ({ patient, onAssignMembership, onViewCoupons }) => {
+const OverviewTab = ({ patient, onAssignMembership }) => {
   const {
     phone,
     email,
@@ -343,15 +341,6 @@ const OverviewTab = ({ patient, onAssignMembership, onViewCoupons }) => {
                   Notes: {membership.notes}
                 </Typography>
               )}
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<CardGiftcardIcon />}
-                onClick={onViewCoupons}
-                sx={{ mt: 1, fontSize: "0.7rem" }}
-              >
-                View Coupons
-              </Button>
             </>
           ) : (
             <Typography variant="body2" className="text-gray-400">
@@ -787,7 +776,6 @@ const ReportsTab = ({ patientId }) => {
 const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReactivate, onPermanentDelete, onRefresh }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [couponsModalOpen, setCouponsModalOpen] = useState(false);
   const [assignMembershipOpen, setAssignMembershipOpen] = useState(false);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
@@ -877,7 +865,6 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           <OverviewTab
             patient={patient}
             onAssignMembership={() => setAssignMembershipOpen(true)}
-            onViewCoupons={() => setCouponsModalOpen(true)}
           />
         </TabPanel>
         <TabPanel value={activeTab} index={1}>
@@ -985,13 +972,6 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         </Box>
       </DialogActions>
 
-      {/* Patient Coupons Modal */}
-      <PatientCouponsModal
-        open={couponsModalOpen}
-        onClose={() => setCouponsModalOpen(false)}
-        patientId={patient?._id}
-        patientName={patient?.name}
-      />
 
       {/* Assign Membership Modal */}
       <AssignMembershipModal

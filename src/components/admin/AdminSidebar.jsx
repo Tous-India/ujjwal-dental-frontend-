@@ -38,7 +38,6 @@ import BiotechIcon from "@mui/icons-material/Biotech";
 import PaymentIcon from "@mui/icons-material/Payment";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
-import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
 import BusinessIcon from "@mui/icons-material/Business";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LanguageIcon from "@mui/icons-material/Language";
@@ -63,11 +62,10 @@ const navItems = [
   { label: "Appointments", path: "/admin/appointments", icon: EventIcon, badgeKey: "appointments", badgeColor: "#3b82f6" },
   { label: "Treatments", path: "/admin/treatments", icon: MedicalServicesIcon },
   { label: "Lab", path: "/admin/lab", icon: BiotechIcon },
-  { label: "Payments", path: "/admin/payments", icon: PaymentIcon, badgeKey: "payments", badgeColor: "#f59e0b" },
+  { label: "Payment History", path: "/admin/payments", icon: PaymentIcon, badgeKey: "payments", badgeColor: "#f59e0b" },
   { label: "Billing", path: "/admin/billing", icon: ReceiptLongIcon },
   { label: "Reports", path: "/admin/reports", icon: AssessmentIcon },
   { label: "Memberships", path: "/admin/memberships", icon: CardMembershipIcon, badgeKey: "memberships", badgeColor: "#8b5cf6" },
-  { label: "Coupons", path: "/admin/coupons", icon: CardGiftcardIcon },
   { label: "Notifications", path: "/admin/notifications", icon: NotificationsIcon, badgeKey: "notifications", badgeColor: "#ec4899" },
   { label: "Clinics", path: "/admin/clinics", icon: BusinessIcon },
   { label: "Staff", path: "/admin/users", icon: GroupIcon },

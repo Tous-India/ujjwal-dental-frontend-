@@ -32,7 +32,6 @@ import {
 import AddMembershipModal from "../../components/admin/modals/AddMembershipModal";
 import EditMembershipModal from "../../components/admin/modals/EditMembershipModal";
 import MembershipDetailModal from "../../components/admin/modals/MembershipDetailModal";
-import CouponVerifySection from "../../components/admin/CouponVerifySection";
 
 /**
  * Tier colors
@@ -277,8 +276,6 @@ const Memberships = () => {
 
   return (
     <Box>
-      {/* Coupon Verification */}
-      <CouponVerifySection />
 
       {/* Header */}
       <Box className="flex justify-between items-center mb-6">

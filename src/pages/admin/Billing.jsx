@@ -215,8 +215,16 @@ const filterOptions = [
 /**
  * Stat card component
  */
-const StatCard = ({ icon: Icon, label, value, color }) => (
-  <Card variant="outlined">
+const StatCard = ({ icon: Icon, label, value, color, onClick }) => (
+  <Card
+    variant="outlined"
+    onClick={onClick}
+    sx={onClick ? {
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      "&:hover": { transform: "translateY(-2px)", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" },
+    } : undefined}
+  >
     <CardContent className="flex items-center gap-3 py-3">
       <Box className={`p-2 rounded-lg ${color}`}>
         <Icon className="text-white" />
@@ -410,6 +418,7 @@ const Billing = () => {
             label="Total Invoices"
             value={stats.totalInvoices || 0}
             color="bg-indigo-500"
+            onClick={() => { setFilters({}); setPage(1); }}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -418,6 +427,7 @@ const Billing = () => {
             label="Total Amount"
             value={formatCurrency(stats.totalAmount)}
             color="bg-blue-500"
+            onClick={() => { setFilters({}); setPage(1); }}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -426,6 +436,7 @@ const Billing = () => {
             label="Total Paid"
             value={formatCurrency(stats.totalPaid)}
             color="bg-green-500"
+            onClick={() => { setFilters({ paymentStatus: "paid" }); setPage(1); }}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -434,6 +445,7 @@ const Billing = () => {
             label="Balance Due"
             value={formatCurrency(stats.totalDue)}
             color="bg-red-500"
+            onClick={() => { setFilters({ paymentStatus: "unpaid" }); setPage(1); }}
           />
         </Grid>
       </Grid>

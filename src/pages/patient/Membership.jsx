@@ -20,7 +20,6 @@ import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import CouponGrid from "../../components/patient/CouponGrid";
 import { useAuthStore } from "../../store/auth.store";
 import api from "../../api/axios";
 
@@ -333,8 +332,6 @@ const Membership = () => {
         </Button>
       </Box>
 
-      {/* Coupons */}
-      <CouponGrid />
     </Box>
   );
 };

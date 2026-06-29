@@ -40,8 +40,17 @@ import PatientDetailModal from "../../components/admin/modals/PatientDetailModal
  * Stats Card Component
  * Reusable card for displaying statistics
  */
-const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading }) => (
-  <Card elevation={0} className="h-full rounded-xl! border border-gray-100 shadow-xs!">
+const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading, onClick }) => (
+  <Card
+    elevation={0}
+    onClick={onClick}
+    className="h-full rounded-xl! border border-gray-100 shadow-xs!"
+    sx={onClick ? {
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      "&:hover": { transform: "translateY(-2px)", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" },
+    } : undefined}
+  >
     <CardContent className="flex items-center gap-4 p-5!">
       {/* Icon */}
       <Box
@@ -157,6 +166,7 @@ const Dashboard = () => {
             iconBg="bg-blue-50"
             iconColor="text-blue-500"
             loading={isLoadingStats}
+            onClick={() => navigate("/admin/patients")}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -167,6 +177,7 @@ const Dashboard = () => {
             iconBg="bg-orange-50"
             iconColor="text-accent"
             loading={isLoadingStats}
+            onClick={() => navigate("/admin/appointments")}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -177,6 +188,7 @@ const Dashboard = () => {
             iconBg="bg-red-50"
             iconColor="text-red-500"
             loading={isLoadingStats}
+            onClick={() => navigate("/admin/payments")}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -187,6 +199,7 @@ const Dashboard = () => {
             iconBg="bg-green-50"
             iconColor="text-green-500"
             loading={isLoadingStats}
+            onClick={() => navigate("/admin/appointments?filter=today")}
           />
         </Grid>
       </Grid>

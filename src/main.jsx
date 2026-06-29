@@ -24,7 +24,7 @@ const muiTheme = createTheme({
   typography: {
     fontFamily: '"DM Sans", sans-serif',
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 5 },
   components: {
     MuiTableCell: {
       styleOverrides: {

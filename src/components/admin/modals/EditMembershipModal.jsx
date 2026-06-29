@@ -60,7 +60,6 @@ const EditMembershipModal = ({ open, onClose, plan, onSuccess }) => {
     features: [],
     isActive: true,
     displayOrder: 0,
-    couponConfig: { enabled: true, numberOfCoupons: 6, flatDiscount: 500, surgeryDiscount: 30, conditions: "" },
   });
   const [featureInput, setFeatureInput] = useState("");
 
@@ -82,13 +81,6 @@ const EditMembershipModal = ({ open, onClose, plan, onSuccess }) => {
         features: plan.features || [],
         isActive: plan.isActive !== false,
         displayOrder: plan.displayOrder || 0,
-        couponConfig: {
-          enabled: plan.couponConfig?.enabled !== false,
-          numberOfCoupons: plan.couponConfig?.numberOfCoupons ?? 6,
-          flatDiscount: plan.couponConfig?.flatDiscount ?? 500,
-          surgeryDiscount: plan.couponConfig?.surgeryDiscount ?? 30,
-          conditions: plan.couponConfig?.conditions || "",
-        },
       });
     }
   }, [plan]);
@@ -104,17 +96,6 @@ const EditMembershipModal = ({ open, onClose, plan, onSuccess }) => {
     setFormData((prev) => ({
       ...prev,
       [field]: e.target.checked,
-    }));
-  };
-
-  const handleCouponChange = (field) => (e) => {
-    const value = field === "conditions" ? e.target.value : field === "enabled" ? e.target.checked : e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      couponConfig: {
-        ...prev.couponConfig,
-        [field]: value,
-      },
     }));
   };
 
@@ -163,13 +144,6 @@ const EditMembershipModal = ({ open, onClose, plan, onSuccess }) => {
       features: formData.features,
       isActive: formData.isActive,
       displayOrder: Number(formData.displayOrder),
-      couponConfig: {
-        enabled: formData.couponConfig.enabled,
-        numberOfCoupons: Number(formData.couponConfig.numberOfCoupons),
-        flatDiscount: Number(formData.couponConfig.flatDiscount),
-        surgeryDiscount: Number(formData.couponConfig.surgeryDiscount),
-        conditions: formData.couponConfig.conditions.trim(),
-      },
     };
 
     updatePlan(
@@ -396,81 +370,7 @@ const EditMembershipModal = ({ open, onClose, plan, onSuccess }) => {
             </Box>
           </Grid>
 
-          {/* Coupon Configuration */}
-          <Grid size={{ xs: 12 }}>
-            <Divider className="my-2" />
-            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-2 mt-2">
-              Coupon Configuration
-            </Typography>
-          </Grid>
 
-          <Grid size={{ xs: 12 }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.couponConfig.enabled}
-                  onChange={handleCouponChange("enabled")}
-                  color="primary"
-                />
-              }
-              label="Enable Coupons"
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <TextField
-              fullWidth
-              label="Number of Coupons"
-              type="number"
-              value={formData.couponConfig.numberOfCoupons}
-              onChange={handleCouponChange("numberOfCoupons")}
-              size="small"
-              inputProps={{ min: 0 }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <TextField
-              fullWidth
-              label="Flat Discount (₹)"
-              type="number"
-              value={formData.couponConfig.flatDiscount}
-              onChange={handleCouponChange("flatDiscount")}
-              size="small"
-              inputProps={{ min: 0 }}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-              }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <TextField
-              fullWidth
-              label="Surgery Discount (%)"
-              type="number"
-              value={formData.couponConfig.surgeryDiscount}
-              onChange={handleCouponChange("surgeryDiscount")}
-              size="small"
-              inputProps={{ min: 0, max: 100 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">%</InputAdornment>,
-              }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="Conditions & Rules"
-              value={formData.couponConfig.conditions}
-              onChange={handleCouponChange("conditions")}
-              multiline
-              rows={2}
-              size="small"
-              placeholder="Enter any conditions or rules for coupon usage"
-            />
-          </Grid>
 
           {/* Display Order */}
           <Grid size={{ xs: 12, sm: 6 }}>

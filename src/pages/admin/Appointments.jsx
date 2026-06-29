@@ -24,6 +24,8 @@ import {
   TextField,
   CircularProgress,
   Alert,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
@@ -31,9 +33,11 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import DownloadIcon from "@mui/icons-material/Download";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
+import AppointmentSlipPreviewModal from "../../components/AppointmentSlipPreviewModal";
 import DataTable from "../../components/common/DataTable";
 import { useAppointments, useAppointmentMutations } from "../../hooks/admin/useAppointments";
-import { useBillingMutations } from "../../hooks/admin/useBilling";
 import {
   getFeeSettings,
   updateFeeSettings,
@@ -63,9 +67,9 @@ const columns = [
   {
     field: "appointmentNumber",
     headerName: "Appt #",
-    minWidth: 140,
+    minWidth: 110,
     render: (value) => (
-      <Typography variant="body2" className="font-mono font-medium">
+      <Typography variant="body2" className="font-mono font-medium" sx={{ fontSize: '12px' }}>
         {value || "-"}
       </Typography>
     ),
@@ -73,42 +77,34 @@ const columns = [
   {
     field: "patient",
     headerName: "Patient",
-    minWidth: 200,
+    minWidth: 160,
     render: (value) => (
-      <Box className="flex items-center gap-2">
-        <Avatar
-          sx={{ width: 32, height: 32 }}
-          className="bg-indigo-100 text-indigo-600"
-        >
-          {value?.name?.[0]?.toUpperCase() || "P"}
-        </Avatar>
-        <Box>
-          <Typography variant="body2" className="font-medium">
-            {value?.name || "Unknown"}
-          </Typography>
-          <Typography variant="caption" className="text-gray-500">
-            {value?.phone || "-"}
-          </Typography>
-        </Box>
+      <Box>
+        <Typography variant="body2" className="font-medium" sx={{ fontSize: '12px' }}>
+          {value?.name || "Unknown"}
+        </Typography>
+        <Typography variant="caption" className="text-gray-500">
+          {value?.phone || "-"}
+        </Typography>
       </Box>
     ),
   },
   {
     field: "date",
     headerName: "Date",
-    minWidth: 120,
+    minWidth: 100,
     render: (value) =>
       value ? new Date(value).toLocaleDateString("en-IN") : "-",
   },
   {
     field: "timeSlot",
     headerName: "Time",
-    minWidth: 100,
+    minWidth: 80,
   },
   {
     field: "tokenNumber",
     headerName: "Token",
-    minWidth: 80,
+    minWidth: 65,
     render: (value) => (
       <Typography variant="body2" className="font-numbers font-medium">
         {value ? `#${value}` : "-"}
@@ -118,20 +114,21 @@ const columns = [
   {
     field: "type",
     headerName: "Type",
-    minWidth: 110,
+    minWidth: 95,
     render: (value) => (
       <Chip
         size="small"
         label={value?.replace("_", " ") || "regular"}
         variant="outlined"
         className="capitalize"
+        sx={{ fontSize: '11px' }}
       />
     ),
   },
   {
     field: "visitType",
     headerName: "Visit Type",
-    minWidth: 150,
+    minWidth: 120,
     render: (value, row) => (
       <Box className="flex items-center gap-1 flex-wrap">
         <Chip
@@ -139,9 +136,10 @@ const columns = [
           label={value === "treatment" ? "Treatment" : "OPD"}
           color={value === "treatment" ? "warning" : "info"}
           title={row?.treatmentId?.name || row?.treatmentName || ""}
+          sx={{ fontSize: '11px' }}
         />
         {row?.appointmentType === "emergency" && (
-          <Chip size="small" label="Emergency" sx={{ bgcolor: "#dc2626", color: "#fff", fontWeight: 700 }} />
+          <Chip size="small" label="Emergency" sx={{ bgcolor: "#dc2626", color: "#fff", fontWeight: 700, fontSize: '11px' }} />
         )}
       </Box>
     ),
@@ -149,7 +147,7 @@ const columns = [
   {
     field: "fee",
     headerName: "Fee",
-    minWidth: 100,
+    minWidth: 85,
     render: (_, row) => {
       if (row?.isFree) {
         return (
@@ -169,13 +167,14 @@ const columns = [
   {
     field: "status",
     headerName: "Status",
-    minWidth: 130,
+    minWidth: 110,
     render: (value) => (
       <Chip
         size="small"
         label={value?.replace("_", " ") || "scheduled"}
         color={statusColors[value] || "default"}
         className="capitalize"
+        sx={{ fontSize: '11px' }}
       />
     ),
   },
@@ -210,42 +209,95 @@ const columns = [
   },
 ];
 
+// Mongoose applies the "unpaid" schema default to old docs on read, so row.paymentStatus is
+// always truthy and can't be used as a short-circuit. Check isFree first, then explicit values.
+const rowPaymentStatus = (row) => {
+  if (row?.isFree) return "free";
+  if (row?.paymentStatus === "paid" || row?.paymentStatus === "free") return row.paymentStatus;
+  if (row?.invoice?.paymentStatus === "paid") return "paid";
+  return "unpaid";
+};
+
 // Function to get columns with action handlers
-const getColumns = (onDeleteRow, onMarkPaid, markingId) => [
-  ...columns,
+const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId) => [
+  ...columns.filter((c) => c.field !== "paymentStatus"),
+  {
+    field: "paymentStatus",
+    headerName: "Payment",
+    minWidth: 120,
+    render: (_, row) => {
+      const current = rowPaymentStatus(row);
+      return (
+        <Select
+          value={current}
+          size="small"
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            e.stopPropagation();
+            onPaymentStatusChange(row, e.target.value);
+          }}
+          disabled={updatingPaymentId === row._id}
+          sx={{
+            height: 28,
+            fontSize: "12px",
+            "& .MuiSelect-select": { py: 0.5, px: 1 },
+            "& fieldset": { borderColor: "#e5e7eb" },
+          }}
+        >
+          <MenuItem value="paid" dense>Paid</MenuItem>
+          <MenuItem value="unpaid" dense>Unpaid</MenuItem>
+          <MenuItem value="free" dense>Free</MenuItem>
+        </Select>
+      );
+    },
+  },
   {
     field: "_actions",
     headerName: "Actions",
     minWidth: 160,
     render: (_, row) => {
-      const inv = row?.invoice;
-      const canMarkPaid = inv && inv.paymentStatus !== "paid" && !row?.isFree;
+      const canCancel = !["cancelled", "completed", "no_show"].includes(row?.status);
       return (
         <Box className="flex items-center gap-1">
-          {canMarkPaid && (
-            <Button
+          <IconButton
+            size="small"
+            title="Preview Appointment Slip"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreviewSlip(row);
+            }}
+            sx={{ color: "#f59e0b" }}
+          >
+            <DownloadIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            title="Edit Appointment"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditRow(row);
+            }}
+            sx={{ color: "#6366f1" }}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          {canCancel && (
+            <IconButton
               size="small"
-              variant="outlined"
-              color="success"
-              disabled={markingId === row._id}
-              startIcon={
-                markingId === row._id ? (
-                  <CircularProgress size={14} />
-                ) : (
-                  <CurrencyRupeeIcon fontSize="small" />
-                )
-              }
+              title="Cancel Appointment"
               onClick={(e) => {
                 e.stopPropagation();
-                onMarkPaid(row);
+                onCancelRow(row);
               }}
+              sx={{ color: "#dc2626" }}
             >
-              Mark Paid
-            </Button>
+              <EventBusyIcon fontSize="small" />
+            </IconButton>
           )}
           <IconButton
             size="small"
             color="error"
+            title="Delete Permanently"
             onClick={(e) => {
               e.stopPropagation();
               onDeleteRow(row);
@@ -299,38 +351,38 @@ const Appointments = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [slipPreviewOpen, setSlipPreviewOpen] = useState(false);
+  const [slipAppointment, setSlipAppointment] = useState(null);
 
-  // Delete mutation
-  const { deleteAppointment, isDeleting: isDeletingAppointment } = useAppointmentMutations();
+  // Delete + update mutations
+  const { deleteAppointment, isDeleting: isDeletingAppointment, updateAppointment: updateApptMutation } = useAppointmentMutations();
 
-  // "Mark Paid" — records the linked invoice's balance as paid
-  const { recordPayment } = useBillingMutations();
-  const [markingId, setMarkingId] = useState(null);
+  // Payment status dropdown — update appointment + sync invoice via backend
+  const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
 
-  const handleMarkPaid = (row) => {
-    const inv = row?.invoice;
-    if (!inv?._id) {
-      toast.error("No invoice linked to this appointment");
-      return;
-    }
-    const balance = inv.balanceDue ?? inv.grandTotal ?? 0;
-    if (balance <= 0) {
-      toast.info("Invoice already settled");
-      return;
-    }
-    setMarkingId(row._id);
-    recordPayment(
-      { id: inv._id, data: { amount: balance } },
+  const handlePaymentStatusChange = (row, newStatus) => {
+    setUpdatingPaymentId(row._id);
+    updateApptMutation(
+      { id: row._id, data: { paymentStatus: newStatus } },
       {
         onSuccess: () => {
-          toast.success("Payment recorded — invoice marked paid");
+          toast.success(`Payment status updated to ${newStatus}`);
           refetch();
         },
         onError: (err) =>
-          toast.error(err.response?.data?.message || "Failed to mark paid"),
-        onSettled: () => setMarkingId(null),
+          toast.error(err.response?.data?.message || "Failed to update payment status"),
+        onSettled: () => setUpdatingPaymentId(null),
       }
     );
+  };
+
+  // Delete guard — appointment must be cancelled first
+  const handleDeleteRow = (row) => {
+    if (row.status !== "cancelled") {
+      toast.warning("Please cancel the appointment before deleting.");
+      return;
+    }
+    setConfirmDelete(row);
   };
 
   // Fee settings state
@@ -553,7 +605,14 @@ const Appointments = () => {
 
       {/* Table */}
       <DataTable
-        columns={getColumns((row) => setConfirmDelete(row), handleMarkPaid, markingId)}
+        columns={getColumns(
+          handleDeleteRow,
+          (row) => { setSelectedAppointment(row); setCancelModalOpen(true); },
+          (row) => { setSlipAppointment(row); setSlipPreviewOpen(true); },
+          (row) => { setSelectedAppointment(row); setEditModalOpen(true); },
+          handlePaymentStatusChange,
+          updatingPaymentId,
+        )}
         data={appointments}
         loading={isLoading}
         searchPlaceholder="Search patient name or phone..."
@@ -607,6 +666,13 @@ const Appointments = () => {
         onClose={() => setCancelModalOpen(false)}
         appointment={selectedAppointment}
         onSuccess={handleAppointmentCancelled}
+      />
+
+      {/* Appointment Slip Preview Modal */}
+      <AppointmentSlipPreviewModal
+        open={slipPreviewOpen}
+        onClose={() => { setSlipPreviewOpen(false); setSlipAppointment(null); }}
+        appointment={slipAppointment}
       />
 
       {/* Fee Settings Modal */}
