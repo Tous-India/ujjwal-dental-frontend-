@@ -74,7 +74,7 @@ import FollowUpReminderModal from "./FollowUpReminderModal";
  */
 const TabPanel = ({ children, value, index, ...other }) => (
   <div role="tabpanel" hidden={value !== index} {...other}>
-    {value === index && <Box className="py-4">{children}</Box>}
+    {value === index && <Box className="py-2">{children}</Box>}
   </div>
 );
 
@@ -82,19 +82,14 @@ const TabPanel = ({ children, value, index, ...other }) => (
  * Info row component
  */
 const InfoRow = ({ icon: Icon, label, value, color = "text-gray-600" }) => (
-  <Box className="flex items-start gap-3 py-2">
-    {Icon && <Icon className={`${color} mt-0.5`} fontSize="small" />}
-    <Box>
-      <Typography variant="caption" className="text-gray-500 block">
-        {label}
-      </Typography>
-      <Typography
-        variant="body2"
-        className={value ? "font-medium" : "text-gray-400"}
-      >
-        {value || "—"}
-      </Typography>
-    </Box>
+  <Box className="flex items-center gap-2 py-0.5">
+    {Icon && <Icon className={color} sx={{ fontSize: 14 }} />}
+    <Typography variant="caption" className="text-gray-500 shrink-0" sx={{ minWidth: 80 }}>
+      {label}
+    </Typography>
+    <Typography variant="body2" className={value ? "font-medium" : "text-gray-400"}>
+      {value || "—"}
+    </Typography>
   </Box>
 );
 
@@ -102,11 +97,11 @@ const InfoRow = ({ icon: Icon, label, value, color = "text-gray-600" }) => (
  * Section header component
  */
 const SectionHeader = ({ title, icon: Icon }) => (
-  <Box className="flex items-center gap-2 mb-2">
-    {Icon && <Icon className="text-blue-600" fontSize="small" />}
+  <Box className="flex items-center gap-1.5 mb-1">
+    {Icon && <Icon className="text-blue-600" sx={{ fontSize: 14 }} />}
     <Typography
-      variant="subtitle2"
-      className="font-semibold text-gray-700 uppercase tracking-wide"
+      variant="caption"
+      className="font-semibold text-gray-600 uppercase tracking-wide"
     >
       {title}
     </Typography>
@@ -176,13 +171,13 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
   };
 
   return (
-    <Grid container spacing={4}>
+    <Grid container spacing={2}>
       {/* Left Column */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Box className="space-y-5">
+        <Box className="space-y-3">
           <Box>
             <SectionHeader title="Personal Information" icon={PersonIcon} />
-            <Box className="bg-gray-50 rounded-lg p-4">
+            <Box className="bg-gray-50 rounded-lg p-2.5">
               <InfoRow icon={PhoneIcon} label="Phone" value={phone} color="text-blue-600" />
               <InfoRow icon={EmailIcon} label="Email" value={email} color="text-blue-600" />
               <InfoRow
@@ -200,7 +195,7 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
 
           <Box>
             <SectionHeader title="Address" icon={LocationOnIcon} />
-            <Box className="bg-gray-50 rounded-lg p-4">
+            <Box className="bg-gray-50 rounded-lg p-2.5">
               {address ? (
                 <Typography variant="body2">
                   {[address.street, address.city, address.state, address.pincode]
@@ -217,7 +212,7 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
 
           <Box>
             <SectionHeader title="Emergency Contact" icon={ContactPhoneIcon} />
-            <Box className="bg-gray-50 rounded-lg p-4">
+            <Box className="bg-gray-50 rounded-lg p-2.5">
               {emergencyContact?.name ? (
                 <>
                   <Typography variant="body2" className="font-medium">
@@ -239,10 +234,10 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
 
       {/* Right Column */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Box className="space-y-5">
+        <Box className="space-y-3">
           <Box>
             <SectionHeader title="Medical Information" icon={LocalHospitalIcon} />
-            <Box className="bg-gray-50 rounded-lg p-4">
+            <Box className="bg-gray-50 rounded-lg p-2.5">
               <InfoRow label="Blood Group" value={bloodGroup} />
               <Box className="py-2">
                 <Typography variant="caption" className="text-gray-500 block mb-1">
@@ -307,7 +302,7 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
                 Assign Membership
               </Button>
             </Box>
-            <Box className="bg-gray-50 rounded-lg p-4">
+            <Box className="bg-gray-50 rounded-lg p-2.5">
               {membership?.status ? (
             <>
               <Box className="flex items-center justify-between mb-2">
@@ -801,20 +796,20 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      PaperProps={{ className: "rounded-xl", sx: { maxHeight: "90vh" } }}
+      PaperProps={{ sx: { borderRadius: "8px", maxHeight: "90vh" } }}
     >
       {/* Header */}
-      <DialogTitle className="bg-linear-to-r from-blue-600 to-blue-700 text-white p-0">
-        <Box className="flex items-center justify-between p-0">
-          <Box className="flex items-center gap-4">
-            <Avatar className="bg-white text-blue-600 w-16 h-16 text-2xl font-bold">
+      <DialogTitle className="bg-linear-to-r from-blue-600 to-blue-700 text-white" sx={{ p: 0 }}>
+        <Box className="flex items-center justify-between px-4 py-2">
+          <Box className="flex items-center gap-3">
+            <Avatar className="bg-white text-blue-600 font-bold" sx={{ width: 40, height: 40, fontSize: "1rem" }}>
               {name?.[0]?.toUpperCase() || "P"}
             </Avatar>
             <Box>
-              <Typography variant="h5" className="font-bold">
+              <Typography variant="subtitle1" className="font-bold leading-tight">
                 {name || "Unknown Patient"}
               </Typography>
-              <Box className="flex items-center gap-2 mt-1">
+              <Box className="flex items-center gap-2 mt-0.5">
                 <Chip
                   label={isActive ? "Active" : "Inactive"}
                   size="small"
@@ -831,8 +826,8 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
               </Box>
             </Box>
           </Box>
-          <IconButton onClick={onClose}>
-            <CloseIcon className="text-white" />
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon className="text-white" fontSize="small" />
           </IconButton>
         </Box>
       </DialogTitle>
@@ -844,21 +839,24 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           onChange={(_, val) => setActiveTab(val)}
           variant="scrollable"
           scrollButtons="auto"
+          sx={{
+            minHeight: 36,
+            "& .MuiTab-root": { minHeight: 36, py: 0.5, px: 1.5, fontSize: "0.75rem", fontWeight: 600, textTransform: "none", minWidth: 0 },
+          }}
         >
-          <Tab icon={<PersonIcon />} label="Overview" iconPosition="start" />
-          <Tab icon={<EventIcon />} label="Appointments" iconPosition="start" />
-          <Tab icon={<MedicalServicesIcon />} label="Treatments" iconPosition="start" />
-          <Tab icon={<ScienceIcon />} label="Tests" iconPosition="start" />
-          <Tab icon={<PaymentIcon />} label="Payments" iconPosition="start" />
-          <Tab icon={<DescriptionIcon />} label="Reports" iconPosition="start" />
+          <Tab label="Overview" />
+          <Tab label="Appointments" />
+          <Tab label="Treatments" />
+          <Tab label="Tests" />
+          <Tab label="Payments" />
+          <Tab label="Reports" />
         </Tabs>
       </Box>
 
       {/* Content — scrolls within the dialog; the pinned footer below stays clear.
           overflowY forced so content never hides behind the action buttons. */}
       <DialogContent
-        className="p-6"
-        style={{ minHeight: "400px" }}
+        className="p-4"
         sx={{ overflowY: "auto !important" }}
       >
         <TabPanel value={activeTab} index={0}>
@@ -893,17 +891,11 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           <ReportsTab patientId={patient._id} />
         </TabPanel>
 
-        {/* Footer Info */}
-        <Divider className="my-4" />
-        <Box className="flex justify-between text-gray-400">
-          <Typography variant="caption">Registered: {formatDate(createdAt)}</Typography>
-          <Typography variant="caption">Last Updated: {formatDate(updatedAt)}</Typography>
-        </Box>
       </DialogContent>
 
       {/* Actions — pinned footer, clearly separated with a top divider */}
       <DialogActions
-        className="p-4 bg-gray-50 justify-between"
+        className="p-3 bg-gray-50 justify-between"
         sx={{ borderTop: 1, borderColor: "divider", flexWrap: "wrap", rowGap: 1 }}
       >
         <Box className="flex gap-2 flex-wrap">
@@ -911,6 +903,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
             variant="outlined"
             startIcon={<LockResetIcon />}
             onClick={() => setResetPasswordOpen(true)}
+            sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
           >
             Reset Password
           </Button>
@@ -918,6 +911,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
             variant="outlined"
             startIcon={<EventRepeatIcon />}
             onClick={() => setFollowUpOpen(true)}
+            sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
           >
             Add Follow-up Reminder
           </Button>
@@ -927,6 +921,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
               color="error"
               startIcon={<DeleteIcon />}
               onClick={() => onDelete(patient)}
+              sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
             >
               Deactivate
             </Button>
@@ -937,6 +932,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
                 variant="outlined"
                 color="success"
                 onClick={() => onReactivate?.(patient)}
+                sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
               >
                 Activate
               </Button>
@@ -949,6 +945,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
                     if (onPermanentDelete) onPermanentDelete(patient);
                   }
                 }}
+                sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
               >
                 Delete Permanently
               </Button>
@@ -956,7 +953,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           )}
         </Box>
         <Box className="flex gap-2 flex-wrap">
-          <Button onClick={onClose} color="inherit">
+          <Button onClick={onClose} color="inherit" sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}>
             Close
           </Button>
           {onEdit && (
@@ -965,6 +962,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
               startIcon={<EditIcon />}
               onClick={() => onEdit(patient)}
               className="bg-blue-600 hover:bg-blue-700"
+              sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
             >
               Edit Patient
             </Button>

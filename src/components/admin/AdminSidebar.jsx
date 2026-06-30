@@ -145,20 +145,25 @@ const AdminSidebar = ({ open, onClose }) => {
       <Toolbar className="border-b border-gray-100">
         <Box className="flex items-center gap-2">
           <img src={logo} alt="Ujjwal Dental Clinic" width={70} />
-          <Typography variant="p" className="font-bold text-[14px] text-[#003366]">
-            Ujjwal Dental Clinic
-          </Typography>
+          <Box>
+            <Typography variant="body2" sx={{ fontSize: "13px", fontWeight: 700, color: "#003366", lineHeight: 1.2 }}>
+              Ujjwal Dental
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: "10px", color: "#9ca3af", letterSpacing: "0.04em" }}>
+              Admin Panel
+            </Typography>
+          </Box>
         </Box>
       </Toolbar>
 
       {/* Navigation List */}
-      <List className="px-4 py-2">
+      <List className="px-3 py-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
 
           return (
-            <ListItem key={item.path} disablePadding className="mb-1">
+            <ListItem key={item.path} disablePadding className="mb-0.5">
               <ListItemButton
                 onClick={() => {
                   if (item.external) {
@@ -168,26 +173,28 @@ const AdminSidebar = ({ open, onClose }) => {
                   }
                 }}
                 className={`
-                  rounded-lg! transition-all duration-200 py-1! px-4!
+                  rounded-lg! transition-all duration-200 py-1.5! px-3!
                   ${
                     active
-                      ? "bg-orange-50! text-accent! font-semibold!"
-                      : "hover:bg-gray-50 text-gray-600"
+                      ? "bg-orange-50! font-semibold!"
+                      : "hover:bg-gray-100 text-gray-600"
                   }
                 `}
+                sx={active ? { borderLeft: "3px solid #F57C00" } : { borderLeft: "3px solid transparent" }}
               >
                 <ListItemIcon
-                  className={`min-w-[40px] ${active ? "text-accent!" : "text-gray-500"}`}
+                  sx={{ minWidth: 36, color: active ? "#F57C00" : "#4B5563" }}
                 >
-                  <Icon />
+                  <Icon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
                   primary={item.label}
                   primaryTypographyProps={{
                     sx: {
-                      fontSize: "0.8rem",
-                      fontWeight: 500,
-                      opacity: "0.65 !important",
+                      fontSize: "0.82rem",
+                      fontWeight: active ? 600 : 500,
+                      color: active ? "#F57C00" : "#374151",
+                      letterSpacing: "-0.01em",
                     },
                   }}
                 />
@@ -220,7 +227,7 @@ const AdminSidebar = ({ open, onClose }) => {
       <Box className="mt-auto p-4">
         <Divider className="mb-4" />
         <Typography variant="caption" className="text-gray-400">
-          Dental Clinic CMS v1.0
+          Ujjwal Dental CRM · v1.0
         </Typography>
       </Box>
     </>

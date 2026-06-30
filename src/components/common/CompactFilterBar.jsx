@@ -47,15 +47,9 @@ const CompactFilterBar = ({
 
   return (
     <Paper className="p-3 mb-4">
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
+      <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 1.5, alignItems: "center" }}>
         {showDates && (
           <>
-            <Box className="flex items-center gap-1 shrink-0">
-              <CalendarTodayIcon className="text-gray-500" fontSize="small" />
-              <Typography variant="body2" className="text-gray-600 font-medium">
-                Date Filter:
-              </Typography>
-            </Box>
             <TextField
               type="date"
               size="small"

@@ -190,33 +190,19 @@ const LabOrdersTab = () => {
 
   return (
     <Box>
-      <Box className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <ToggleButtonGroup
-          size="small"
-          exclusive
-          value={view}
-          onChange={(_, v) => { if (v) { setView(v); setPage(1); } }}
-        >
-          <ToggleButton value="active">Active</ToggleButton>
-          <ToggleButton value="archived">Archived</ToggleButton>
-        </ToggleButtonGroup>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateOpen(true)}
-          sx={{ bgcolor: "#f57c00", "&:hover": { bgcolor: "#e06c00" } }}
-        >
-          New Lab Order
-        </Button>
-      </Box>
-
-      {/* Consolidated filter row: From, To, Search, Lab, Delivery, Payment, Refresh */}
+      {/* Consolidated filter row: Toggle, From, To, Search, Lab, Delivery, Payment, Refresh, New */}
       <Paper className="p-3 mb-4">
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
-          <Box className="flex items-center gap-1 shrink-0">
-            <CalendarTodayIcon className="text-gray-500" fontSize="small" />
-            <Typography variant="body2" className="text-gray-600 font-medium">Date Filter:</Typography>
-          </Box>
+        <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 1.5, alignItems: "center" }}>
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={view}
+            onChange={(_, v) => { if (v) { setView(v); setPage(1); } }}
+            sx={{ flexShrink: 0, "& .MuiToggleButton-root": { py: 0.5, px: 1.5, fontSize: "0.75rem", textTransform: "none" } }}
+          >
+            <ToggleButton value="active">Active</ToggleButton>
+            <ToggleButton value="archived">Archived</ToggleButton>
+          </ToggleButtonGroup>
           <TextField
             type="date"
             size="small"
@@ -224,7 +210,7 @@ const LabOrdersTab = () => {
             value={fromDate}
             onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
             slotProps={{ inputLabel: { shrink: true } }}
-            sx={{ width: 150 }}
+            sx={{ width: 130, "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
           />
           <TextField
             type="date"
@@ -233,7 +219,7 @@ const LabOrdersTab = () => {
             value={toDate}
             onChange={(e) => { setToDate(e.target.value); setPage(1); }}
             slotProps={{ inputLabel: { shrink: true } }}
-            sx={{ width: 150 }}
+            sx={{ width: 130, "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
           />
           {(fromDate || toDate) && (
             <IconButton size="small" onClick={() => { setFromDate(""); setToDate(""); setPage(1); }} title="Clear dates">
@@ -245,7 +231,7 @@ const LabOrdersTab = () => {
             placeholder="Search by order #..."
             value={filters.search || ""}
             onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value || undefined })); setPage(1); }}
-            sx={{ flex: 1, minWidth: 200 }}
+            sx={{ flex: 1, minWidth: 0, "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
             autoComplete="off"
             InputProps={{
               startAdornment: (
@@ -256,7 +242,7 @@ const LabOrdersTab = () => {
             }}
           />
           {filterOptions.map((filter) => (
-            <FormControl key={filter.key} size="small" sx={{ minWidth: 160 }}>
+            <FormControl key={filter.key} size="small" sx={{ minWidth: 110, "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}>
               <InputLabel>{filter.label}</InputLabel>
               <Select
                 value={filters[filter.key] || ""}
@@ -277,6 +263,14 @@ const LabOrdersTab = () => {
               <RefreshIcon />
             </IconButton>
           </Tooltip>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setCreateOpen(true)}
+            sx={{ bgcolor: "#f57c00", "&:hover": { bgcolor: "#e06c00" }, textTransform: "none", fontSize: "12px", fontWeight: 600, height: 36, px: 2, whiteSpace: "nowrap", flexShrink: 0 }}
+          >
+            New Lab Order
+          </Button>
         </Box>
       </Paper>
 
@@ -323,13 +317,12 @@ const LabsTab = () => {
 
   return (
     <Box>
-      <Box className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <Typography variant="body2" className="text-gray-500">Manage labs and their procedure price lists</Typography>
+      <Box className="flex justify-end mb-4">
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => { setEditing(null); setFormOpen(true); }}
-          sx={{ bgcolor: "#f57c00", "&:hover": { bgcolor: "#e06c00" } }}
+          sx={{ bgcolor: "#f57c00", "&:hover": { bgcolor: "#e06c00" }, textTransform: "none", fontSize: "12px", fontWeight: 600, height: 36 }}
         >
           Add Lab
         </Button>
@@ -362,13 +355,16 @@ const Lab = () => {
 
   return (
     <Box>
-      <Box className="mb-4">
-        <Typography variant="h4" className="font-bold text-gray-800">Lab</Typography>
-        <Typography variant="body2" className="text-gray-500">Dental lab orders and lab management</Typography>
-      </Box>
-
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2, display: "flex", alignItems: "center", gap: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1f2937", whiteSpace: "nowrap" }}>Lab</Typography>
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          sx={{
+            minHeight: 32,
+            "& .MuiTab-root": { minHeight: 32, py: 0.5, px: 1.5, fontSize: "0.8rem", fontWeight: 600, textTransform: "none", minWidth: 0 },
+          }}
+        >
           <Tab label="Lab Orders" />
           <Tab label="Labs" />
         </Tabs>

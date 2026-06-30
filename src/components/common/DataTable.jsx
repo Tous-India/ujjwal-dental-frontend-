@@ -65,6 +65,7 @@ const DataTable = ({
   emptyMessage = "No data found",
   rowsPerPageOptions = [10, 25, 50],
   getRowStyle,
+  getRowSx,
 }) => {
   // Local search state
   const [searchTerm, setSearchTerm] = useState("");
@@ -212,7 +213,7 @@ const DataTable = ({
           refresh render exactly as before. */}
       {(onSearch || filters.length > 0 || onRefresh) && (
       <Box className="p-4 border-b border-gray-200">
-        <Box className="flex flex-wrap gap-4 items-center">
+        <Box sx={{ display: "flex", flexWrap: "nowrap", alignItems: "center", gap: 2 }}>
           {/* Search Input */}
           {onSearch && (
             <TextField
@@ -220,9 +221,9 @@ const DataTable = ({
               placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={handleSearchChange}
-              className="min-w-[250px]"
               autoComplete="off"
               inputProps={{ autoComplete: "off" }}
+              sx={{ flex: 1, minWidth: 0 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -235,7 +236,7 @@ const DataTable = ({
 
           {/* Filters */}
           {filters.map((filter) => (
-            <FormControl key={filter.key} size="small" sx={{ minWidth: 200 }}>
+            <FormControl key={filter.key} size="small" sx={{ minWidth: 120, flexShrink: 0 }}>
               <InputLabel>{filter.label}</InputLabel>
               <Select
                 value={filterValues[filter.key] || ""}
@@ -300,6 +301,7 @@ const DataTable = ({
                   onClick={() => onRowClick && onRowClick(row)}
                   className={onRowClick ? "cursor-pointer" : ""}
                   style={getRowStyle ? getRowStyle(row) : undefined}
+                  sx={getRowSx ? getRowSx(row) : undefined}
                 >
                   {columns.map((column) => (
                     <TableCell key={column.field} align={column.align || "left"}>

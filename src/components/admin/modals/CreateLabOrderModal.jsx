@@ -190,22 +190,22 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ className: "rounded-xl" }}>
-      <DialogTitle className="bg-navy text-white">
-        <Box className="flex items-center justify-between">
+      <DialogTitle className="bg-navy text-white" sx={{ p: 0 }}>
+        <Box className="flex items-center justify-between px-4 py-2">
           <Box className="flex items-center gap-2">
-            <ScienceIcon />
-            <Typography variant="h6" className="font-bold">New Lab Order</Typography>
+            <ScienceIcon fontSize="small" />
+            <Typography variant="subtitle1" className="font-bold">New Lab Order</Typography>
           </Box>
-          <IconButton onClick={handleClose} disabled={isCreating}>
-            <CloseIcon className="text-white" />
+          <IconButton onClick={handleClose} disabled={isCreating} size="small">
+            <CloseIcon className="text-white" fontSize="small" />
           </IconButton>
         </Box>
       </DialogTitle>
 
-      <DialogContent className="p-6 mt-5">
-        <Grid container spacing={3}>
+      <DialogContent className="p-4 mt-5">
+        <Grid container spacing={2}>
           {/* Lab */}
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Autocomplete
               options={labs}
               getOptionLabel={(o) => o?.name || ""}
@@ -221,7 +221,7 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
           </Grid>
 
           {/* Patient */}
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Autocomplete
               options={patientOptions}
               getOptionLabel={(o) => (o ? `${o.name} - ${o.phone}` : "")}
@@ -252,7 +252,7 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
           </Grid>
 
           {/* Doctor */}
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               select
               fullWidth
@@ -269,7 +269,7 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
           </Grid>
 
           {/* Expected delivery */}
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               label="Expected Delivery"
@@ -284,7 +284,7 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
 
           {/* Items */}
           <Grid size={{ xs: 12 }}>
-            <Divider className="my-2" />
+            <Divider className="mt-6 mb-2" />
             <Box className="flex items-center justify-between mb-3">
               <Typography variant="subtitle1" className="font-semibold">Procedures</Typography>
               <Button size="small" startIcon={<AddIcon />} onClick={addItem} variant="outlined" disabled={!formData.lab}>
@@ -299,8 +299,8 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
             )}
 
             {formData.items.map((item, index) => (
-              <Paper key={index} variant="outlined" className="p-3 mb-3">
-                <Grid container spacing={2} alignItems="center">
+              <Box key={index} className="border border-gray-200 rounded py-3 px-4 mb-2">
+                <Grid container spacing={1.5} alignItems="center">
                   <Grid size={{ xs: 12, sm: 5 }}>
                     <TextField
                       select
@@ -365,19 +365,17 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
                     </Grid>
                   )}
                 </Grid>
-              </Paper>
+              </Box>
             ))}
 
             {/* Order total */}
-            <Box className="flex justify-end">
-              <Paper variant="outlined" className="p-4 min-w-[240px]">
-                <Box className="flex justify-between">
-                  <Typography variant="subtitle2" className="font-bold">Order Total:</Typography>
-                  <Typography variant="subtitle2" className="font-numbers font-bold text-green-600">
-                    {formatCurrency(orderTotal)}
-                  </Typography>
-                </Box>
-              </Paper>
+            <Box className="flex justify-end mt-1">
+              <Box className="flex items-center gap-3">
+                <Typography variant="caption" className="font-bold text-gray-600">Order Total:</Typography>
+                <Typography variant="body2" className="font-numbers font-bold text-green-600">
+                  {formatCurrency(orderTotal)}
+                </Typography>
+              </Box>
             </Box>
           </Grid>
 
@@ -390,20 +388,20 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
               onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
               size="small"
               multiline
-              rows={2}
+              rows={1}
               placeholder="Optional notes..."
             />
           </Grid>
         </Grid>
       </DialogContent>
 
-      <DialogActions className="p-4 bg-gray-50">
-        <Button onClick={handleClose} color="inherit" disabled={isCreating}>Cancel</Button>
+      <DialogActions className="p-2 bg-gray-50">
+        <Button onClick={handleClose} color="inherit" disabled={isCreating} sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}>Cancel</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={isCreating}
-          sx={{ bgcolor: "#f57c00", "&:hover": { bgcolor: "#e06c00" } }}
+          sx={{ bgcolor: "#f57c00", "&:hover": { bgcolor: "#e06c00" }, textTransform: "none", fontSize: "12px", fontWeight: 600 }}
           startIcon={isCreating ? <CircularProgress size={16} /> : <AddIcon />}
         >
           {isCreating ? "Creating..." : "Create Order"}

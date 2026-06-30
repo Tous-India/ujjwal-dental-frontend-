@@ -408,78 +408,60 @@ const Payments = () => {
 
   return (
     <Box>
-      {/* ── PAGE HEADER ────────────────────────────────────────────────────── */}
-      <Box className="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <Box>
-          <Typography variant="h4" className="font-bold text-gray-800">
-            Payments
-          </Typography>
-          <Typography variant="body2" className="text-gray-500">
-            Collect payments against patient invoices
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* ── PATIENT SEARCH SECTION ─────────────────────────────────────────── */}
-      <Card variant="outlined" sx={{ mb: 3 }}>
-        <CardContent sx={{ pb: "16px !important" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-            <PersonSearchIcon sx={{ color: "#1e3a5f" }} />
-            <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#1e3a5f" }}>
-              Search Patient to Collect Payment
-            </Typography>
-          </Box>
-
-          <Autocomplete
-            options={patientOptions}
-            getOptionLabel={(opt) => opt?.name || ""}
-            isOptionEqualToValue={(option, value) => option._id === value._id}
-            filterOptions={(x) => x}
-            loading={searchLoading}
-            value={selectedPatient}
-            onChange={handlePatientChange}
-            inputValue={patientQuery}
-            onInputChange={(_, val, reason) => {
-              if (reason !== "reset") setPatientQuery(val);
-            }}
-            noOptionsText={searchLoading ? "Searching…" : "No patients found"}
-            renderOption={(props, option) => (
-              <Box component="li" {...props} key={option._id}>
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>
-                    {option.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {option.phone || "—"}
-                    {option.email ? ` · ${option.email}` : ""}
-                  </Typography>
-                </Box>
+      {/* ── HEADER + PATIENT SEARCH (one row) ──────────────────────────────── */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1f2937", whiteSpace: "nowrap" }}>Payment History</Typography>
+        <PersonSearchIcon sx={{ color: "#6b7280", fontSize: 18, flexShrink: 0 }} />
+        <Autocomplete
+          options={patientOptions}
+          getOptionLabel={(opt) => opt?.name || ""}
+          isOptionEqualToValue={(option, value) => option._id === value._id}
+          filterOptions={(x) => x}
+          loading={searchLoading}
+          value={selectedPatient}
+          onChange={handlePatientChange}
+          inputValue={patientQuery}
+          onInputChange={(_, val, reason) => {
+            if (reason !== "reset") setPatientQuery(val);
+          }}
+          noOptionsText={searchLoading ? "Searching…" : "No patients found"}
+          renderOption={(props, option) => (
+            <Box component="li" {...props} key={option._id}>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>
+                  {option.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {option.phone || "—"}
+                  {option.email ? ` · ${option.email}` : ""}
+                </Typography>
               </Box>
-            )}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Type patient name or phone…"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {searchLoading ? <CircularProgress size={16} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-          />
-        </CardContent>
-      </Card>
+            </Box>
+          )}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="Type patient name or phone…"
+              size="small"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {searchLoading ? <CircularProgress size={16} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          sx={{ flex: 1, maxWidth: 400, "& .MuiInputBase-root": { height: 36, fontSize: "13px" } }}
+        />
+      </Box>
 
       {/* ── UNPAID INVOICES SECTION (shown after patient selected) ────────── */}
       {selectedPatient && (
-        <Card variant="outlined" sx={{ mb: 3 }}>
-          <CardContent sx={{ pb: "16px !important" }}>
+        <Card variant="outlined" sx={{ mb: 2 }}>
+          <CardContent sx={{ pb: "12px !important", pt: 1.5, px: 2 }}>
             {loadingUnpaid ? (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 2 }}>
                 <CircularProgress size={20} />
@@ -656,13 +638,6 @@ const Payments = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* ── RECENT PAYMENTS ───────────────────────────────────────────────── */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: "#1e3a5f" }}>
-          Recent Payments
-        </Typography>
-      </Box>
 
       <CompactFilterBar
         fromDate={fromDate}

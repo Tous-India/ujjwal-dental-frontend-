@@ -619,8 +619,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             (MUI zeroes DialogContent padding-top right after DialogTitle). */}
         {!bookedAppointment && (
         <Grid container spacing={1.5} sx={{ mt: 1 }}>
-          {/* Patient Search */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+
+          {/* ─── ROW 1: Patient + Time + Type + Reason ─── */}
+          <Grid size={{ xs: 12 }}>
             <Autocomplete
               options={patientOptions}
               getOptionLabel={(option) => `${option.name} (${option.phone})`}
@@ -669,11 +670,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 )
               }
             />
-
           </Grid>
-
-          {/* Time Slot */}
-          <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <TextField
               fullWidth
               label="Time Slot"
@@ -693,8 +691,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             >
               <MenuItem value="">Select Time</MenuItem>
               {timeSlots.map((slot) => {
-                // Disable if the slot is in the past today (client clock = IST)
-                // or full/unavailable per the backend.
                 const disabled =
                   isPastSlotForDate(formData.date, slot) ||
                   (Array.isArray(availableSlots) &&
@@ -708,9 +704,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               })}
             </TextField>
           </Grid>
-
-          {/* Type */}
-          <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <TextField
               fullWidth
               label="Appointment Type"
@@ -727,9 +721,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               ))}
             </TextField>
           </Grid>
-
-          {/* Reason */}
-          <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Reason for Visit"
@@ -744,9 +736,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             />
           </Grid>
 
+          {/* ─── ADD NEW PATIENT (conditional, full width) ─── */}
           {showAddPatient && (
             <Grid size={{ xs: 12 }}>
-              {/* FIX 1: Inline add-patient mini form */}
               <Box
                 sx={{
                   border: "1px solid #e5e7eb",
@@ -826,8 +818,13 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             </Grid>
           )}
 
-          {/* Clinic Selection */}
-          <Grid size={{ xs: 6, sm: 4, md: 4 }}>
+          {/* ─── SECTION DIVIDER ─── */}
+          <Grid size={{ xs: 12 }}>
+            <Divider />
+          </Grid>
+
+          {/* ─── ROW 2: Clinic + Source + Date ─── */}
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Autocomplete
               options={clinics}
               getOptionLabel={(option) =>
@@ -853,8 +850,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               )}
             />
           </Grid>
-          {/* Source */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
+          <Grid size={{ xs: 6, sm: 3, md: 4 }}>
             <TextField
               fullWidth
               label="Booking Source"
@@ -871,7 +867,29 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               ))}
             </TextField>
           </Grid>
-          {/* Membership notice — OPD is free for active members */}
+          <Grid size={{ xs: 6, sm: 3, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Appointment Date"
+              name="date"
+              type="date"
+              value={formData.date}
+              onChange={handleDateChange}
+              error={!!errors.date}
+              helperText={errors.date}
+              required
+              size="small"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: todayStr(), max: MAX_DATE, ...dateGuards }}
+            />
+          </Grid>
+
+          {/* ─── SECTION DIVIDER ─── */}
+          <Grid size={{ xs: 12 }}>
+            <Divider />
+          </Grid>
+
+          {/* Membership notice */}
           {isActiveMember && formData.visitType === "opd" && (
             <Grid size={{ xs: 12 }}>
               <Box
@@ -894,137 +912,119 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             </Grid>
           )}
 
-          {/* Date — FIX 5: defaults to today via getInitialFormState */}
-          <Grid size={{ xs: 6, sm: 3, md: 3 }}>
-            <TextField
-              fullWidth
-              label="Appointment Date"
-              name="date"
-              type="date"
-              value={formData.date}
-              onChange={handleDateChange}
-              error={!!errors.date}
-              helperText={errors.date}
-              required
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: todayStr(), max: MAX_DATE, ...dateGuards }}
-            />
-          </Grid>
-
-          {/* Visit Type + Urgency — side by side, compact inline radios */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-            <FormControl>
-              <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
-                Visit Type
-              </FormLabel>
-              <RadioGroup
-                row
-                value={formData.visitType}
-                onChange={(e) => {
-                  const newVisitType = e.target.value;
-                  if (newVisitType === "treatment") {
-                    setPaymentMethod("cash");
-                    // Membership OPD benefit doesn't apply to treatment; reset auto-free
-                    if (isActiveMember && formData.isFree) {
-                      const defaultFee =
-                        formData.appointmentType === "emergency"
-                          ? feeSettings.opdFeeEmergency
-                          : feeSettings.opdFeeRegular;
-                      setFormData((prev) => ({
-                        ...prev,
-                        visitType: "treatment",
-                        isFree: false,
-                        opdFee: defaultFee,
-                      }));
-                      return;
+          {/* ─── ROW 3: Visit Config (bordered group) ─── */}
+          <Grid size={{ xs: 12 }}>
+            <Box
+              sx={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 2,
+                p: 1.5,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                alignItems: "flex-start",
+                bgcolor: "#fafafa",
+              }}
+            >
+              {/* Visit Type */}
+              <FormControl>
+                <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
+                  Visit Type
+                </FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.visitType}
+                  onChange={(e) => {
+                    const newVisitType = e.target.value;
+                    if (newVisitType === "treatment") {
+                      setPaymentMethod("cash");
+                      if (isActiveMember && formData.isFree) {
+                        const defaultFee =
+                          formData.appointmentType === "emergency"
+                            ? feeSettings.opdFeeEmergency
+                            : feeSettings.opdFeeRegular;
+                        setFormData((prev) => ({
+                          ...prev,
+                          visitType: "treatment",
+                          isFree: false,
+                          opdFee: defaultFee,
+                        }));
+                        return;
+                      }
                     }
-                  }
-                  setFormData((prev) => ({
-                    ...prev,
-                    visitType: newVisitType,
-                    // reset treatment fields when switching back to OPD
-                    ...(newVisitType === "opd"
-                      ? { treatment: null, treatmentName: "", fee: "" }
-                      : {}),
-                  }));
-                }}
-                sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.85rem" }, "& .MuiFormControlLabel-root": { mr: 1.5 } }}
-              >
-                <FormControlLabel value="opd" control={<Radio size="small" />} label="OPD" />
-                <FormControlLabel value="treatment" control={<Radio size="small" />} label="Treatment" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-
-          {/* Urgency (Regular / Emergency) */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-            <FormControl>
-              <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
-                Urgency
-              </FormLabel>
-              <RadioGroup
-                row
-                value={formData.appointmentType}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, appointmentType: e.target.value }))
-                }
-                sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.85rem" }, "& .MuiFormControlLabel-root": { mr: 1.5 } }}
-              >
-                <FormControlLabel value="regular" control={<Radio size="small" />} label="Regular" />
-                <FormControlLabel
-                  value="emergency"
-                  control={<Radio size="small" sx={{ "&.Mui-checked": { color: "#dc2626" } }} />}
-                  label="Emergency"
-                />
-              </RadioGroup>
-              {formData.appointmentType === "emergency" && formData.visitType === "opd" && (
-                <Typography variant="caption" className="text-red-600 font-medium" sx={{ fontSize: "0.7rem" }}>
-                  Emergency OPD fee applied (₹{feeSettings.opdFeeEmergency}).
-                </Typography>
-              )}
-              {formData.appointmentType === "emergency" && formData.visitType === "treatment" && (
-                <Typography variant="caption" className="text-gray-500" sx={{ fontSize: "0.7rem" }}>
-                  Flagged emergency — treatment fee unchanged.
-                </Typography>
-              )}
-            </FormControl>
-          </Grid>
-
-          {/* Treatment fields (treatment visits only) */}
-          {formData.visitType === "treatment" && (
-            <>
-              <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-                <Autocomplete
-                  options={[...treatments, OTHER_TREATMENT]}
-                  getOptionLabel={(o) => (o ? o.name || "" : "")}
-                  value={formData.treatment}
-                  isOptionEqualToValue={(opt, val) => opt._id === val?._id}
-                  onChange={(_, value) => {
-                    const isOther = value?._id === "other";
                     setFormData((prev) => ({
                       ...prev,
-                      treatment: value,
-                      fee: isOther ? "" : value?.price ?? prev.fee,
-                      treatmentName: isOther ? prev.treatmentName : "",
+                      visitType: newVisitType,
+                      ...(newVisitType === "opd"
+                        ? { treatment: null, treatmentName: "", fee: "" }
+                        : {}),
                     }));
-                    setErrors((prev) => ({ ...prev, treatment: "", treatmentName: "", fee: "" }));
                   }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Treatment"
-                      placeholder="Select a treatment"
-                      required
-                      size="small"
-                      error={!!errors.treatment}
-                      helperText={errors.treatment}
-                    />
-                  )}
-                />
-              </Grid>
-              {formData.treatment?._id === "other" && (
-                <Grid size={{ xs: 6, sm: 6, md: 4 }}>
+                  sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.8rem" }, "& .MuiFormControlLabel-root": { mr: 1 } }}
+                >
+                  <FormControlLabel value="opd" control={<Radio size="small" />} label="OPD" />
+                  <FormControlLabel value="treatment" control={<Radio size="small" />} label="Treatment" />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Urgency */}
+              <FormControl>
+                <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
+                  Urgency
+                </FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.appointmentType}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, appointmentType: e.target.value }))
+                  }
+                  sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.8rem" }, "& .MuiFormControlLabel-root": { mr: 1 } }}
+                >
+                  <FormControlLabel value="regular" control={<Radio size="small" />} label="Regular" />
+                  <FormControlLabel
+                    value="emergency"
+                    control={<Radio size="small" sx={{ "&.Mui-checked": { color: "#dc2626" } }} />}
+                    label="Emergency"
+                  />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Treatment dropdown (only when treatment selected) */}
+              {formData.visitType === "treatment" && (
+                <Box sx={{ flex: "0 0 auto", minWidth: 220 }}>
+                  <Autocomplete
+                    options={[...treatments, OTHER_TREATMENT]}
+                    getOptionLabel={(o) => (o ? o.name || "" : "")}
+                    value={formData.treatment}
+                    isOptionEqualToValue={(opt, val) => opt._id === val?._id}
+                    onChange={(_, value) => {
+                      const isOther = value?._id === "other";
+                      setFormData((prev) => ({
+                        ...prev,
+                        treatment: value,
+                        fee: isOther ? "" : value?.price ?? prev.fee,
+                        treatmentName: isOther ? prev.treatmentName : "",
+                      }));
+                      setErrors((prev) => ({ ...prev, treatment: "", treatmentName: "", fee: "" }));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Treatment"
+                        placeholder="Select a treatment"
+                        required
+                        size="small"
+                        error={!!errors.treatment}
+                        helperText={errors.treatment}
+                      />
+                    )}
+                  />
+                </Box>
+              )}
+
+              {/* Custom treatment name (only when "Other" selected) */}
+              {formData.visitType === "treatment" && formData.treatment?._id === "other" && (
+                <Box sx={{ flex: "0 0 auto", minWidth: 200 }}>
                   <TextField
                     fullWidth
                     label="Treatment name"
@@ -1037,14 +1037,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                     helperText={errors.treatmentName || "Enter the custom treatment name"}
                     placeholder="e.g., Custom procedure"
                   />
-                </Grid>
+                </Box>
               )}
-            </>
-          )}
 
-          {/* Free Appointment Toggle */}
-          <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-            <Box className="flex items-center h-full">
+              {/* Free toggle */}
               <FormControlLabel
                 control={
                   <Switch
@@ -1062,26 +1058,31 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                       if (isFree) setPaymentMethod("cash");
                     }}
                     color="success"
+                    size="small"
                   />
                 }
                 label={
-                  <Box>
-                    <Typography variant="body2" fontWeight={500}>
-                      Free Appointment
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      No payment required
-                    </Typography>
-                  </Box>
+                  <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                    Free
+                  </Typography>
                 }
               />
             </Box>
+            {formData.appointmentType === "emergency" && formData.visitType === "opd" && (
+              <Typography variant="caption" className="text-red-600 font-medium" sx={{ fontSize: "0.7rem", display: "block", mt: 0.5 }}>
+                Emergency OPD fee applied (₹{feeSettings.opdFeeEmergency}).
+              </Typography>
+            )}
+            {formData.appointmentType === "emergency" && formData.visitType === "treatment" && (
+              <Typography variant="caption" className="text-gray-500" sx={{ fontSize: "0.7rem", display: "block", mt: 0.5 }}>
+                Flagged emergency — treatment fee unchanged.
+              </Typography>
+            )}
           </Grid>
 
-
-          {/* Fee Summary */}
+          {/* ─── ROW 4: Fee Summary + Notes (same row, same height) ─── */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper variant="outlined" className="p-2 bg-gray-50">
+            <Paper variant="outlined" className="p-3 bg-gray-50">
               <Box className="flex justify-between items-center py-1">
                 <Typography variant="caption" className="text-gray-600">
                   {formData.visitType === "treatment"
@@ -1114,50 +1115,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </Box>
               )}
               <Divider className="my-2.5" />
-
-              {/* FIX 3: Payment method toggle (hidden when free) */}
               <Box className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-0.5 mt-2">
                 <Box className="flex items-center gap-1">
                   <Typography variant="caption" className="text-gray-500">Method:</Typography>
-                  {(isActiveMember && formData.visitType === "opd") ? (
-                    // Membership case: always show Free / Cash / Online so admin can override
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <Button
-                        variant={!formData.isFree && paymentMethod === "cash" ? "contained" : "outlined"}
-                        size="small"
-                        onClick={() => setPaymentMethod("cash")}
-                        sx={{
-                          textTransform: "none",
-                          fontSize: "11px",
-                          height: 24,
-                          minWidth: 0,
-                          px: 1.5,
-                          ...(!formData.isFree && paymentMethod === "cash"
-                            ? { backgroundColor: "#1e3a5f", color: "#fff", "&:hover": { backgroundColor: "#162d4a" } }
-                            : { borderColor: "#1e3a5f", color: "#1e3a5f" }),
-                        }}
-                      >
-                        Cash
-                      </Button>
-                      <Button
-                        variant={!formData.isFree && paymentMethod === "online" ? "contained" : "outlined"}
-                        size="small"
-                        onClick={() => setPaymentMethod("online")}
-                        sx={{
-                          textTransform: "none",
-                          fontSize: "11px",
-                          height: 24,
-                          minWidth: 0,
-                          px: 1.5,
-                          ...(!formData.isFree && paymentMethod === "online"
-                            ? { backgroundColor: "#059669", color: "#fff", "&:hover": { backgroundColor: "#047857" } }
-                            : { borderColor: "#059669", color: "#059669" }),
-                        }}
-                      >
-                        Online
-                      </Button>
-                    </Box>
-                  ) : formData.isFree ? (
+                  {formData.isFree ? (
                     <Chip size="small" variant="outlined" label="Free" sx={{ height: 20 }} />
                   ) : (
                     <Box sx={{ display: "flex", gap: 1 }}>
@@ -1166,11 +1127,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                         size="small"
                         onClick={() => setPaymentMethod("cash")}
                         sx={{
-                          textTransform: "none",
-                          fontSize: "11px",
-                          height: 24,
-                          minWidth: 0,
-                          px: 1.5,
+                          textTransform: "none", fontSize: "11px", height: 22, minWidth: 0, px: 1.5,
                           ...(paymentMethod === "cash"
                             ? { backgroundColor: "#1e3a5f", color: "#fff", "&:hover": { backgroundColor: "#162d4a" } }
                             : { borderColor: "#1e3a5f", color: "#1e3a5f" }),
@@ -1183,11 +1140,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                         size="small"
                         onClick={() => setPaymentMethod("online")}
                         sx={{
-                          textTransform: "none",
-                          fontSize: "11px",
-                          height: 24,
-                          minWidth: 0,
-                          px: 1.5,
+                          textTransform: "none", fontSize: "11px", height: 22, minWidth: 0, px: 1.5,
                           ...(paymentMethod === "online"
                             ? { backgroundColor: "#059669", color: "#fff", "&:hover": { backgroundColor: "#047857" } }
                             : { borderColor: "#059669", color: "#059669" }),
@@ -1201,8 +1154,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               </Box>
             </Paper>
           </Grid>
-
-          {/* Notes */}
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
@@ -1211,7 +1162,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               value={formData.notes}
               onChange={handleChange}
               multiline
-              rows={1}
+              rows={4}
               size="small"
               placeholder="Additional notes..."
             />

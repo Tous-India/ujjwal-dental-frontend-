@@ -62,9 +62,9 @@ const formatDate = (d) =>
     : "-";
 
 const InfoRow = ({ label, children }) => (
-  <Box className="flex justify-between py-1">
-    <Typography variant="body2" className="text-gray-500">{label}</Typography>
-    <Typography variant="body2" className="font-medium" component="div">{children}</Typography>
+  <Box className="flex justify-between py-0.5">
+    <Typography variant="caption" className="text-gray-500">{label}</Typography>
+    <Typography variant="caption" className="font-medium" component="div">{children}</Typography>
   </Box>
 );
 
@@ -128,37 +128,33 @@ const LabOrderDetailModal = ({ open, onClose, order, onRefresh }) => {
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ className: "rounded-xl" }}>
-      <DialogTitle className="bg-navy text-white">
-        <Box className="flex items-center justify-between">
-          <Box className="flex items-center gap-3">
-            <ScienceIcon />
-            <Box>
-              <Typography variant="h6" className="font-bold">{o?.orderNumber || "Lab Order"}</Typography>
-              <Box className="flex gap-2 mt-1">
-                <Chip label={payStatus.label} size="small" color={payStatus.color} />
-                <Chip label={delStatus.label} size="small" color={delStatus.color} variant="outlined" className="border-white/50 text-white" />
-              </Box>
-            </Box>
+      <DialogTitle className="bg-navy text-white" sx={{ p: 0 }}>
+        <Box className="flex items-center justify-between px-4 py-2">
+          <Box className="flex items-center gap-2 flex-wrap">
+            <ScienceIcon fontSize="small" />
+            <Typography variant="subtitle1" className="font-bold">{o?.orderNumber || "Lab Order"}</Typography>
+            <Chip label={payStatus.label} size="small" color={payStatus.color} />
+            <Chip label={delStatus.label} size="small" color={delStatus.color} variant="outlined" sx={{ borderColor: "rgba(255,255,255,0.6)", color: "#fff" }} />
           </Box>
-          <IconButton onClick={handleClose}><CloseIcon className="text-white" /></IconButton>
+          <IconButton onClick={handleClose} size="small"><CloseIcon className="text-white" fontSize="small" /></IconButton>
         </Box>
       </DialogTitle>
 
-      <DialogContent className="p-6 mt-2">
+      <DialogContent className="p-4 mt-1">
         {isLoading ? (
           <Box className="text-center py-8"><CircularProgress /></Box>
         ) : (
           <>
             {/* Summary */}
-            <Box className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-              <Paper variant="outlined" className="p-3">
-                <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-2">Order Info</Typography>
+            <Box className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+              <Paper variant="outlined" className="p-2">
+                <Typography variant="caption" className="font-semibold text-gray-600 uppercase block mb-1">Order Info</Typography>
                 <InfoRow label="Lab">{o?.lab?.name || "-"}</InfoRow>
                 <InfoRow label="Patient">{o?.patient?.name || "-"}</InfoRow>
                 <InfoRow label="Doctor">{o?.doctor || "-"}</InfoRow>
               </Paper>
-              <Paper variant="outlined" className="p-3">
-                <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-2">Dates</Typography>
+              <Paper variant="outlined" className="p-2">
+                <Typography variant="caption" className="font-semibold text-gray-600 uppercase block mb-1">Dates</Typography>
                 <InfoRow label="Order Date">{formatDate(o?.orderDate)}</InfoRow>
                 <InfoRow label="Expected">{formatDate(o?.expectedDelivery)}</InfoRow>
                 <InfoRow label="Delivered">{formatDate(o?.deliveredDate)}</InfoRow>
@@ -166,8 +162,8 @@ const LabOrderDetailModal = ({ open, onClose, order, onRefresh }) => {
             </Box>
 
             {/* Items */}
-            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-2">Items</Typography>
-            <TableContainer component={Paper} variant="outlined" className="mb-4">
+            <Typography variant="caption" className="font-semibold text-gray-600 uppercase block mb-1">Items</Typography>
+            <TableContainer component={Paper} variant="outlined" className="mb-3">
               <Table size="small">
                 <TableHead>
                   <TableRow className="bg-gray-50">
@@ -190,9 +186,25 @@ const LabOrderDetailModal = ({ open, onClose, order, onRefresh }) => {
               </Table>
             </TableContainer>
 
-            {/* Totals */}
-            <Box className="flex justify-end mb-4">
-              <Paper variant="outlined" className="p-4 min-w-[260px]">
+            {/* Delivery + Totals — one row */}
+            <Box className="flex items-start justify-between gap-3 mb-3">
+              <Box className="flex items-center gap-2">
+                <LocalShippingIcon fontSize="small" className="text-gray-500" />
+                <Typography variant="caption" className="font-semibold">Delivery</Typography>
+                <TextField
+                  select
+                  value={o?.deliveryStatus || "pending"}
+                  onChange={(e) => handleDeliveryChange(e.target.value)}
+                  size="small"
+                  disabled={isUpdating}
+                  sx={{ minWidth: 150, "& .MuiInputBase-root": { height: 32, fontSize: "12px" }, "& .MuiSelect-select": { py: 0.5 } }}
+                >
+                  {deliveryOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+              <Paper variant="outlined" className="p-2 min-w-[200px]">
                 <InfoRow label="Total"><span className="font-numbers font-bold">{formatCurrency(o?.totalAmount)}</span></InfoRow>
                 <InfoRow label="Amount Paid"><span className="font-numbers text-green-600 font-medium">{formatCurrency(o?.amountPaid)}</span></InfoRow>
                 <Divider className="my-1" />
@@ -204,33 +216,12 @@ const LabOrderDetailModal = ({ open, onClose, order, onRefresh }) => {
               </Paper>
             </Box>
 
-            {/* Delivery status control */}
-            <Paper variant="outlined" className="p-4 mb-4">
-              <Box className="flex items-center gap-2 mb-2">
-                <LocalShippingIcon fontSize="small" className="text-gray-500" />
-                <Typography variant="subtitle2" className="font-semibold">Delivery</Typography>
-              </Box>
-              <TextField
-                select
-                label="Delivery Status"
-                value={o?.deliveryStatus || "pending"}
-                onChange={(e) => handleDeliveryChange(e.target.value)}
-                size="small"
-                disabled={isUpdating}
-                className="min-w-[220px]"
-              >
-                {deliveryOptions.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                ))}
-              </TextField>
-            </Paper>
-
             {/* Payment section */}
-            <Paper variant="outlined" className="p-4">
-              <Box className="flex items-center justify-between mb-2">
+            <Paper variant="outlined" className="p-2">
+              <Box className="flex items-center justify-between mb-1">
                 <Box className="flex items-center gap-2">
                   <PaymentIcon fontSize="small" className="text-gray-500" />
-                  <Typography variant="subtitle2" className="font-semibold">Payments</Typography>
+                  <Typography variant="caption" className="font-semibold">Payments</Typography>
                 </Box>
                 {o?.balanceDue > 0 && !showPaymentForm && (
                   <Button size="small" variant="contained" color="success" startIcon={<PaymentIcon />} onClick={() => setShowPaymentForm(true)}>
@@ -240,8 +231,8 @@ const LabOrderDetailModal = ({ open, onClose, order, onRefresh }) => {
               </Box>
 
               {showPaymentForm && (
-                <Box className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
-                  <Box className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <Box className="bg-green-50 border border-green-200 rounded-lg p-2 mb-2">
+                  <Box className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                     <TextField
                       label="Amount (₹)"
                       type="number"
@@ -277,7 +268,7 @@ const LabOrderDetailModal = ({ open, onClose, order, onRefresh }) => {
                       onChange={(e) => setPay((p) => ({ ...p, notes: e.target.value }))}
                     />
                   </Box>
-                  <Box className="flex gap-2 mt-3">
+                  <Box className="flex gap-2 mt-2">
                     <Button
                       variant="contained"
                       color="success"
@@ -323,7 +314,7 @@ const LabOrderDetailModal = ({ open, onClose, order, onRefresh }) => {
             </Paper>
 
             {o?.notes && (
-              <Paper className="p-3 mt-4 bg-yellow-50 border border-yellow-200">
+              <Paper className="p-2 mt-3 bg-yellow-50 border border-yellow-200">
                 <Typography variant="caption" className="text-yellow-800 font-semibold block">Notes</Typography>
                 <Typography variant="body2" className="text-yellow-900">{o.notes}</Typography>
               </Paper>
@@ -332,8 +323,8 @@ const LabOrderDetailModal = ({ open, onClose, order, onRefresh }) => {
         )}
       </DialogContent>
 
-      <DialogActions className="p-4 bg-gray-50">
-        <Button onClick={handleClose} color="inherit">Close</Button>
+      <DialogActions className="p-2 bg-gray-50">
+        <Button onClick={handleClose} color="inherit" sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}>Close</Button>
       </DialogActions>
     </Dialog>
   );

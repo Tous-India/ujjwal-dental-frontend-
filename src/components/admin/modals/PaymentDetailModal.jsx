@@ -54,14 +54,9 @@ const formatCurrency = (amount) => {
  * Info row component
  */
 const InfoRow = ({ label, value, highlight = false }) => (
-  <Box className="flex justify-between py-2 border-b border-gray-100 last:border-b-0">
-    <Typography variant="body2" className="text-gray-500">
-      {label}
-    </Typography>
-    <Typography
-      variant="body2"
-      className={`font-medium ${highlight ? "text-green-600" : ""}`}
-    >
+  <Box className="flex justify-between items-center py-0.5">
+    <Typography variant="caption" className="text-gray-500">{label}</Typography>
+    <Typography variant="caption" className={`font-medium ${highlight ? "text-green-600" : ""}`}>
       {value || "-"}
     </Typography>
   </Box>
@@ -177,45 +172,28 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
       PaperProps={{ className: "rounded-xl" }}
     >
       {/* Header */}
-      <DialogTitle className="bg-linear-to-r from-green-600 to-green-700 text-white p-0">
-        <Box className="flex items-center justify-between p-2">
-          <Box className="flex items-center gap-3">
-            <PaymentIcon fontSize="large" />
-            <Box>
-              <Typography variant="h6" className="font-bold">
-                Payment Details
-              </Typography>
-              <Typography variant="body2" className="opacity-80">
-                {payment.paymentNumber}
-              </Typography>
-            </Box>
-          </Box>
+      <DialogTitle className="bg-linear-to-r from-green-600 to-green-700 text-white" sx={{ p: 0 }}>
+        <Box className="flex items-center justify-between px-4 py-2">
           <Box className="flex items-center gap-2">
-            <Chip
-              label={payment.status}
-              size="small"
-              color={statusColors[payment.status] || "default"}
-              className="capitalize"
-            />
-            <IconButton onClick={handleClose} disabled={isRefunding}>
-              <CloseIcon className="text-white" />
-            </IconButton>
+            <PaymentIcon fontSize="small" />
+            <Typography variant="subtitle1" className="font-bold">{payment.paymentNumber}</Typography>
+            <Chip label={payment.status} size="small" color={statusColors[payment.status] || "default"} className="capitalize" />
           </Box>
+          <IconButton onClick={handleClose} disabled={isRefunding} size="small">
+            <CloseIcon className="text-white" fontSize="small" />
+          </IconButton>
         </Box>
       </DialogTitle>
 
       {/* Content */}
-      <DialogContent className="p-6">
-        <Grid container spacing={4}>
+      <DialogContent className="p-4">
+        <Grid container spacing={2}>
           {/* Left Column - Payment Info */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Box className="flex items-center gap-2 mb-3">
-              <AccountBalanceWalletIcon className="text-green-600" fontSize="small" />
-              <Typography variant="subtitle2" className="font-semibold text-gray-700 uppercase">
-                Payment Information
-              </Typography>
-            </Box>
-            <Box className="bg-gray-50 rounded-lg p-4">
+            <Typography variant="caption" className="font-semibold text-gray-600 uppercase flex items-center gap-1 mb-1">
+              <AccountBalanceWalletIcon sx={{ fontSize: 13 }} className="text-green-600" /> Payment Info
+            </Typography>
+            <Box sx={{ bgcolor: "#f9fafb", borderRadius: 1, p: 1.5 }}>
               <InfoRow label="Amount" value={<span className="font-numbers">{formatCurrency(payment.amount)}</span>} highlight />
               <InfoRow label="Mode" value={paymentModeLabels[payment.paymentMode] || payment.paymentMode} />
               <InfoRow label="Type" value={paymentTypeLabels[payment.type] || payment.type} />
@@ -230,13 +208,10 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
 
           {/* Right Column - Patient & Invoice */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Box className="flex items-center gap-2 mb-3">
-              <PersonIcon className="text-blue-600" fontSize="small" />
-              <Typography variant="subtitle2" className="font-semibold text-gray-700 uppercase">
-                Patient & Invoice
-              </Typography>
-            </Box>
-            <Box className="bg-gray-50 rounded-lg p-4">
+            <Typography variant="caption" className="font-semibold text-gray-600 uppercase flex items-center gap-1 mb-1">
+              <PersonIcon sx={{ fontSize: 13 }} className="text-blue-600" /> Patient & Invoice
+            </Typography>
+            <Box sx={{ bgcolor: "#f9fafb", borderRadius: 1, p: 1.5 }}>
               <InfoRow label="Patient" value={payment.patient?.name} />
               <InfoRow label="Phone" value={payment.patient?.phone} />
               <InfoRow label="Clinic" value={payment.clinic?.name} />
@@ -262,10 +237,8 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           {/* Notes */}
           {payment.notes && (
             <Grid size={{ xs: 12 }}>
-              <Box className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-1">
-                  Notes
-                </Typography>
+              <Box sx={{ bgcolor: "#fffbeb", borderRadius: 1, p: 1.5, border: "1px solid #fde68a" }}>
+                <Typography variant="caption" className="font-semibold text-gray-700 block mb-0.5">Notes</Typography>
                 <Typography variant="body2">{payment.notes}</Typography>
               </Box>
             </Grid>
@@ -274,13 +247,10 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           {/* Razorpay Details */}
           {payment.paymentMode === "razorpay" && payment.razorpayPaymentId && (
             <Grid size={{ xs: 12 }}>
-              <Box className="flex items-center gap-2 mb-3">
-                <ReceiptIcon className="text-purple-600" fontSize="small" />
-                <Typography variant="subtitle2" className="font-semibold text-gray-700 uppercase">
-                  Razorpay Details
-                </Typography>
-              </Box>
-              <Box className="bg-purple-50 rounded-lg p-4">
+              <Typography variant="caption" className="font-semibold text-gray-600 uppercase flex items-center gap-1 mb-1">
+                <ReceiptIcon sx={{ fontSize: 13 }} className="text-purple-600" /> Razorpay Details
+              </Typography>
+              <Box sx={{ bgcolor: "#faf5ff", borderRadius: 1, p: 1.5 }}>
                 <InfoRow label="Order ID" value={payment.razorpayOrderId} />
                 <InfoRow label="Payment ID" value={payment.razorpayPaymentId} />
                 {payment.razorpayDetails?.method && (
@@ -296,10 +266,8 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           {/* Refund Details */}
           {payment.status === "refunded" && payment.refund && (
             <Grid size={{ xs: 12 }}>
-              <Box className="bg-red-50 rounded-lg p-4 border border-red-200">
-                <Typography variant="subtitle2" className="font-semibold text-red-700 mb-2">
-                  Refund Information
-                </Typography>
+              <Box sx={{ bgcolor: "#fef2f2", borderRadius: 1, p: 1.5, border: "1px solid #fecaca" }}>
+                <Typography variant="caption" className="font-semibold text-red-700 block mb-0.5">Refund Information</Typography>
                 <InfoRow label="Refunded At" value={formatDate(payment.refund.refundedAt)} />
                 <InfoRow label="Reason" value={payment.refund.reason} />
                 {payment.refund.razorpayRefundId && (
@@ -312,10 +280,8 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           {/* Refund Form */}
           {showRefundForm && canRefund && (
             <Grid size={{ xs: 12 }}>
-              <Box className="bg-red-50 rounded-lg p-4 border border-red-200">
-                <Typography variant="subtitle2" className="font-semibold text-red-700 mb-3">
-                  Process Refund
-                </Typography>
+              <Box sx={{ bgcolor: "#fef2f2", borderRadius: 1, p: 1.5, border: "1px solid #fecaca" }}>
+                <Typography variant="caption" className="font-semibold text-red-700 block mb-1">Process Refund</Typography>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
@@ -372,13 +338,14 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
       </DialogContent>
 
       {/* Actions */}
-      <DialogActions className="p-4 bg-gray-50">
+      <DialogActions className="p-2 bg-gray-50">
         {canRefund && !showRefundForm && (
           <Button
             variant="outlined"
             color="error"
             startIcon={<RefreshIcon />}
             onClick={() => setShowRefundForm(true)}
+            sx={{ textTransform: "none", fontSize: "12px" }}
           >
             Process Refund
           </Button>
@@ -389,11 +356,12 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           startIcon={isDeleting ? <CircularProgress size={16} /> : <DeleteIcon />}
           onClick={handleDelete}
           disabled={isDeleting || isRefunding}
+          sx={{ textTransform: "none", fontSize: "12px" }}
         >
           Delete
         </Button>
         <Box className="flex-grow" />
-        <Button onClick={handleClose} color="inherit" disabled={isRefunding}>
+        <Button onClick={handleClose} color="inherit" disabled={isRefunding} sx={{ textTransform: "none", fontSize: "12px" }}>
           Close
         </Button>
       </DialogActions>

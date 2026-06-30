@@ -35,6 +35,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import DownloadIcon from "@mui/icons-material/Download";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AppointmentSlipPreviewModal from "../../components/AppointmentSlipPreviewModal";
 import DataTable from "../../components/common/DataTable";
 import { useAppointments, useAppointmentMutations } from "../../hooks/admin/useAppointments";
@@ -167,7 +168,7 @@ const columns = [
   {
     field: "status",
     headerName: "Status",
-    minWidth: 110,
+    minWidth: 130,
     render: (value) => (
       <Chip
         size="small"
@@ -219,8 +220,49 @@ const rowPaymentStatus = (row) => {
 };
 
 // Function to get columns with action handlers
-const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId) => [
-  ...columns.filter((c) => c.field !== "paymentStatus"),
+const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId, onStatusChange, updatingStatusId) => [
+  ...columns.filter((c) => c.field !== "paymentStatus" && c.field !== "status"),
+  {
+    field: "status",
+    headerName: "Status",
+    minWidth: 140,
+    render: (value, row) => {
+      const isTerminal = ["completed", "cancelled", "no_show"].includes(value);
+      if (isTerminal) {
+        return (
+          <Chip
+            size="small"
+            label={value?.replace("_", " ") || ""}
+            color={statusColors[value] || "default"}
+            className="capitalize"
+            sx={{ fontSize: '11px' }}
+          />
+        );
+      }
+      return (
+        <Select
+          value={value || "scheduled"}
+          size="small"
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            e.stopPropagation();
+            onStatusChange(row, e.target.value);
+          }}
+          disabled={updatingStatusId === row._id}
+          sx={{
+            height: 28,
+            fontSize: "12px",
+            "& .MuiSelect-select": { py: 0.5, px: 1 },
+            "& fieldset": { borderColor: "#e5e7eb" },
+          }}
+        >
+          <MenuItem value="scheduled" dense>Scheduled</MenuItem>
+          <MenuItem value="in_progress" dense>In Progress</MenuItem>
+          <MenuItem value="completed" dense>Completed</MenuItem>
+        </Select>
+      );
+    },
+  },
   {
     field: "paymentStatus",
     headerName: "Payment",
@@ -335,6 +377,14 @@ const filterOptions = [
       { value: "emergency", label: "Emergency" },
     ],
   },
+  {
+    key: "visitType",
+    label: "Visit Type",
+    options: [
+      { value: "opd", label: "OPD" },
+      { value: "treatment", label: "Treatment" },
+    ],
+  },
 ];
 
 const Appointments = () => {
@@ -359,6 +409,8 @@ const Appointments = () => {
 
   // Payment status dropdown — update appointment + sync invoice via backend
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+  const [dateFilter, setDateFilter] = useState("");
 
   const handlePaymentStatusChange = (row, newStatus) => {
     setUpdatingPaymentId(row._id);
@@ -372,6 +424,22 @@ const Appointments = () => {
         onError: (err) =>
           toast.error(err.response?.data?.message || "Failed to update payment status"),
         onSettled: () => setUpdatingPaymentId(null),
+      }
+    );
+  };
+
+  const handleStatusChange = (row, newStatus) => {
+    setUpdatingStatusId(row._id);
+    updateApptMutation(
+      { id: row._id, data: { status: newStatus } },
+      {
+        onSuccess: () => {
+          toast.success(`Status updated to ${newStatus.replace("_", " ")}`);
+          refetch();
+        },
+        onError: (err) =>
+          toast.error(err.response?.data?.message || "Failed to update status"),
+        onSettled: () => setUpdatingStatusId(null),
       }
     );
   };
@@ -538,6 +606,17 @@ const Appointments = () => {
     });
   };
 
+  const isToday = (dateStr) => {
+    if (!dateStr) return false;
+    const apptDate = new Date(dateStr);
+    const today = new Date();
+    return (
+      apptDate.getDate() === today.getDate() &&
+      apptDate.getMonth() === today.getMonth() &&
+      apptDate.getFullYear() === today.getFullYear()
+    );
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -593,10 +672,114 @@ const Appointments = () => {
           </Paper>
 
           <Button
+            variant={dateFilter === "yesterday" ? "contained" : "outlined"}
+            onClick={() => {
+              if (dateFilter === "yesterday") {
+                setDateFilter("");
+                setFilters((prev) => { const f = { ...prev }; delete f.date; return f; });
+              } else {
+                setDateFilter("yesterday");
+                const d = new Date();
+                d.setDate(d.getDate() - 1);
+                setFilters((prev) => ({ ...prev, date: d.toISOString().split("T")[0] }));
+              }
+              setPage(1);
+            }}
+            sx={{
+              textTransform: "none",
+              fontSize: "12px",
+              fontWeight: 600,
+              px: 1.5,
+              height: 36,
+              minWidth: 0,
+              ...(dateFilter === "yesterday"
+                ? { backgroundColor: "#6366f1", "&:hover": { backgroundColor: "#4f46e5" } }
+                : { borderColor: "#d1d5db", color: "#374151" }),
+            }}
+          >
+            Yesterday
+          </Button>
+          <Button
+            variant={dateFilter === "today" ? "contained" : "outlined"}
+            onClick={() => {
+              if (dateFilter === "today") {
+                setDateFilter("");
+                setFilters((prev) => { const f = { ...prev }; delete f.date; return f; });
+              } else {
+                setDateFilter("today");
+                setFilters((prev) => ({ ...prev, date: new Date().toISOString().split("T")[0] }));
+              }
+              setPage(1);
+            }}
+            sx={{
+              textTransform: "none",
+              fontSize: "12px",
+              fontWeight: 600,
+              px: 1.5,
+              height: 36,
+              minWidth: 0,
+              ...(dateFilter === "today"
+                ? { backgroundColor: "#3b82f6", "&:hover": { backgroundColor: "#2563eb" } }
+                : { borderColor: "#d1d5db", color: "#374151" }),
+            }}
+          >
+            Today
+          </Button>
+          <TextField
+            type="date"
+            size="small"
+            value={dateFilter === "custom" ? (filters.date || "") : ""}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val) {
+                setDateFilter("custom");
+                setFilters((prev) => ({ ...prev, date: val }));
+              } else {
+                setDateFilter("");
+                setFilters((prev) => { const f = { ...prev }; delete f.date; return f; });
+              }
+              setPage(1);
+            }}
+            InputLabelProps={{ shrink: true }}
+            sx={{
+              width: 150,
+              "& .MuiInputBase-root": { height: 36, fontSize: "12px" },
+              "& .MuiInputBase-input": { py: 0.5, px: 1 },
+            }}
+          />
+          {dateFilter && (
+            <Button
+              variant="text"
+              onClick={() => {
+                setDateFilter("");
+                setFilters((prev) => { const f = { ...prev }; delete f.date; return f; });
+                setPage(1);
+              }}
+              sx={{
+                textTransform: "none",
+                fontSize: "11px",
+                color: "#6b7280",
+                minWidth: 0,
+                px: 1,
+                height: 36,
+              }}
+            >
+              Clear
+            </Button>
+          )}
+
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddClick}
-            className="bg-[#1976d2] hover:[#1976d2] whitespace-nowrap py-4!"
+            sx={{
+              textTransform: "none",
+              fontSize: "13px",
+              fontWeight: 600,
+              height: 36,
+              px: 2,
+              whiteSpace: "nowrap",
+            }}
           >
             New Appointment
           </Button>
@@ -612,7 +795,27 @@ const Appointments = () => {
           (row) => { setSelectedAppointment(row); setEditModalOpen(true); },
           handlePaymentStatusChange,
           updatingPaymentId,
+          handleStatusChange,
+          updatingStatusId,
         )}
+        getRowSx={(row) => {
+          const today = isToday(row?.date);
+          const unpaid = rowPaymentStatus(row) === "unpaid";
+          if (today) {
+            return {
+              backgroundColor: "#eff6ff",
+              borderLeft: "3px solid #3b82f6",
+              "&:hover": { backgroundColor: "#dbeafe" },
+            };
+          }
+          if (unpaid) {
+            return {
+              backgroundColor: "#fef2f2",
+              "&:hover": { backgroundColor: "#fee2e2" },
+            };
+          }
+          return {};
+        }}
         data={appointments}
         loading={isLoading}
         searchPlaceholder="Search patient name or phone..."
