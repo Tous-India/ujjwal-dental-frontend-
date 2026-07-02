@@ -12,11 +12,15 @@
 }
 html {
   overflow-x: hidden;
+  /* Explicit overflow-y: auto makes <html> the vertical scroll container.
+     This is also what overflow-x:hidden computes to per the CSS spec
+     ("if one axis is non-visible, the other visible becomes auto"), but being
+     explicit ensures scrollbar-gutter: stable has a clear target in all browsers. */
+  overflow-y: auto;
   max-width: 100%;
   /* Always reserve the scrollbar gutter so content width never changes when the
      scrollbar appears or disappears (belt-and-suspenders alongside disableScrollLock
-     in the MUI theme). Works because overflow-x:hidden forces overflow-y to auto,
-     making <html> the vertical scroll container. */
+     in the MUI theme). Works because <html> is the vertical scroll container. */
   scrollbar-gutter: stable;
 }
 /* NOTE: overflow-x must NOT be set on body.
@@ -30,6 +34,9 @@ html {
    level (html is the root scroll container) without affecting MUI's measurement. */
 body {
   max-width: 100%;
+  /* Defensive: if a future change ever makes body the scroll container, the gutter
+     will already be reserved so content width stays stable. No-op when html scrolls. */
+  scrollbar-gutter: stable;
 }
 /* In @layer base so Tailwind height/width utilities (e.g. h-12) still override
    it — an unlayered rule here would beat every utility and break sized images

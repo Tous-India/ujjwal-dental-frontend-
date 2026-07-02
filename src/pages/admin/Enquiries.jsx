@@ -246,6 +246,14 @@ const Enquiries = () => {
   const handleRowClick = (enq) => { setSelectedEnquiry(enq); setDetailModalOpen(true); };
   const handleClearDates = () => { setFromDate(""); setToDate(""); setPage(1); };
 
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -293,7 +301,7 @@ const Enquiries = () => {
         filters={filterOptions}
         filterValues={filters}
         onFilterChange={handleFilterChange}
-        onRefresh={refetch}
+        onRefresh={handleReset}
       />
 
       {/* Data Table */}

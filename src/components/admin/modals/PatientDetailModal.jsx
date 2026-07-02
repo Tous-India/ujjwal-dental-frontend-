@@ -5,8 +5,10 @@
  * - Overview: Personal info, medical info, membership
  * - Appointments: Patient's appointment history (with edit)
  * - Treatments: Treatment history
- * - Payments: Payment history with summary (with add payment)
+ * - Payment History: Payment history with summary (with add payment)
  * - Reports: Medical reports
+ * - Lab: Lab orders for this patient (client-side filtered)
+ * - Invoices: Patient's invoices (server-side filtered by patient ID)
  */
 import React, { useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -53,24 +55,25 @@ import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import ScienceIcon from "@mui/icons-material/Science";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import AddIcon from "@mui/icons-material/Add";
 import {
   getPatientAppointments,
   getPatientTreatments,
-  getPatientPayments,
   getPatientReports,
   getPatientTests,
   deletePatient,
 } from "../../../api/admin/patients.api";
-import { getBillingStats } from "../../../api/admin/billing.api";
+import { getLabOrders } from "../../../api/admin/labOrders.api";
+import { getBillingStats, getInvoices } from "../../../api/admin/billing.api";
 import EditAppointmentModal from "./EditAppointmentModal";
-import RecordPaymentModal from "./RecordPaymentModal";
 import AssignMembershipModal from "./AssignMembershipModal";
 import ResetPasswordDialog from "./ResetPasswordDialog";
 import FollowUpReminderModal from "./FollowUpReminderModal";
 import ConfirmDialog from "../../common/ConfirmDialog";
+import InvoiceDetailModal from "./InvoiceDetailModal";
 import { toast } from "react-toastify";
 
 /**
@@ -144,6 +147,9 @@ const statusColors = {
   paid: "success",
   partial: "warning",
   unpaid: "error",
+  delivered: "success",
+  rejected: "error",
+  partially_paid: "warning",
 };
 
 /**
@@ -579,73 +585,61 @@ const TestsTab = ({ patientId }) => {
 };
 
 /**
- * Payments Tab Content
+ * Payment History Tab Content
+ * Derives payment history from invoices where amountPaid > 0.
+ * Read-only — actions (Record Payment, Refund) are on the Billing page.
  */
-const PaymentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
-  const [data, setData] = useState({ payments: [], invoiceStats: null });
+const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
+  const [data, setData] = useState({ invoices: [], invoiceStats: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
 
-  const fetchPayments = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      // Payment-history rows (the list) + the invoice-based money summary.
-      // The summary reuses the SAME invoice aggregation the Billing page uses
-      // (getBillingStats), scoped to this patient & all-time, so the balances
-      // match across screens instead of being computed from payment records.
-      const [paymentsRes, statsRes] = await Promise.all([
-        getPatientPayments(patientId, { limit: 50 }),
+      const [invRes, statsRes] = await Promise.all([
+        getInvoices({ patient: patientId, limit: 50 }),
         getBillingStats({ patient: patientId }),
       ]);
       setData({
-        payments: paymentsRes.data?.payments || [],
+        invoices: invRes.data || [],
         invoiceStats: statsRes.data?.stats || null,
       });
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to load payments");
+      setError(err.response?.data?.message || "Failed to load payment history");
     } finally {
       setLoading(false);
     }
   }, [patientId]);
 
   useEffect(() => {
-    if (patientId) fetchPayments();
-  }, [patientId, refreshKey, fetchPayments]);
-
-  const handlePaymentSuccess = () => {
-    fetchPayments();
-    onRefresh?.();
-  };
+    if (patientId) fetchData();
+  }, [patientId, refreshKey, fetchData]);
 
   if (loading) return <Box className="text-center py-8"><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
 
-  const { payments, invoiceStats } = data;
+  const { invoices, invoiceStats } = data;
+  const paid = invoices.filter((inv) => (inv.amountPaid || 0) > 0);
+  const totalPaidFromList = paid.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0);
+
+  const paymentMethodLabel = (method) => {
+    const map = {
+      cash: "Cash", card: "Card", upi: "UPI", online: "Online",
+      razorpay: "Online", "pay-at-clinic": "Pay at Clinic", free: "Free",
+    };
+    return map[method] || (method ? method.replace(/-/g, " ") : "-");
+  };
 
   return (
     <>
-      {/* Header with Add Payment Button */}
-      <Box className="flex justify-between items-center mb-4">
-        <Typography variant="subtitle1" className="font-semibold text-gray-700">
-          Payment History
-        </Typography>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={() => setRecordPaymentOpen(true)}
-          className="bg-green-600 hover:bg-green-700"
-        >
-          Record Payment
-        </Button>
-      </Box>
-
-      {/* Summary — computed from the patient's INVOICES (same source as the
-          Billing page), so balances agree across screens. */}
+      {/* Invoice-based billing summary — same source as Billing page */}
       {invoiceStats && (
         <Box className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <Box className="bg-purple-50 rounded-lg p-4 text-center">
+          <Box
+            className="bg-purple-50 rounded-lg p-4 text-center cursor-pointer hover:bg-purple-100 transition-colors"
+            onClick={() => onTabSwitch?.(7)}
+          >
             <Typography variant="h6" className="font-numbers font-bold text-purple-600">
               {formatCurrency(invoiceStats.totalAmount)}
             </Typography>
@@ -657,13 +651,19 @@ const PaymentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
             </Typography>
             <Typography variant="caption" className="text-gray-600">Total Paid</Typography>
           </Box>
-          <Box className="bg-red-50 rounded-lg p-4 text-center">
+          <Box
+            className="bg-red-50 rounded-lg p-4 text-center cursor-pointer hover:bg-red-100 transition-colors"
+            onClick={() => onTabSwitch?.(7, "unpaid")}
+          >
             <Typography variant="h6" className="font-numbers font-bold text-red-600">
               {formatCurrency(invoiceStats.totalDue)}
             </Typography>
-            <Typography variant="caption" className="text-gray-600">Pending</Typography>
+            <Typography variant="caption" className="text-gray-600">Balance Due</Typography>
           </Box>
-          <Box className="bg-blue-50 rounded-lg p-4 text-center">
+          <Box
+            className="bg-blue-50 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-100 transition-colors"
+            onClick={() => onTabSwitch?.(7)}
+          >
             <Typography variant="h6" className="font-numbers font-bold text-blue-600">
               {invoiceStats.totalInvoices || 0}
             </Typography>
@@ -672,44 +672,65 @@ const PaymentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
         </Box>
       )}
 
-      {!payments.length ? (
-        <Typography className="text-gray-400 text-center py-8">No payments found</Typography>
+      {!paid.length ? (
+        <Typography className="text-gray-400 text-center py-8">
+          No payments recorded for this patient yet.
+        </Typography>
       ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead className="bg-gray-50">
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Method</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Reference</TableCell>
-                <TableCell>Notes</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {payments.map((pmt) => (
-                <TableRow key={pmt._id} hover>
-                  <TableCell>{formatDate(pmt.createdAt)}</TableCell>
-                  <TableCell className="capitalize">{pmt.type?.replace("_", " ") || "-"}</TableCell>
-                  <TableCell className="capitalize">{pmt.paymentMode?.replace("_", " ") || pmt.method?.replace("_", " ") || "-"}</TableCell>
-                  <TableCell className="font-medium text-green-600">{formatCurrency(pmt.amount)}</TableCell>
-                  <TableCell>{pmt.referenceNumber || "-"}</TableCell>
-                  <TableCell>{pmt.notes || "-"}</TableCell>
+        <>
+          <Typography variant="caption" className="text-gray-500 block mb-2">
+            Total Paid:{" "}
+            <strong className="text-gray-700">{formatCurrency(totalPaidFromList)}</strong>
+            {" "}across{" "}
+            <strong className="text-gray-700">{paid.length}</strong>
+            {" "}invoice{paid.length !== 1 ? "s" : ""}
+          </Typography>
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead className="bg-gray-50">
+                <TableRow>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Invoice No.</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Total</TableCell>
+                  <TableCell>Paid</TableCell>
+                  <TableCell>Payment Mode</TableCell>
+                  <TableCell>Status</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {paid.map((inv) => (
+                  <TableRow key={inv._id} hover>
+                    <TableCell>{formatDate(inv.invoiceDate || inv.createdAt)}</TableCell>
+                    <TableCell className="font-numbers">{inv.invoiceNumber || "-"}</TableCell>
+                    <TableCell>
+                      {inv.items?.[0]?.description ||
+                        inv.items?.[0]?.itemType?.replace(/_/g, " ") || "-"}
+                      {inv.items?.length > 1 && (
+                        <Typography component="span" variant="caption" className="text-gray-400">
+                          {` +${inv.items.length - 1} more`}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>{formatCurrency(inv.grandTotal)}</TableCell>
+                    <TableCell className="font-medium text-green-600">
+                      {formatCurrency(inv.amountPaid)}
+                    </TableCell>
+                    <TableCell>{paymentMethodLabel(inv.paymentMethod)}</TableCell>
+                    <TableCell>
+                      <Chip
+                        size="small"
+                        label={inv.paymentStatus || "-"}
+                        color={statusColors[inv.paymentStatus] || "default"}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
       )}
-
-      {/* Record Payment Modal */}
-      <RecordPaymentModal
-        open={recordPaymentOpen}
-        onClose={() => setRecordPaymentOpen(false)}
-        patient={patient}
-        onSuccess={handlePaymentSuccess}
-      />
     </>
   );
 };
@@ -770,6 +791,206 @@ const ReportsTab = ({ patientId }) => {
 };
 
 /**
+ * Invoices Tab Content
+ */
+const InvoicesTab = ({ patientId, paymentStatusFilter, onClearFilter }) => {
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        setLoading(true);
+        const params = { patient: patientId, limit: 50 };
+        if (paymentStatusFilter) params.paymentStatus = paymentStatusFilter;
+        const res = await getInvoices(params);
+        setInvoices(res.data || []);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load invoices");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (patientId) fetchInvoices();
+  }, [patientId, paymentStatusFilter]);
+
+  if (loading) return <Box className="text-center py-8"><CircularProgress /></Box>;
+  if (error) return <Alert severity="error">{error}</Alert>;
+
+  return (
+    <>
+      {paymentStatusFilter && (
+        <Box className="flex items-center gap-2 mb-3">
+          <Chip
+            label={`Filter: ${paymentStatusFilter.replace(/_/g, " ")}`}
+            size="small"
+            color="warning"
+            onDelete={onClearFilter}
+          />
+          <Typography variant="caption" className="text-gray-500">
+            Click × to show all invoices
+          </Typography>
+        </Box>
+      )}
+
+      {!invoices.length ? (
+        <Typography className="text-gray-400 text-center py-8">
+          {paymentStatusFilter
+            ? `No ${paymentStatusFilter.replace(/_/g, " ")} invoices found for this patient.`
+            : "No invoices found for this patient."}
+        </Typography>
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead className="bg-gray-50">
+              <TableRow>
+                <TableCell>Invoice No.</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Items</TableCell>
+                <TableCell>Total</TableCell>
+                <TableCell>Paid</TableCell>
+                <TableCell>Balance Due</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="center">Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {invoices.map((inv) => (
+                <TableRow key={inv._id} hover>
+                  <TableCell className="font-numbers">{inv.invoiceNumber || "-"}</TableCell>
+                  <TableCell>{formatDate(inv.createdAt)}</TableCell>
+                  <TableCell>
+                    {inv.items?.length > 0 ? inv.items[0].description || "-" : "-"}
+                    {inv.items?.length > 1 && (
+                      <Typography component="span" variant="caption" className="text-gray-400">
+                        {` +${inv.items.length - 1} more`}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>{formatCurrency(inv.totalAmount)}</TableCell>
+                  <TableCell className="text-green-600">{formatCurrency(inv.amountPaid)}</TableCell>
+                  <TableCell className="text-red-600">{formatCurrency(inv.balanceDue)}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={inv.paymentStatus?.replace(/_/g, " ") || "-"}
+                      color={statusColors[inv.paymentStatus] || "default"}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="View Invoice">
+                      <IconButton
+                        size="small"
+                        onClick={() => { setSelectedInvoice(inv); setInvoiceModalOpen(true); }}
+                        className="text-blue-600 hover:bg-blue-50"
+                      >
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      <InvoiceDetailModal
+        open={invoiceModalOpen}
+        onClose={() => { setInvoiceModalOpen(false); setSelectedInvoice(null); }}
+        invoice={selectedInvoice}
+        onRefresh={() => {
+          setInvoiceModalOpen(false);
+          setSelectedInvoice(null);
+        }}
+      />
+    </>
+  );
+};
+
+/**
+ * Lab Orders Tab Content
+ * Fetches all lab orders and filters client-side by patient ID.
+ */
+const LabOrdersTab = ({ patientId }) => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const res = await getLabOrders({ limit: 200 });
+        const all = res.data || [];
+        setOrders(
+          all.filter((o) => String(o.patient?._id || o.patient) === String(patientId))
+        );
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load lab orders");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (patientId) fetchOrders();
+  }, [patientId]);
+
+  if (loading) return <Box className="text-center py-8"><CircularProgress /></Box>;
+  if (error) return <Alert severity="error">{error}</Alert>;
+  if (!orders.length) return <Typography className="text-gray-400 text-center py-8">No lab orders found for this patient.</Typography>;
+
+  return (
+    <TableContainer component={Paper} variant="outlined">
+      <Table size="small">
+        <TableHead className="bg-gray-50">
+          <TableRow>
+            <TableCell>Order No.</TableCell>
+            <TableCell>Date</TableCell>
+            <TableCell>Lab</TableCell>
+            <TableCell>Items</TableCell>
+            <TableCell>Delivery</TableCell>
+            <TableCell>Payment</TableCell>
+            <TableCell>Total</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {orders.map((order) => (
+            <TableRow key={order._id} hover>
+              <TableCell className="font-numbers">{order.orderNumber || "-"}</TableCell>
+              <TableCell>{formatDate(order.orderDate)}</TableCell>
+              <TableCell>{order.lab?.name || "-"}</TableCell>
+              <TableCell>
+                {order.items?.length > 0
+                  ? order.items.map((it) => it.procedure).join(", ")
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                <Chip
+                  size="small"
+                  label={order.deliveryStatus?.replace(/_/g, " ") || "-"}
+                  color={statusColors[order.deliveryStatus] || "default"}
+                />
+              </TableCell>
+              <TableCell>
+                <Chip
+                  size="small"
+                  label={order.paymentStatus?.replace(/_/g, " ") || "-"}
+                  color={statusColors[order.paymentStatus] || "default"}
+                />
+              </TableCell>
+              <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
+
+/**
  * Main Component
  */
 const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReactivate, onRefresh }) => {
@@ -781,6 +1002,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
   const [permDeleteConfirmOpen, setPermDeleteConfirmOpen] = useState(false);
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState("");
 
   // Reset tab when modal opens
   useEffect(() => {
@@ -858,7 +1080,10 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
       <Box className="border-b border-gray-200 px-4">
         <Tabs
           value={activeTab}
-          onChange={(_, val) => setActiveTab(val)}
+          onChange={(_, val) => {
+            if (val === 7) setInvoiceStatusFilter("");
+            setActiveTab(val);
+          }}
           variant="scrollable"
           scrollButtons="auto"
           sx={{
@@ -870,8 +1095,10 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           <Tab label="Appointments" />
           <Tab label="Treatments" />
           <Tab label="Tests" />
-          <Tab label="Payments" />
+          <Tab label="Payment History" />
           <Tab label="Reports" />
+          <Tab label="Lab" />
+          <Tab label="Invoices" />
         </Tabs>
       </Box>
 
@@ -904,13 +1131,25 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         <TabPanel value={activeTab} index={4}>
           <PaymentsTab
             patientId={patient._id}
-            patient={patient}
             refreshKey={refreshKey}
-            onRefresh={handleRefresh}
+            onTabSwitch={(tabIndex, filter = "") => {
+              setInvoiceStatusFilter(filter);
+              setActiveTab(tabIndex);
+            }}
           />
         </TabPanel>
         <TabPanel value={activeTab} index={5}>
           <ReportsTab patientId={patient._id} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={6}>
+          <LabOrdersTab patientId={patient._id} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={7}>
+          <InvoicesTab
+            patientId={patient._id}
+            paymentStatusFilter={invoiceStatusFilter}
+            onClearFilter={() => setInvoiceStatusFilter("")}
+          />
         </TabPanel>
 
       </DialogContent>

@@ -219,7 +219,9 @@ const Patients = () => {
    * Handle patient created successfully
    */
   const handlePatientCreated = () => {
-    refetch();
+    setSearch("");
+    setFilters({});
+    setPage(1);
   };
 
   /**
@@ -292,8 +294,19 @@ const Patients = () => {
     refetch();
   };
 
+  /**
+   * Handle refresh/reset — clears all active filters and search so the full
+   * unfiltered patient list loads. Previously onRefresh called refetch() directly,
+   * which left filters intact and made the ↺ button appear broken.
+   */
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+    setPage(1);
+  };
+
   return (
-    <Box>
+    <Box sx={{ minHeight: "100vh" }}>
       {/* Page Header */}
       <Box className="flex justify-between items-center mb-6">
         <Box>
@@ -320,6 +333,7 @@ const Patients = () => {
         data={patients}
         loading={isLoading}
         searchPlaceholder="Search by name or phone..."
+        searchValue={search}
         onSearch={handleSearch}
         filters={filterOptions}
         filterValues={filters}
@@ -335,7 +349,7 @@ const Patients = () => {
           },
         }}
         onRowClick={handleRowClick}
-        onRefresh={refetch}
+        onRefresh={handleReset}
         emptyMessage="No patients found"
       />
 

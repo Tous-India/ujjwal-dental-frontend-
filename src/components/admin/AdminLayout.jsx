@@ -60,6 +60,11 @@ const AdminLayout = () => {
           minWidth: 0,
           width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` },
           minHeight: "100vh",
+          // Mirrors the html { scrollbar-gutter: stable } in index.css. If the
+          // browser ever treats this flex container as the effective layout root
+          // instead of <html>, the gutter is still reserved and content won't shift
+          // when the page scrollbar appears or disappears.
+          scrollbarGutter: "stable",
         }}
         className="bg-gray-50"
       >

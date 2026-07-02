@@ -3,7 +3,7 @@
  *
  * Form modal to create a new patient with all necessary fields.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -18,6 +18,7 @@ import {
   Chip,
   InputAdornment,
   CircularProgress,
+  Alert,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import Grid from "@mui/material/Grid";
@@ -73,6 +74,12 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
   const [allergyInput, setAllergyInput] = useState("");
   const [historyInput, setHistoryInput] = useState("");
   const [errors, setErrors] = useState({});
+  // Incremented each time the modal opens so React unmounts and remounts all
+  // form TextFields, destroying any browser autofill field associations.
+  const [formKey, setFormKey] = useState(0);
+  useEffect(() => {
+    if (open) setFormKey((k) => k + 1);
+  }, [open]);
 
   const { createPatientAsync, isCreating } = usePatientMutations();
 
@@ -104,10 +111,11 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
       }));
     }
 
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
+    // Clear field-specific error and any general API error
+    setErrors((prev) => {
+      if (!prev[name] && !prev._form) return prev;
+      return { ...prev, [name]: "", _form: "" };
+    });
   };
 
   /**
@@ -187,9 +195,15 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
   };
 
   /**
-   * Handle form submit
+   * Handle form submit.
+   * Accepts the MouseEvent so we can stop propagation — prevents the click
+   * from bubbling through the React fiber tree to any ancestor handler
+   * (e.g. DataTable's search onChange) that could trigger an unintended filter.
    */
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+
     if (!validateForm()) return;
 
     // Clean up empty nested objects
@@ -209,13 +223,26 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
 
     try {
       const response = await createPatientAsync(cleanData);
+      toast.success("Patient added successfully");
       setFormData(initialFormState);
+      setErrors({});
       onSuccess?.(response);
       onClose();
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to create patient",
-      );
+      const message =
+        error.response?.data?.message || "Failed to create patient";
+      // Show the error inline on the phone field when it's a duplicate-phone
+      // rejection, or as a general form alert otherwise. Never trigger a
+      // search/filter on the parent Patients list.
+      const isPhoneError =
+        error.response?.status === 409 ||
+        message.toLowerCase().includes("phone") ||
+        message.toLowerCase().includes("already exist");
+      if (isPhoneError) {
+        setErrors((prev) => ({ ...prev, phone: message }));
+      } else {
+        setErrors((prev) => ({ ...prev, _form: message }));
+      }
     }
   };
 
@@ -262,7 +289,14 @@ const AddPatientModal = ({ open, onClose, onSuccess }) => {
 
       {/* Content */}
       <DialogContent className="px-5 py-3">
-        <Grid container spacing={1.5} className="mt-0">
+        <Grid container spacing={1.5} className="mt-0" key={formKey}>
+          {/* General API error (non-phone errors) */}
+          {errors._form && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="error" sx={{ py: 0.5 }}>{errors._form}</Alert>
+            </Grid>
+          )}
+
           {/* Basic Info */}
           <Grid size={{ xs: 12 }}>
             <Typography

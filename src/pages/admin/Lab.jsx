@@ -24,6 +24,7 @@ import {
   MenuItem,
   InputAdornment,
 } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -133,6 +134,14 @@ const LabOrdersTab = () => {
     });
   };
 
+  const handleReset = () => {
+    setFilters({});
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+    setView("active");
+  };
+
   // Append a per-row archive / unarchive action column.
   const columns = [
     ...orderColumns,
@@ -190,88 +199,111 @@ const LabOrdersTab = () => {
 
   return (
     <Box>
-      {/* Consolidated filter row: Toggle, From, To, Search, Lab, Delivery, Payment, Refresh, New */}
+      {/* Filter bar */}
       <Paper className="p-3 mb-4">
-        <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 1.5, alignItems: "center" }}>
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            value={view}
-            onChange={(_, v) => { if (v) { setView(v); setPage(1); } }}
-            sx={{ flexShrink: 0, "& .MuiToggleButton-root": { py: 0.5, px: 1.5, fontSize: "0.75rem", textTransform: "none" } }}
-          >
-            <ToggleButton value="active">Active</ToggleButton>
-            <ToggleButton value="archived">Archived</ToggleButton>
-          </ToggleButtonGroup>
-          <TextField
-            type="date"
-            size="small"
-            label="From"
-            value={fromDate}
-            onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
-            slotProps={{ inputLabel: { shrink: true } }}
-            sx={{ width: 130, "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
-          />
-          <TextField
-            type="date"
-            size="small"
-            label="To"
-            value={toDate}
-            onChange={(e) => { setToDate(e.target.value); setPage(1); }}
-            slotProps={{ inputLabel: { shrink: true } }}
-            sx={{ width: 130, "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
-          />
-          {(fromDate || toDate) && (
-            <IconButton size="small" onClick={() => { setFromDate(""); setToDate(""); setPage(1); }} title="Clear dates">
-              <ClearIcon fontSize="small" />
-            </IconButton>
-          )}
-          <TextField
-            size="small"
-            placeholder="Search by order #..."
-            value={filters.search || ""}
-            onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value || undefined })); setPage(1); }}
-            sx={{ flex: 1, minWidth: 0, "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
-            autoComplete="off"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon className="text-gray-400" />
-                </InputAdornment>
-              ),
-            }}
-          />
-          {filterOptions.map((filter) => (
-            <FormControl key={filter.key} size="small" sx={{ minWidth: 110, "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}>
-              <InputLabel>{filter.label}</InputLabel>
-              <Select
-                value={filters[filter.key] || ""}
-                label={filter.label}
-                onChange={(e) => { setFilters((f) => ({ ...f, [filter.key]: e.target.value || undefined })); setPage(1); }}
-              >
-                <MenuItem value="">All</MenuItem>
-                {filter.options.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          ))}
-          <Tooltip title="Refresh">
-            <IconButton onClick={() => refetch()}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
+        {/* Actions: New Lab Order (left) + Refresh (right, above filter rows) */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
-            sx={{ bgcolor: "#f57c00", "&:hover": { bgcolor: "#e06c00" }, textTransform: "none", fontSize: "12px", fontWeight: 600, height: 36, px: 2, whiteSpace: "nowrap", flexShrink: 0 }}
+            sx={{ bgcolor: "#f57c00", "&:hover": { bgcolor: "#e06c00" }, textTransform: "none", fontSize: "12px", fontWeight: 600, height: 36, px: 2, whiteSpace: "nowrap" }}
           >
             New Lab Order
           </Button>
+          <Tooltip title="Refresh">
+            <IconButton onClick={handleReset}>
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
+
+        {/* Filter Grid — 4 columns on desktop */}
+        <Grid container spacing={1.5}>
+          {/* Row 1: View toggle · From · To (+Clear inline) · Search */}
+          <Grid size={{ xs: 12, md: 3 }}>
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={view}
+              onChange={(_, v) => { if (v) { setView(v); setPage(1); } }}
+              sx={{ "& .MuiToggleButton-root": { py: 0.5, px: 1.5, fontSize: "0.75rem", textTransform: "none" } }}
+            >
+              <ToggleButton value="active">Active</ToggleButton>
+              <ToggleButton value="archived">Archived</ToggleButton>
+            </ToggleButtonGroup>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              fullWidth
+              type="date"
+              size="small"
+              label="From"
+              value={fromDate}
+              onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <TextField
+                fullWidth
+                type="date"
+                size="small"
+                label="To"
+                value={toDate}
+                onChange={(e) => { setToDate(e.target.value); setPage(1); }}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
+              />
+              {(fromDate || toDate) && (
+                <IconButton size="small" onClick={() => { setFromDate(""); setToDate(""); setPage(1); }} title="Clear dates">
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search by order #..."
+              value={filters.search || ""}
+              onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value || undefined })); setPage(1); }}
+              sx={{ "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
+              autoComplete="off"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon className="text-gray-400" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          {/* Row 2: Lab · Delivery · Payment */}
+          {filterOptions.map((filter) => (
+            <Grid key={filter.key} size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth size="small" sx={{ "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}>
+                <InputLabel>{filter.label}</InputLabel>
+                <Select
+                  value={filters[filter.key] || ""}
+                  label={filter.label}
+                  onChange={(e) => { setFilters((f) => ({ ...f, [filter.key]: e.target.value || undefined })); setPage(1); }}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {filter.options.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          ))}
+        </Grid>
       </Paper>
 
       <DataTable
@@ -316,7 +348,7 @@ const LabsTab = () => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ minHeight: "100vh" }}>
       <Box className="flex justify-end mb-4">
         <Button
           variant="contained"

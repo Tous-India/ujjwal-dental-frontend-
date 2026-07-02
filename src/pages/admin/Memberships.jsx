@@ -113,6 +113,11 @@ const Memberships = () => {
     setMenuPlan(null);
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+  };
+
   const handleStatusChange = (updates) => {
     if (!menuPlan) return;
     updatePlan(
@@ -326,7 +331,7 @@ const Memberships = () => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ minHeight: "100vh" }}>
 
       {/* Header */}
       <Box className="flex justify-between items-center mb-6">
@@ -356,6 +361,7 @@ const Memberships = () => {
         loading={isLoading}
         searchPlaceholder="Search by plan name or code..."
         onSearch={setSearch}
+        searchValue={search}
         filters={[
           {
             key: "type",
@@ -390,7 +396,7 @@ const Memberships = () => {
         }
         pagination={false}
         onRowClick={handleRowClick}
-        onRefresh={refetch}
+        onRefresh={handleReset}
         emptyMessage="No membership plans found"
       />
 

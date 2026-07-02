@@ -35,7 +35,6 @@ import PersonIcon from "@mui/icons-material/Person";
 import BusinessIcon from "@mui/icons-material/Business";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import SettingsIcon from "@mui/icons-material/Settings";
-import PaymentIcon from "@mui/icons-material/Payment";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
@@ -51,8 +50,6 @@ import {
   useNotificationPreferencesMutations,
   useSystemConfig,
   useSystemConfigMutations,
-  useFeeSettings,
-  useFeeSettingsMutations,
 } from "../../hooks/admin/useSettings";
 
 // Tab Panel Component
@@ -74,7 +71,6 @@ const Settings = () => {
   const { data: clinicData, isLoading: clinicLoading } = useClinicSettings();
   const { data: notificationData, isLoading: notificationLoading } = useNotificationPreferences();
   const { data: systemData, isLoading: systemLoading } = useSystemConfig();
-  const { data: feeData, isLoading: feeLoading } = useFeeSettings();
 
   // Mutations
   const {
@@ -88,7 +84,6 @@ const Settings = () => {
   const { updateClinicSettings, isUpdating: isUpdatingClinic } = useClinicSettingsMutations();
   const { updatePreferences, isUpdating: isUpdatingNotifications } = useNotificationPreferencesMutations();
   const { updateConfig, isUpdating: isUpdatingSystem } = useSystemConfigMutations();
-  const { updateFeeSettings, isUpdating: isUpdatingFees } = useFeeSettingsMutations();
 
   // Local form states
   const [profileForm, setProfileForm] = useState({
@@ -138,13 +133,6 @@ const Settings = () => {
     timeFormat: "12h",
   });
 
-  const [feeForm, setFeeForm] = useState({
-    opdFeeRegular: 300,
-    opdFeeEmergency: 500,
-    consultationFee: 500,
-    requirePaymentBeforeBooking: true,
-  });
-
   const [popupForm, setPopupForm] = useState({
     enabled: true,
     delaySeconds: 5,
@@ -185,28 +173,6 @@ const Settings = () => {
       ...prev,
       pages: prev.pages.filter((p) => p !== pageToRemove),
     }));
-  };
-
-  const [planPricingForm, setPlanPricingForm] = useState({
-    "Implant Post Care": "4500",
-    "Cosmodentofacial Family Dental Plan": "4999",
-    "Individuals Plan": "2000",
-  });
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("dental_plans_pricing");
-      if (saved) setPlanPricingForm((prev) => ({ ...prev, ...JSON.parse(saved) }));
-    } catch {}
-  }, []);
-
-  const handlePlanPriceChange = (planTitle) => (e) => {
-    setPlanPricingForm((prev) => ({ ...prev, [planTitle]: e.target.value }));
-  };
-
-  const handleSavePlanPricing = () => {
-    localStorage.setItem("dental_plans_pricing", JSON.stringify(planPricingForm));
-    toast.success("Plan pricing saved successfully");
   };
 
   // Initialize forms when data loads
@@ -255,12 +221,6 @@ const Settings = () => {
       setSystemForm(systemData.data.config);
     }
   }, [systemData]);
-
-  useEffect(() => {
-    if (feeData?.data?.fees) {
-      setFeeForm(feeData.data.fees);
-    }
-  }, [feeData]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -394,19 +354,6 @@ const Settings = () => {
     });
   };
 
-  // Fee handlers
-  const handleFeeChange = (field) => (e) => {
-    const value = field === "requirePaymentBeforeBooking" ? e.target.checked : Number(e.target.value);
-    setFeeForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveFees = () => {
-    updateFeeSettings(feeForm, {
-      onSuccess: () => toast.success("Fee settings updated successfully!"),
-      onError: (err) => toast.error(err.response?.data?.message || "Failed to update fee settings"),
-    });
-  };
-
   const user = profileData?.data?.user;
 
   return (
@@ -427,11 +374,9 @@ const Settings = () => {
           <Tabs value={activeTab} onChange={handleTabChange}>
             <Tab icon={<PersonIcon />} label="Profile" iconPosition="start" />
             <Tab icon={<BusinessIcon />} label="Clinic" iconPosition="start" />
-            <Tab icon={<PaymentIcon />} label="Fees" iconPosition="start" />
             <Tab icon={<NotificationsIcon />} label="Notifications" iconPosition="start" />
             <Tab icon={<SettingsIcon />} label="System" iconPosition="start" />
             <Tab icon={<WebIcon />} label="Popup" iconPosition="start" />
-            <Tab icon={<PaymentIcon />} label="Plan Pricing" iconPosition="start" />
           </Tabs>
         </Box>
 
@@ -750,110 +695,8 @@ const Settings = () => {
           </CardContent>
         </TabPanel>
 
-        {/* Fee Settings Tab */}
-        <TabPanel value={activeTab} index={2}>
-          <CardContent>
-            {feeLoading ? (
-              <Box className="space-y-4">
-                <Skeleton variant="rectangular" height={56} />
-                <Skeleton variant="rectangular" height={56} />
-                <Skeleton variant="rectangular" height={56} />
-              </Box>
-            ) : (
-              <>
-                <Typography variant="h6" className="mb-2!">
-                  OPD & Appointment Fees
-                </Typography>
-                <Typography variant="body2" color="text.secondary" className="mb-8!">
-                  Configure the fees for appointments. These fees will be shown on the patient booking page.
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Regular OPD Fee"
-                      type="number"
-                      value={feeForm.opdFeeRegular}
-                      onChange={handleFeeChange("opdFeeRegular")}
-                      slotProps={{
-                        input: {
-                          startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                        },
-                      }}
-                      helperText="Standard appointment fee for regular OPD visits"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Emergency OPD Fee"
-                      type="number"
-                      value={feeForm.opdFeeEmergency}
-                      onChange={handleFeeChange("opdFeeEmergency")}
-                      slotProps={{
-                        input: {
-                          startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                        },
-                      }}
-                      helperText="Fee for emergency/urgent appointments"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Consultation Fee"
-                      type="number"
-                      value={feeForm.consultationFee}
-                      onChange={handleFeeChange("consultationFee")}
-                      slotProps={{
-                        input: {
-                          startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                        },
-                      }}
-                      helperText="Fee for detailed consultations"
-                    />
-                  </Grid>
-                </Grid>
-
-                <Divider sx={{ my: 4 }} />
-
-                <Typography variant="h6" className="font-semibold mb-4">
-                  Payment Settings
-                </Typography>
-                <Box sx={{ mb: 3 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={feeForm.requirePaymentBeforeBooking}
-                        onChange={handleFeeChange("requirePaymentBeforeBooking")}
-                        color="success"
-                      />
-                    }
-                    label="Require Payment Before Booking"
-                  />
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 6 }}>
-                    When enabled, patients must pay the OPD fee online before their appointment is confirmed
-                  </Typography>
-                </Box>
-
-                <Box sx={{ mt: 4 }}>
-                  <Button
-                    variant="contained"
-                    startIcon={isUpdatingFees ? <CircularProgress size={16} /> : <SaveIcon />}
-                    onClick={handleSaveFees}
-                    disabled={isUpdatingFees}
-                    className="bg-teal-600 hover:bg-teal-700"
-                  >
-                    {isUpdatingFees ? "Saving..." : "Save Fee Settings"}
-                  </Button>
-                </Box>
-              </>
-            )}
-          </CardContent>
-        </TabPanel>
-
         {/* Notification Preferences Tab */}
-        <TabPanel value={activeTab} index={3}>
+        <TabPanel value={activeTab} index={2}>
           <CardContent>
             {notificationLoading ? (
               <Box className="space-y-4">
@@ -980,7 +823,7 @@ const Settings = () => {
         </TabPanel>
 
         {/* System Configuration Tab */}
-        <TabPanel value={activeTab} index={4}>
+        <TabPanel value={activeTab} index={3}>
           <CardContent>
             {systemLoading ? (
               <Box className="space-y-4">
@@ -1087,7 +930,7 @@ const Settings = () => {
         </TabPanel>
 
         {/* Popup Settings Tab */}
-        <TabPanel value={activeTab} index={5}>
+        <TabPanel value={activeTab} index={4}>
           <CardContent>
             <Typography variant="h6" className="font-semibold mb-4">
               Popup Enquiry Form Settings
@@ -1188,47 +1031,6 @@ const Settings = () => {
           </CardContent>
         </TabPanel>
 
-        {/* Plan Pricing Tab */}
-        <TabPanel value={activeTab} index={6}>
-          <CardContent>
-            <Typography variant="h6" className="font-semibold mb-4">
-              Dental Health Plan Pricing
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Update the prices displayed on the homepage Dental Health Plans section.
-            </Typography>
-
-            <Grid container spacing={3} className="mt-2">
-              {Object.entries(planPricingForm).map(([planTitle, price]) => (
-                <Grid key={planTitle} size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label={planTitle}
-                    type="number"
-                    value={price}
-                    onChange={handlePlanPriceChange(planTitle)}
-                    slotProps={{
-                      input: {
-                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                      },
-                    }}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-
-            <Box sx={{ mt: 4 }}>
-              <Button
-                variant="contained"
-                startIcon={<SaveIcon />}
-                onClick={handleSavePlanPricing}
-                className="bg-teal-600 hover:bg-teal-700"
-              >
-                Save Plan Pricing
-              </Button>
-            </Box>
-          </CardContent>
-        </TabPanel>
       </Card>
     </Box>
   );
