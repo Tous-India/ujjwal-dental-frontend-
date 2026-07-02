@@ -156,7 +156,7 @@ const Patients = () => {
   });
 
   // Mutations
-  const { deletePatient, isDeleting, reactivatePatient } = usePatientMutations();
+  const { deletePatient, updatePatient, isDeleting, reactivatePatient } = usePatientMutations();
 
   // Extract data from response
   const patients = data?.data || [];
@@ -247,18 +247,21 @@ const Patients = () => {
   const handleConfirmDelete = () => {
     if (!selectedPatient) return;
 
-    deletePatient(selectedPatient._id, {
-      onSuccess: () => {
-        setDeleteModalOpen(false);
-        setSelectedPatient(null);
-        refetch();
-      },
-      onError: (error) => {
-        setDeleteError(
-          error.response?.data?.message || "Failed to deactivate patient"
-        );
-      },
-    });
+    updatePatient(
+      { id: selectedPatient._id, data: { isActive: false } },
+      {
+        onSuccess: () => {
+          setDeleteModalOpen(false);
+          setSelectedPatient(null);
+          refetch();
+        },
+        onError: (error) => {
+          setDeleteError(
+            error.response?.data?.message || "Failed to deactivate patient"
+          );
+        },
+      }
+    );
   };
 
   /**
