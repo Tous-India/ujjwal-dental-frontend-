@@ -292,6 +292,14 @@ const Payments = () => {
     setPage(1);
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+  };
+
   const handleRowClick = (payment) => {
     setSelectedPayment(payment);
     setDetailModalOpen(true);
@@ -571,7 +579,7 @@ const Payments = () => {
   const totalPending = unpaidData?.totalPending || 0;
 
   return (
-    <Box>
+    <Box sx={{ minHeight: "100vh" }}>
       {/* ── HEADER + PATIENT SEARCH (one row) ──────────────────────────────── */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1f2937", whiteSpace: "nowrap" }}>Payment History</Typography>
@@ -856,7 +864,7 @@ const Payments = () => {
         filters={filterOptions}
         filterValues={filters}
         onFilterChange={handleFilterChange}
-        onRefresh={refetch}
+        onRefresh={handleReset}
       />
 
       <DataTable

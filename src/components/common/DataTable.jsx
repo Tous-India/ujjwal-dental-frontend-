@@ -56,6 +56,9 @@ const DataTable = ({
   loading = false,
   searchPlaceholder = "Search...",
   onSearch,
+  // When provided, the search input becomes externally controlled — the parent
+  // drives the visible value (e.g. so resetting parent state clears the box).
+  searchValue,
   filters = [],
   filterValues = {},
   onFilterChange,
@@ -70,13 +73,16 @@ const DataTable = ({
   // Defaults to "medium" so all existing call sites are unaffected.
   size = "medium",
 }) => {
-  // Local search state
+  // Local search state — used when searchValue prop is not provided.
   const [searchTerm, setSearchTerm] = useState("");
 
   /**
-   * Handle search input change
+   * Handle search input change.
+   * Guard on isTrusted: browser-autofill and programmatic dispatches set
+   * isTrusted=false in most browsers.  Real keystrokes are always trusted.
    */
   const handleSearchChange = (e) => {
+    if (!e.isTrusted) return;
     const value = e.target.value;
     setSearchTerm(value);
     if (onSearch) {
@@ -217,15 +223,20 @@ const DataTable = ({
       {(onSearch || filters.length > 0 || onRefresh) && (
       <Box className="p-4 border-b border-gray-200">
         <Box sx={{ display: "flex", flexWrap: "nowrap", alignItems: "center", gap: 2 }}>
-          {/* Search Input */}
+          {/* Search Input — autoComplete="off" + non-standard name prevents
+              Chrome's autofill heuristic from injecting values into this field
+              when a modal form on the same page is submitted. */}
           {onSearch && (
             <TextField
               size="small"
               placeholder={searchPlaceholder}
-              value={searchTerm}
+              value={searchValue !== undefined ? searchValue : searchTerm}
               onChange={handleSearchChange}
               autoComplete="off"
-              inputProps={{ autoComplete: "off" }}
+              inputProps={{
+                autoComplete: "off",
+                name: "search-no-autofill",
+              }}
               sx={{ flex: 1, minWidth: 0 }}
               InputProps={{
                 startAdornment: (
@@ -242,11 +253,11 @@ const DataTable = ({
             <FormControl key={filter.key} size="small" sx={{ minWidth: 120, flexShrink: 0 }}>
               <InputLabel>{filter.label}</InputLabel>
               <Select
-                value={filterValues[filter.key] || ""}
+                value={filterValues[filter.key] || "all"}
                 label={filter.label}
-                onChange={(e) => handleFilterChange(filter.key, e.target.value)}
+                onChange={(e) => handleFilterChange(filter.key, e.target.value === "all" ? "" : e.target.value)}
               >
-                <MenuItem value="">All</MenuItem>
+                <MenuItem value="all">All</MenuItem>
                 {filter.options.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}

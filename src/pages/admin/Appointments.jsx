@@ -551,6 +551,13 @@ const Appointments = () => {
     setPage(1);
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+    setDateFilter("");
+    setPage(1);
+  };
+
   /**
    * Row click → open detail modal
    */
@@ -635,7 +642,7 @@ const Appointments = () => {
   };
 
   return (
-    <Box>
+    <Box sx={{ minHeight: "100vh" }}>
       {/* Header */}
       <Box className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <Box>
@@ -852,7 +859,7 @@ const Appointments = () => {
           },
         }}
         onRowClick={handleRowClick}
-        onRefresh={refetch}
+        onRefresh={handleReset}
         emptyMessage="No appointments found"
       />
 

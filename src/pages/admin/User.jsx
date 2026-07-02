@@ -149,6 +149,12 @@ const User = () => {
     setPage(1);
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+    setPage(1);
+  };
+
   const handleRowClick = (user) => {
     setSelectedUser(user);
     setDetailModalOpen(true);
@@ -196,7 +202,7 @@ const User = () => {
             setPage(1);
           },
         }}
-        onRefresh={refetch}
+        onRefresh={handleReset}
         onRowClick={handleRowClick}
         emptyMessage="No staff members found"
       />

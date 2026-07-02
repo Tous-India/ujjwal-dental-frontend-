@@ -216,6 +216,11 @@ const Clinics = () => {
     }));
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -246,12 +251,13 @@ const Clinics = () => {
         loading={isLoading}
         searchPlaceholder="Search clinic name or phone..."
         onSearch={setSearch}
+        searchValue={search}
         filters={filterOptions}
         filterValues={filters}
         onFilterChange={handleFilterChange}
         pagination={false}
         onRowClick={handleRowClick}
-        onRefresh={refetch}
+        onRefresh={handleReset}
         emptyMessage="No clinics found"
       />
 

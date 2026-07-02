@@ -242,6 +242,11 @@ const TreatmentMaster = () => {
     }));
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -272,12 +277,13 @@ const TreatmentMaster = () => {
         loading={isLoading}
         searchPlaceholder="Search treatment name or code..."
         onSearch={setSearch}
+        searchValue={search}
         filters={filterOptions}
         filterValues={filters}
         onFilterChange={handleFilterChange}
         pagination={false}
         onRowClick={handleRowClick}
-        onRefresh={refetch}
+        onRefresh={handleReset}
         emptyMessage="No treatments found"
       />
 

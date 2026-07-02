@@ -56,7 +56,6 @@ export const usePatientMutations = () => {
   const createMutation = useMutation({
     mutationFn: createPatient,
     onSuccess: () => invalidatePatients(),
-    onSettled: () => invalidatePatients(),
   });
 
   const updateMutation = useMutation({

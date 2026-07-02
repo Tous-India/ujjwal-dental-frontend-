@@ -112,7 +112,7 @@ const filterOptions = [
  * and active CTA buttons (Login, HomePage). Click the active card again to
  * toggle the filter off.
  */
-const StatCard = ({ icon: Icon, label, value, color, onClick, isActive }) => (
+const StatCard = ({ icon: Icon, label, value, color, onClick, isActive, dateLabel }) => (
   <Card
     variant="outlined"
     onClick={onClick}
@@ -140,6 +140,11 @@ const StatCard = ({ icon: Icon, label, value, color, onClick, isActive }) => (
         <Typography variant="h6" className="font-numbers font-bold leading-tight">
           {value}
         </Typography>
+        {dateLabel && (
+          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "11px", display: "block", lineHeight: 1.4 }}>
+            {dateLabel}
+          </Typography>
+        )}
       </Box>
     </CardContent>
   </Card>
@@ -206,6 +211,19 @@ const Billing = () => {
   });
   const stats = statsData?.data?.stats || {};
 
+  // Muted date scope label shown below each stat card value.
+  // Default (no date picker set) → "All time" (stats now cover all invoices).
+  // When a range is active → "1 Jul – 15 Jul" (or partial if only one end set).
+  const statDateLabel = (() => {
+    if (fromDate || toDate) {
+      const fmt = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+      if (fromDate && toDate) return `${fmt(fromDate)} – ${fmt(toDate)}`;
+      if (fromDate) return `From ${fmt(fromDate)}`;
+      return `Until ${fmt(toDate)}`;
+    }
+    return "All time";
+  })();
+
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSearch = (value) => { setSearch(value); setPage(1); };
 
@@ -218,6 +236,8 @@ const Billing = () => {
   };
 
   // Toggle a stat card's filter on/off. Clicking the same card twice clears.
+  // When activating a card, also clear the date range — stat cards show all-time
+  // totals (no date scope), so the table must match to stay consistent.
   const handleStatCardClick = (cardKey, filterToSet) => {
     if (activeStatCard === cardKey) {
       setActiveStatCard(null);
@@ -225,6 +245,8 @@ const Billing = () => {
     } else {
       setActiveStatCard(cardKey);
       setFilters(filterToSet);
+      setFromDate("");
+      setToDate("");
     }
     setPage(1);
   };
@@ -237,6 +259,15 @@ const Billing = () => {
   const handleFromDateChange = (e) => { setFromDate(e.target.value); setPage(1); };
   const handleToDateChange = (e) => { setToDate(e.target.value); setPage(1); };
   const handleClearDates = () => { setFromDate(""); setToDate(""); setPage(1); };
+
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+    setFromDate("");
+    setToDate("");
+    setActiveStatCard(null);
+    setPage(1);
+  };
 
   const formatCurrency = (val) => `₹${(val || 0).toLocaleString("en-IN")}`;
 
@@ -531,7 +562,7 @@ const Billing = () => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ minHeight: "100vh" }}>
       {/* Header */}
       <Box className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <Box>
@@ -561,6 +592,7 @@ const Billing = () => {
             label="Total Invoices"
             value={stats.totalInvoices || 0}
             color="bg-indigo-500"
+            dateLabel={statDateLabel}
             onClick={() => { setActiveStatCard(null); setFilters({}); setPage(1); }}
           />
         </Grid>
@@ -570,6 +602,7 @@ const Billing = () => {
             label="Total Amount"
             value={formatCurrency(stats.totalAmount)}
             color="bg-blue-500"
+            dateLabel={statDateLabel}
             onClick={() => { setActiveStatCard(null); setFilters({}); setPage(1); }}
           />
         </Grid>
@@ -580,6 +613,7 @@ const Billing = () => {
             label="Total Paid"
             value={formatCurrency(stats.totalPaid)}
             color="bg-green-500"
+            dateLabel={statDateLabel}
             isActive={activeStatCard === "paid"}
             onClick={() => handleStatCardClick("paid", { paymentStatus: "paid" })}
           />
@@ -590,16 +624,18 @@ const Billing = () => {
             label="Balance Due"
             value={formatCurrency(stats.totalDue)}
             color="bg-red-500"
+            dateLabel={statDateLabel}
             isActive={activeStatCard === "unpaid"}
-            onClick={() => handleStatCardClick("unpaid", { paymentStatus: "unpaid" })}
+            onClick={() => handleStatCardClick("unpaid", { paymentStatus: "unpaid,partial" })}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 2.4 }}>
           <StatCard
             icon={LocalHospitalIcon}
-            label="OPD Collection"
+            label="OPD Collected"
             value={formatCurrency(stats.opdCollection)}
             color="bg-teal-500"
+            dateLabel={statDateLabel}
             isActive={activeStatCard === "opd"}
             onClick={() => handleStatCardClick("opd", { itemType: "opd_fee" })}
           />
@@ -619,7 +655,7 @@ const Billing = () => {
         filters={filterOptions}
         filterValues={filters}
         onFilterChange={handleFilterChange}
-        onRefresh={refetch}
+        onRefresh={handleReset}
       />
 
       {/* Data Table */}

@@ -170,6 +170,28 @@ frontend/src/
 - Loading states with skeleton placeholders
 - Empty state when no notifications
 
+### [2026-07-02] AddPatientModal — Duplicate Phone Bug Fix
+**Files:** `components/admin/modals/AddPatientModal.jsx`, `hooks/admin/usePatients.js`
+
+**Root cause (Phase 2 — Chrome autofill hardening):** Even after adding `e.stopPropagation()` and removing `onSettled`, Chrome's autofill heuristic could still inject the submitted phone number into the DataTable search field during React's re-render cycle. Three further guards applied (see below). **Root cause (Phase 1):** Two compounding issues:
+1. `createMutation` in `usePatients.js` had `onSettled: () => invalidatePatients()`, which fired on **both success and failure**. A failed create (e.g. duplicate phone) still invalidated and immediately refetched the patients query, triggering a Patients page re-render while the modal's phone input was still focused. This re-render, combined with some browsers' autofill heuristics for `name="phone"` inputs, caused the DataTable's search field to receive the phone number value — calling `handleSearch(phoneNumber)` and filtering the list.
+2. API errors were shown via `toast.error()` only (no inline feedback), so the admin had no clear in-form signal, making the behavior visible on re-try.
+
+**Fixes applied:**
+- ✅ `handleSubmit` now accepts the `MouseEvent` and immediately calls `e.stopPropagation()` + `e.preventDefault()` — prevents click event from bubbling through the React fiber tree to any ancestor handler.
+- ✅ Errors are shown **inline** in the form, not just as a toast:
+  - Duplicate phone (409 or message containing "phone"/"already exist") → sets `errors.phone` → shown as red helperText on the phone field
+  - Other API errors → sets `errors._form` → shown as an `<Alert severity="error">` at the top of the form
+  - All inline errors clear when the user edits any field
+- ✅ On **success**: `toast.success("Patient added successfully")` fires, form resets, modal closes, patients list refreshes via `onSuccess` callback.
+- ✅ `createMutation.onSettled` removed from `usePatients.js` — `onSuccess` is sufficient for the success case; the list must NOT be refetched on failure.
+- ✅ No changes to `Patients.jsx` search/filter logic.
+
+**Phase 2 — Chrome autofill hardening** (`components/common/DataTable.jsx`, `AddPatientModal.jsx`):
+- ✅ **FIX 1 — DataTable search: non-standard name** (`DataTable.jsx`): Added `name="search-no-autofill"` to the search TextField's `inputProps`. Chrome's autofill heuristic only injects into inputs with names it recognises as standard form fields (phone, email, etc.); a non-standard name breaks that association. Note: the search TextField is in `DataTable.jsx`, not `Patients.jsx` — the fix is applied at the source.
+- ✅ **FIX 2 — AddPatientModal: formKey forces field remount** (`AddPatientModal.jsx`): Added `formKey` state that increments each time `open` becomes `true` (via `useEffect`). The Grid container wrapping all TextFields receives `key={formKey}`, so React unmounts and remounts every input on each modal open, destroying any DOM-level autofill associations Chrome built from the previous session.
+- ✅ **FIX 3 — DataTable search: isTrusted guard** (`DataTable.jsx`): `handleSearchChange` now returns early if `!e.isTrusted`. Real keystrokes set `isTrusted = true`; browser-autofill and programmatically dispatched events set it `false` in most browsers. Combined with FIX 1 and FIX 2, this is belt-and-suspenders.
+
 ### Patients Management
 - View all patients with search and filters
 - Click row to view patient details in modal
@@ -318,7 +340,7 @@ frontend/src/
   | Total Invoices | `stats.totalInvoices` | indigo | clears all filters |
   | Total Amount | `stats.totalAmount` (₹) | blue | clears all filters |
   | Total Paid | `stats.totalPaid` (₹) | green | paymentStatus=paid |
-  | Balance Due | `stats.totalDue` (₹) | red | paymentStatus=unpaid |
+  | Balance Due | `stats.totalDue` (₹) | red | paymentStatus=unpaid,partial |
   | OPD Collection | `stats.opdCollection` (₹) | teal | itemType=opd_fee |
 - [2026-06-30] "Unpaid Invoices" stat card removed (was displaying `stats.unpaidCount`; backend field preserved). Grid resized to `md:2.4` (5-up, exact 12-column fit).
 - [2026-06-30] Stat card toggle-to-clear filter behavior (`Billing.jsx` only):
@@ -618,6 +640,55 @@ All `window.alert`, `window.confirm`, and `window.prompt` calls have been remove
 - ✅ Removed `{ title: "Book Treatment", path: "/book-treatment", icon: <AddShoppingCartIcon /> }` nav item from the patient sidebar — the route no longer exists in the sidebar navigation
 - ✅ Removed `const BookTreatment = lazy(...)` import and `<Route path="book-treatment" .../>` from `App.jsx`
 - ✅ "Book Appointment / Treatment" button on Dashboard Quick Actions is **unaffected** — it routes to `/book-appointment`
+
+### [2026-07-02] Admin — PatientDetailModal Tab Changes
+**File:** `components/admin/modals/PatientDetailModal.jsx`
+
+- ✅ **Renamed** "Payments" tab → "Payment History" (tab index 4, label only — content, panel, and index unchanged)
+- ✅ **Added** "Lab" tab (index 6, after Reports) showing the patient's lab orders
+  - Fetches via existing `GET /api/lab-orders` (`getLabOrders` from `labOrders.api.js`) with `limit: 200`
+  - Client-side filtered by `patient._id` (backend `getAllLabOrders` does not yet accept a `patient` query param)
+  - Columns: Order No., Date, Lab, Items (comma-joined procedures), Delivery status chip, Payment status chip, Total
+  - Empty state: "No lab orders found for this patient."
+  - New status color entries added to shared `statusColors` map: `delivered` (success), `rejected` (error), `partially_paid` (warning)
+- ✅ **Added** "Invoices" tab (index 7, after Lab) showing the patient's invoices
+  - Fetches via `getInvoices({ patient: patientId, limit: 50 })` — server-side filtered (backend supports `patient` query param)
+  - Columns: Invoice No., Date, Items (first item + "+N more"), Total, Paid, Balance Due, Payment Status chip, eye icon action
+  - Eye icon opens `InvoiceDetailModal` for that invoice (reuses existing modal, no modification)
+  - Empty state: "No invoices found for this patient."
+  - Supports `paymentStatusFilter` prop for pre-filtered views (e.g., "unpaid" from stat card click)
+  - Filter chip shown when active; × clears it back to all invoices
+- ✅ **Billing stat cards in "Payment History" tab made clickable:**
+  - "Total Amount" card → navigates to Invoices tab (all invoices)
+  - "Balance Due" card → navigates to Invoices tab pre-filtered to `paymentStatus=unpaid`
+  - "Invoices" count card → navigates to Invoices tab (all invoices)
+  - "Total Paid" card → no action (already on Payment History tab)
+  - Renamed "Pending" label to "Balance Due" for clarity
+  - Clicking Invoices tab header directly resets any active filter
+- ✅ **Payment History tab now shows actual payment data derived from invoices:**
+  - Root cause of empty tab: previous implementation called `getPatientPayments` which queries the `Payment` collection — but this system tracks payments on invoices (`amountPaid`, `paymentMethod`, `paymentStatus` fields on Invoice model). `Payment.find()` returned empty.
+  - Fix: replaced with `getInvoices({ patient: patientId, limit: 50 })`, filtered client-side to `amountPaid > 0`
+  - Table columns: Date (`invoiceDate`) / Invoice No. / Description (first item) / Total (`grandTotal`) / Paid / Payment Mode / Status chip
+  - Summary line above table: "Total Paid: ₹X across Y invoices"
+  - Empty state: "No payments recorded for this patient yet."
+  - Read-only — "Record Payment" button and `RecordPaymentModal` removed (admin uses Billing page for actions)
+  - Stat cards retained (from `getBillingStats`): Total Amount / Total Paid / Balance Due / Invoices count
+- ✅ **No other tabs, panels, or functionality changed**
+
+### [2026-07-02] Admin — Billing Stats Cards: Three Bug Fixes
+**Files:** `pages/admin/Billing.jsx` (frontend), `backend/src/modules/billing/billing.controller.js` (backend)
+
+- ✅ **Fix 1 — Balance Due click filter now includes partial invoices:**
+  - Was: clicking "Balance Due" stat card sent `paymentStatus=unpaid` — partial invoices (with outstanding `balanceDue`) were excluded.
+  - Fix: click now sends `paymentStatus=unpaid,partial`. Backend `getAllInvoices` was updated to parse comma-separated `paymentStatus` values, validate each against `["unpaid","partial","paid"]`, and use `{ $in: [...] }` for multi-value queries. Single-value behaviour unchanged.
+- ✅ **Fix 2 — Stats date filter now uses `invoiceDate` (was `createdAt`):**
+  - `getBillingStats` was building `matchQuery.createdAt = { $gte, $lte }` but `getAllInvoices` and the invoice table both use `invoiceDate`. For backdated invoices the stat totals and the visible table rows fell into different date buckets.
+  - Fix: `matchQuery.createdAt` → `matchQuery.invoiceDate` in `getBillingStats`. `Invoice.getStats()` aggregation is unchanged.
+- ✅ **Fix 3 — Date scope label added to each stat card:**
+  - Each stat card now shows a small muted subtitle (11 px, `text.secondary`) below the value showing the active date window.
+  - Default (no date picker set): shows current month + year, e.g. "July 2026" (mirrors the backend current-month default).
+  - When a date range is active: shows the formatted range, e.g. "1 Jul – 15 Jul" (or "From 1 Jul" / "Until 15 Jul" when only one end is set).
+  - No new API calls or state — derived purely from existing `fromDate`/`toDate` state. `StatCard` accepts a new optional `dateLabel` prop; unchanged if omitted.
 
 ### [2026-07-02] Admin — AppointmentDetailModal Payment Status Fix
 **File:** `components/admin/modals/AppointmentDetailModal.jsx`

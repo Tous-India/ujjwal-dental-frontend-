@@ -269,6 +269,14 @@ const Notifications = () => {
     setPage(1);
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setFilters({});
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -350,7 +358,7 @@ const Notifications = () => {
         filters={filterOptions}
         filterValues={filters}
         onFilterChange={handleFilterChange}
-        onRefresh={refetch}
+        onRefresh={handleReset}
       />
 
       {/* Data Table */}
