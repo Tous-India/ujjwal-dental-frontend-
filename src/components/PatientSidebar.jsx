@@ -76,11 +76,6 @@ const navItems = [
     badgeColor: "#8b5cf6",
   },
   {
-    title: "Book Treatment",
-    path: "/book-treatment",
-    icon: <AddShoppingCartIcon />,
-  },
-  {
     title: "My Membership",
     path: "/membership",
     icon: <CardMembershipIcon />,

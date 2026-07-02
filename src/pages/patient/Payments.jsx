@@ -18,7 +18,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   Paper,
   Button,
   Dialog,
@@ -34,7 +33,7 @@ import Grid from "@mui/material/Grid";
 import PaymentIcon from "@mui/icons-material/Payment";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CloseIcon from "@mui/icons-material/Close";
-import { useMyPayments } from "../../hooks/patient/useMyPayments";
+import { useMyPaymentHistory } from "../../hooks/patient/useMyPayments";
 import { useMyBillingSummary } from "../../hooks/patient/useMyInvoices";
 import { useAuthStore } from "../../store/auth.store";
 import {
@@ -42,32 +41,21 @@ import {
   verifyPendingPayment,
 } from "../../api/patient/payments.api";
 
-const modeLabels = {
+const paymentModeLabels = {
   cash: "Cash",
   card: "Card",
   upi: "UPI",
-  razorpay: "Razorpay",
+  online: "Online",
+  razorpay: "Online",
   netbanking: "Net Banking",
-  other: "Other",
-};
-
-const typeLabels = {
-  opd_fee: "OPD Fee",
-  consultation: "Consultation",
-  treatment: "Treatment",
-  test: "Test",
-  invoice_payment: "Invoice",
-  advance: "Advance",
-  membership: "Membership",
+  free: "Free",
   other: "Other",
 };
 
 const statusColors = {
-  pending: "warning",
   paid: "success",
-  failed: "error",
-  refunded: "info",
-  cancelled: "default",
+  partial: "warning",
+  unpaid: "error",
 };
 
 const formatDate = (date) => {
@@ -237,17 +225,13 @@ const PayPendingModal = ({ open, onClose, pendingAmount, onPaymentSuccess }) => 
 /* ── Main Page ──────────────────────────────────────────────────────── */
 
 const Payments = () => {
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  const { data, isLoading, error, refetch } = useMyPayments({ page, limit });
+  const { data, isLoading, error, refetch } = useMyPaymentHistory();
   const { data: billingData, refetch: refetchBilling } = useMyBillingSummary();
 
-  const paymentsData = data?.data || {};
-  const payments = paymentsData.payments || (Array.isArray(data?.data) ? data.data : []);
-  const pagination = data?.pagination || { total: 0 };
+  const payments = Array.isArray(data?.data) ? data.data : [];
   const stats = billingData?.data?.stats || {};
   const pendingAmount = stats.totalDue || 0;
 
@@ -273,7 +257,7 @@ const Payments = () => {
     <Box>
       {/* Page Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography variant="h5" fontWeight="bold" gutterBottom>
           Payment History
         </Typography>
         <Typography variant="body1" color="text.secondary">
@@ -282,9 +266,9 @@ const Payments = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 3, alignItems: "stretch" }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card>
+          <Card sx={{ height: "100%" }}>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <PaymentIcon color="primary" sx={{ fontSize: 40 }} />
@@ -302,7 +286,7 @@ const Payments = () => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card>
+          <Card sx={{ height: "100%" }}>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <AccountBalanceWalletIcon color="success" sx={{ fontSize: 40 }} />
@@ -320,8 +304,8 @@ const Payments = () => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card>
-            <CardContent>
+          <Card sx={{ height: "100%" }}>
+            <CardContent sx={{ height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <PaymentIcon color="warning" sx={{ fontSize: 40 }} />
                 <Box sx={{ flex: 1 }}>
@@ -331,27 +315,27 @@ const Payments = () => {
                   <Typography variant="h5" fontWeight="bold" className="font-numbers text-orange-600">
                     {formatCurrency(pendingAmount)}
                   </Typography>
-                  {pendingAmount > 0 && (
-                    <Button
-                      size="small"
-                      onClick={() => setPayModalOpen(true)}
-                      sx={{
-                        mt: 1,
-                        bgcolor: "#f59e0b",
-                        color: "#fff",
-                        fontWeight: 600,
-                        fontSize: "14px",
-                        borderRadius: "8px",
-                        px: 3,
-                        py: 0.75,
-                        "&:hover": { bgcolor: "#d97706" },
-                      }}
-                    >
-                      Pay Now
-                    </Button>
-                  )}
                 </Box>
               </Box>
+              {pendingAmount > 0 && (
+                <Button
+                  size="small"
+                  onClick={() => setPayModalOpen(true)}
+                  sx={{
+                    mt: 1,
+                    bgcolor: "#f59e0b",
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: "14px",
+                    borderRadius: "8px",
+                    px: 3,
+                    py: 0.75,
+                    "&:hover": { bgcolor: "#d97706" },
+                  }}
+                >
+                  Pay Now
+                </Button>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -383,94 +367,77 @@ const Payments = () => {
             <Box sx={{ textAlign: "center", py: 6 }}>
               <PaymentIcon sx={{ fontSize: 64, color: "text.disabled", mb: 2 }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No payments found
+                No payments recorded yet
               </Typography>
               <Typography variant="body2" color="text.disabled">
-                Your payment history will appear here
+                Your payment history will appear here once a payment is made.
               </Typography>
             </Box>
           ) : (
-            <>
-              <TableContainer component={Paper} elevation={0}>
-                <Table sx={{ bgcolor: "white", minWidth: "max-content" }}>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                      <TableCell>Payment #</TableCell>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Mode</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Reference</TableCell>
+            <TableContainer component={Paper} elevation={0}>
+              <Table sx={{ bgcolor: "white", minWidth: "max-content" }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Invoice No.</TableCell>
+                    <TableCell>Service</TableCell>
+                    <TableCell>Total Amount</TableCell>
+                    <TableCell>Amount Paid</TableCell>
+                    <TableCell>Mode</TableCell>
+                    <TableCell>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {payments.map((payment) => (
+                    <TableRow key={payment._id} hover>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatDate(payment.date)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" className="font-mono text-xs" fontWeight="medium">
+                          {payment.invoiceNumber || "-"}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {payment.service || "-"}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" className="font-numbers">
+                          {formatCurrency(payment.grandTotal)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight="bold" className="font-numbers text-green-600">
+                          {formatCurrency(payment.amountPaid)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {paymentModeLabels[payment.paymentMethod] || payment.paymentMethod || "-"}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={
+                            payment.paymentStatus === "paid"
+                              ? "Paid"
+                              : payment.paymentStatus === "partial"
+                              ? "Partial"
+                              : payment.paymentStatus || "-"
+                          }
+                          size="small"
+                          color={statusColors[payment.paymentStatus] || "default"}
+                        />
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {payments.map((payment) => (
-                      <TableRow key={payment._id} hover>
-                        <TableCell>
-                          <Typography variant="body2" className="font-mono text-xs" fontWeight="medium">
-                            {payment.paymentNumber || "-"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {formatDate(payment.paidAt || payment.createdAt)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="bold" className="text-green-600">
-                            {formatCurrency(payment.amount)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {modeLabels[payment.paymentMode] || payment.paymentMode || "-"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={typeLabels[payment.type] || payment.type || "-"}
-                            size="small"
-                            variant="outlined"
-                          />
-                          {(payment.treatmentType?.name || payment.treatmentName) && (
-                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                              {payment.treatmentType?.name || payment.treatmentName}
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={payment.status || "pending"}
-                            size="small"
-                            color={statusColors[payment.status] || "default"}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" className="font-mono text-xs">
-                            {payment.razorpayPaymentId || payment.invoice?.invoiceNumber || "-"}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              {pagination.total > limit && (
-                <TablePagination
-                  component="div"
-                  count={pagination.total}
-                  page={page - 1}
-                  onPageChange={(_, p) => setPage(p + 1)}
-                  rowsPerPage={limit}
-                  onRowsPerPageChange={(e) => {
-                    setLimit(parseInt(e.target.value, 10));
-                    setPage(1);
-                  }}
-                  rowsPerPageOptions={[10, 25, 50]}
-                />
-              )}
-            </>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </CardContent>
       </Card>

@@ -5,6 +5,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { getMyPayments } from "../../api/patient/payments.api";
+import { getMyPaymentHistory } from "../../api/patient/invoices.api";
 import { useAuthStore } from "../../store/auth.store";
 
 /**
@@ -24,3 +25,19 @@ export const useMyPayments = (params = {}) => {
 };
 
 export default useMyPayments;
+
+/**
+ * Hook for fetching patient's payment history derived from invoices.amountPaid.
+ * Uses token-derived endpoint — no patient ID param needed (IDOR-safe).
+ */
+export const useMyPaymentHistory = () => {
+  const patient = useAuthStore((state) => state.patient);
+
+  return useQuery({
+    queryKey: ["patient", "payment-history", patient?._id],
+    queryFn: getMyPaymentHistory,
+    enabled: !!patient?._id,
+    staleTime: 30 * 1000,
+    refetchOnMount: "always",
+  });
+};

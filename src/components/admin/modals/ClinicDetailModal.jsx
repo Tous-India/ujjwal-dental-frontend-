@@ -90,7 +90,7 @@ const ClinicDetailModal = ({ open, onClose, clinic, onEdit, onDelete, onPermanen
               <BusinessIcon />
             </Avatar>
             <Box>
-              <Typography variant="h6" className="font-bold">
+              <Typography variant="h6" component="span" className="font-bold">
                 {name || "Clinic"}
               </Typography>
               <Box className="flex items-center gap-2 mt-1">

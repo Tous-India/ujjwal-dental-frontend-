@@ -26,16 +26,27 @@ import {
   TableContainer,
   Paper,
   Divider,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import UndoIcon from "@mui/icons-material/Undo";
+import PrintIcon from "@mui/icons-material/Print";
+import ReplayIcon from "@mui/icons-material/Replay";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
+import DownloadIcon from "@mui/icons-material/Download";
+import { getInvoice } from "../../api/admin/billing.api";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
 import CollectPaymentModal from "../../components/admin/modals/CollectPaymentModal";
+import PaymentDetailModal from "../../components/admin/modals/PaymentDetailModal";
+import InvoiceDetailModal from "../../components/admin/modals/InvoiceDetailModal";
+import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
 import { usePayments, useAdminPaymentMutations, usePatientUnpaidInvoices } from "../../hooks/admin/usePayments";
 import { searchPatients } from "../../api/admin/patients.api";
 import AddPaymentModal from "../../components/admin/modals/AddPaymentModal";
-import PaymentDetailModal from "../../components/admin/modals/PaymentDetailModal";
+import { downloadInvoicePDF } from "../../utils/downloadInvoicePDF";
+import { exportPaymentsPdf } from "../../api/admin/payments.api";
 
 const fmt = (n) => (n || 0).toLocaleString("en-IN");
 
@@ -58,180 +69,72 @@ const CATEGORY_COLORS = {
   Other: { bg: "#f3f4f6", color: "#374151" },
 };
 
-// ── Payment history table columns ────────────────────────────────────────────
-const paymentColumns = [
-  {
-    field: "paymentNumber",
-    headerName: "Payment #",
-    minWidth: 140,
-    render: (value) => (
-      <Typography variant="body2" className="font-mono font-medium text-green-600">
-        {value || "-"}
-      </Typography>
-    ),
-  },
-  {
-    field: "patient",
-    headerName: "Patient",
-    minWidth: 180,
-    render: (value) => (
-      <Box className="flex items-center gap-2">
-        <Avatar className="bg-green-100 text-green-600" sx={{ width: 32, height: 32 }}>
-          {value?.name?.[0]?.toUpperCase() || "P"}
-        </Avatar>
-        <Box>
-          <Typography variant="body2" className="font-medium">
-            {value?.name || "Unknown"}
-          </Typography>
-          <Typography variant="caption" className="text-gray-500">
-            {value?.phone || ""}
-          </Typography>
-        </Box>
-      </Box>
-    ),
-  },
-  {
-    field: "amount",
-    headerName: "Amount",
-    minWidth: 120,
-    render: (value) => (
-      <Typography variant="body2" className="font-numbers font-semibold text-green-600">
-        ₹{fmt(value)}
-      </Typography>
-    ),
-  },
-  {
-    field: "paymentMode",
-    headerName: "Mode",
-    minWidth: 100,
-    render: (value) => {
-      const labels = {
-        cash: "Cash",
-        card: "Card",
-        upi: "UPI",
-        razorpay: "Razorpay",
-        netbanking: "Net Banking",
-        other: "Other",
-      };
-      return (
-        <Typography variant="body2" className="capitalize">
-          {labels[value] || value || "-"}
-        </Typography>
-      );
-    },
-  },
-  {
-    field: "type",
-    headerName: "Type",
-    minWidth: 130,
-    render: (value) => {
-      const labels = {
-        opd_fee: "OPD Fee",
-        consultation: "Consultation",
-        treatment: "Treatment",
-        test: "Test",
-        invoice_payment: "Invoice",
-        advance: "Advance",
-        membership: "Membership",
-        refund: "Refund",
-        other: "Other",
-      };
-      return (
-        <Chip
-          label={labels[value] || value || "-"}
-          size="small"
-          variant="outlined"
-          className="capitalize"
-        />
-      );
-    },
-  },
-  {
-    field: "status",
-    headerName: "Status",
-    minWidth: 110,
-    render: (value, row) => {
-      const colors = {
-        pending: "warning",
-        paid: "success",
-        failed: "error",
-        refunded: "info",
-        cancelled: "default",
-        reversed: "default",
-      };
-      const chip = (
-        <Chip
-          label={value === "reversed" ? "Reversed" : value || "pending"}
-          size="small"
-          color={colors[value] || "default"}
-          className="capitalize"
-          sx={
-            value === "reversed"
-              ? { color: "#6b7280", bgcolor: "#f3f4f6", borderColor: "#d1d5db" }
-              : {}
-          }
-        />
-      );
-      if (value === "reversed" && row?.reversalReason) {
-        return (
-          <Tooltip title={`Reason: ${row.reversalReason}`} placement="top">
-            {chip}
-          </Tooltip>
-        );
-      }
-      return chip;
-    },
-  },
-  {
-    field: "clinic",
-    headerName: "Clinic",
-    minWidth: 120,
-    render: (value) => (
-      <Typography variant="body2">{value?.name || "-"}</Typography>
-    ),
-  },
-  {
-    field: "paidAt",
-    headerName: "Paid At",
-    minWidth: 120,
-    type: "date",
-  },
-];
+// ── Label maps (static, used inside columns) ─────────────────────────────────
+const MODE_LABELS = {
+  cash: "Cash",
+  card: "Card",
+  upi: "UPI",
+  razorpay: "Razorpay",
+  netbanking: "Net Banking",
+  other: "Other",
+};
+
+const TYPE_LABELS = {
+  opd_fee: "OPD Fee",
+  consultation: "Consultation",
+  treatment: "Treatment",
+  test: "Test",
+  invoice_payment: "Invoice Payment",
+  advance: "Advance",
+  membership: "Membership",
+  refund: "Refund",
+  other: "Other",
+};
+
+const TYPE_CHIP_COLORS = {
+  "OPD Fee":         { bg: "#dbeafe", color: "#1e40af" },
+  "Consultation":    { bg: "#ede9fe", color: "#5b21b6" },
+  "Treatment":       { bg: "#dcfce7", color: "#166534" },
+  "Test":            { bg: "#fce7f3", color: "#9d174d" },
+  "Invoice Payment": { bg: "#f3f4f6", color: "#374151" },
+  "Advance":         { bg: "#fef9c3", color: "#713f12" },
+  "Membership":      { bg: "#fef3c7", color: "#92400e" },
+  "Refund":          { bg: "#fef2f2", color: "#991b1b" },
+};
+
+const MODE_CHIP_COLORS = {
+  cash:       { bg: "#dcfce7", color: "#166534" },
+  upi:        { bg: "#ede9fe", color: "#5b21b6" },
+  card:       { bg: "#dbeafe", color: "#1e40af" },
+  razorpay:   { bg: "#fdf4ff", color: "#6b21a8" },
+  netbanking: { bg: "#fef3c7", color: "#92400e" },
+  other:      { bg: "#f3f4f6", color: "#374151" },
+};
 
 const filterOptions = [
-  {
-    key: "status",
-    label: "Status",
-    options: [
-      { value: "pending", label: "Pending" },
-      { value: "paid", label: "Paid" },
-      { value: "failed", label: "Failed" },
-      { value: "refunded", label: "Refunded" },
-      { value: "cancelled", label: "Cancelled" },
-    ],
-  },
   {
     key: "paymentMode",
     label: "Mode",
     options: [
-      { value: "cash", label: "Cash" },
-      { value: "card", label: "Card" },
-      { value: "upi", label: "UPI" },
-      { value: "razorpay", label: "Razorpay" },
+      { value: "cash",       label: "Cash" },
+      { value: "card",       label: "Card" },
+      { value: "upi",        label: "UPI" },
+      { value: "razorpay",   label: "Razorpay" },
       { value: "netbanking", label: "Net Banking" },
+      { value: "other",      label: "Other" },
     ],
   },
   {
     key: "type",
     label: "Type",
     options: [
-      { value: "opd_fee", label: "OPD Fee" },
-      { value: "consultation", label: "Consultation" },
-      { value: "treatment", label: "Treatment" },
-      { value: "test", label: "Test" },
+      { value: "opd_fee",         label: "OPD Fee" },
+      { value: "consultation",    label: "Consultation" },
+      { value: "treatment",       label: "Treatment" },
+      { value: "test",            label: "Test" },
       { value: "invoice_payment", label: "Invoice" },
-      { value: "advance", label: "Advance" },
-      { value: "membership", label: "Membership" },
+      { value: "advance",         label: "Advance" },
+      { value: "membership",      label: "Membership" },
     ],
   },
 ];
@@ -258,6 +161,21 @@ const Payments = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
 
+  // ── Patient / Invoice detail modal state ─────────────────────────────────
+  const [patientForModal, setPatientForModal] = useState(null);
+  const [patientModalOpen, setPatientModalOpen] = useState(false);
+  const [invoiceForModal, setInvoiceForModal] = useState(null);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+
+  // ── Active tab: 0 = Paid, 1 = Refunded ───────────────────────────────────
+  const [activeTab, setActiveTab] = useState(0);
+  const [exporting, setExporting] = useState(false);
+
+  // ── PDF preview dialog state ──────────────────────────────────────────────
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [pdfFilename, setPdfFilename] = useState("");
+
   // ── Reversal state ─────────────────────────────────────────────────────────
   const [reverseDialogOpen, setReverseDialogOpen] = useState(false);
   const [reversalPayment, setReversalPayment] = useState(null);
@@ -277,10 +195,12 @@ const Payments = () => {
   } = usePatientUnpaidInvoices(selectedPatient?._id);
 
   // ── Payment history ────────────────────────────────────────────────────────
+  const activeStatus = activeTab === 0 ? "paid" : "refunded";
   const { data, isLoading, refetch } = usePayments({
     page,
     limit,
     search,
+    status: activeStatus,
     ...filters,
     ...(fromDate && { from: fromDate }),
     ...(toDate && { to: toDate }),
@@ -316,6 +236,52 @@ const Payments = () => {
   };
 
   // ── Payment history handlers ───────────────────────────────────────────────
+  const handleTabChange = (_, newTab) => {
+    setActiveTab(newTab);
+    setPage(1);
+  };
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      const params = {
+        status: activeStatus,
+        ...filters,
+        ...(fromDate && { from: fromDate }),
+        ...(toDate && { to: toDate }),
+      };
+      const blob = await exportPaymentsPdf(params);
+      const url = window.URL.createObjectURL(blob);
+      const filename = `payment-history-${activeStatus}-${new Date().toISOString().split("T")[0]}.pdf`;
+      setPdfPreviewUrl(url);
+      setPdfFilename(filename);
+      setPdfPreviewOpen(true);
+    } catch (err) {
+      console.error("Export failed:", err);
+      setSnackbar({ open: true, message: "Failed to export PDF. Please try again.", severity: "error" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handlePreviewClose = () => {
+    setPdfPreviewOpen(false);
+    if (pdfPreviewUrl) {
+      window.URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
+    setPdfFilename("");
+  };
+
+  const handlePreviewDownload = () => {
+    const a = document.createElement("a");
+    a.href = pdfPreviewUrl;
+    a.download = pdfFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleSearch = (value) => {
     setSearch(value);
     setPage(1);
@@ -371,35 +337,233 @@ const Payments = () => {
     }
   };
 
+  // Returns a human-readable service label — treatmentName wins over generic type
+  const getServiceLabel = (row) => row.treatmentName || TYPE_LABELS[row.type] || row.type || "—";
+
+  // Columns defined inside the component so render fns can close over state setters
   const allColumns = [
-    ...paymentColumns,
+    // 1. Receipt No.
+    {
+      field: "paymentNumber",
+      headerName: "Receipt No.",
+      minWidth: 150,
+      render: (value) => (
+        <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 700, color: "#16a34a" }}>
+          {value || "—"}
+        </Typography>
+      ),
+    },
+    // 2. Date & Time
+    {
+      field: "paidAt",
+      headerName: "Date & Time",
+      minWidth: 160,
+      render: (value, row) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {new Date(value || row.createdAt).toLocaleString("en-IN", {
+            day: "2-digit", month: "short", year: "numeric",
+            hour: "2-digit", minute: "2-digit",
+          })}
+        </Typography>
+      ),
+    },
+    // 3. Patient — click opens PatientDetailModal
+    {
+      field: "patient",
+      headerName: "Patient",
+      minWidth: 180,
+      render: (value) => (
+        <Box
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); setPatientForModal(value); setPatientModalOpen(true); }}
+        >
+          <Avatar sx={{ width: 28, height: 28, fontSize: "0.75rem", bgcolor: "#dcfce7", color: "#16a34a" }}>
+            {value?.name?.[0]?.toUpperCase() || "P"}
+          </Avatar>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.3 }} className="hover:underline">
+              {value?.name || "Unknown"}
+            </Typography>
+            <Typography variant="caption" className="text-gray-500">{value?.phone || ""}</Typography>
+          </Box>
+        </Box>
+      ),
+    },
+    // 4. Invoice No. — click opens InvoiceDetailModal
+    {
+      field: "invoice",
+      headerName: "Invoice No.",
+      minWidth: 150,
+      render: (value) => {
+        if (!value?.invoiceNumber)
+          return <Typography variant="body2" sx={{ color: "#9ca3af" }}>—</Typography>;
+        return (
+          <Typography
+            variant="body2"
+            sx={{ fontFamily: "monospace", fontWeight: 700, color: "#4338ca", cursor: "pointer" }}
+            className="hover:underline"
+            onClick={(e) => { e.stopPropagation(); setInvoiceForModal(value); setInvoiceModalOpen(true); }}
+          >
+            {value.invoiceNumber}
+          </Typography>
+        );
+      },
+    },
+    // 5. Treatment / Service
+    {
+      field: "type",
+      headerName: "Treatment/Service",
+      minWidth: 165,
+      render: (_value, row) => {
+        const label = getServiceLabel(row);
+        const style = TYPE_CHIP_COLORS[label] || { bg: "#f3f4f6", color: "#374151" };
+        return (
+          <Box component="span" sx={{
+            px: 1, py: 0.3, bgcolor: style.bg, color: style.color,
+            borderRadius: "4px", fontSize: 12, fontWeight: 600, display: "inline-block",
+          }}>
+            {label}
+          </Box>
+        );
+      },
+    },
+    // 6. Amount Paid
+    {
+      field: "amount",
+      headerName: "Amount Paid",
+      minWidth: 120,
+      align: "right",
+      render: (value) => (
+        <Typography variant="body2" sx={{ fontWeight: 700, color: "#16a34a" }}>
+          ₹{fmt(value)}
+        </Typography>
+      ),
+    },
+    // 7. Payment Mode
+    {
+      field: "paymentMode",
+      headerName: "Mode",
+      minWidth: 120,
+      render: (value) => {
+        const style = MODE_CHIP_COLORS[value] || { bg: "#f3f4f6", color: "#374151" };
+        return (
+          <Box component="span" sx={{
+            px: 1, py: 0.3, bgcolor: style.bg, color: style.color,
+            borderRadius: "4px", fontSize: 12, fontWeight: 600, display: "inline-block",
+          }}>
+            {MODE_LABELS[value] || value || "—"}
+          </Box>
+        );
+      },
+    },
+    // Actions
     {
       field: "_id",
-      headerName: "Reverse",
-      minWidth: 80,
+      headerName: "Actions",
+      minWidth: 120,
       align: "center",
-      render: (_value, row) => {
-        if (row.reversed || row.status === "reversed" || !row.settledInvoices?.length)
-          return null;
-        return (
-          <Tooltip title="Reverse this payment">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={(e) => {
+      render: (_value, row) => (
+        <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
+          {/* View payment details — always visible */}
+          <Tooltip title="View Payment Details">
+            <IconButton size="small" sx={{ color: "#4338ca" }} onClick={(e) => {
+              e.stopPropagation();
+              setSelectedPayment(row);
+              setDetailModalOpen(true);
+            }}>
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {/* Download invoice PDF — only when a linked invoice exists */}
+          {row.invoice?._id && (
+            <Tooltip title="Download Invoice PDF">
+              <IconButton size="small" sx={{ color: "#6b7280" }} onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  const res = await getInvoice(row.invoice._id);
+                  const fullInvoice = res?.data?.invoice || res?.data;
+                  if (fullInvoice) await downloadInvoicePDF(fullInvoice);
+                } catch (err) {
+                  console.error("Invoice PDF download failed:", err);
+                }
+              }}>
+                <PrintIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {/* Process Refund — opens PaymentDetailModal (refund form pre-available) */}
+          {row.status === "paid" && !row.settledInvoices?.length && (
+            <Tooltip title="Process Refund">
+              <IconButton size="small" sx={{ color: "#dc2626" }} onClick={(e) => {
+                e.stopPropagation();
+                setSelectedPayment(row);
+                setDetailModalOpen(true);
+              }}>
+                <ReplayIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {/* Reverse — for admin-recorded payments that settled multiple invoices */}
+          {!row.reversed && row.status !== "reversed" && !!row.settledInvoices?.length && (
+            <Tooltip title="Reverse Payment">
+              <IconButton size="small" color="error" onClick={(e) => {
                 e.stopPropagation();
                 setReversalPayment(row);
                 setReversalReason("");
                 setReverseDialogOpen(true);
-              }}
-            >
-              <UndoIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        );
-      },
+              }}>
+                <UndoIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      ),
     },
   ];
+
+  // ── Refunded-tab extra columns ─────────────────────────────────────────────
+  const refundedOnCol = {
+    field: "_refundedAt",
+    headerName: "Refunded On",
+    minWidth: 140,
+    render: (_, row) => (
+      <Typography variant="body2" sx={{ fontSize: 13 }}>
+        {row.refund?.refundedAt
+          ? new Date(row.refund.refundedAt).toLocaleDateString("en-IN", {
+              day: "2-digit", month: "short", year: "numeric",
+            })
+          : "—"}
+      </Typography>
+    ),
+  };
+
+  const refundReasonCol = {
+    field: "_refundReason",
+    headerName: "Refund Reason",
+    minWidth: 200,
+    render: (_, row) =>
+      row.refund?.reason ? (
+        <Tooltip title={row.refund.reason} placement="top">
+          <Typography variant="body2" sx={{
+            fontSize: 13,
+            maxWidth: 190,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            display: "block",
+          }}>
+            {row.refund.reason}
+          </Typography>
+        </Tooltip>
+      ) : (
+        <Typography variant="body2" sx={{ color: "#9ca3af" }}>—</Typography>
+      ),
+  };
+
+  // For the Refunded tab, splice in the two extra columns before Actions
+  const columns = activeTab === 1
+    ? [...allColumns.slice(0, 7), refundedOnCol, refundReasonCol, allColumns[7]]
+    : allColumns;
 
   // ── Unpaid invoice data ────────────────────────────────────────────────────
   const unpaidInvoices = unpaidData?.invoices || [];
@@ -639,6 +803,47 @@ const Payments = () => {
         </Card>
       )}
 
+      {/* ── PAID / REFUNDED TABS ─────────────────────────────────────────── */}
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          sx={{
+            minHeight: 36,
+            "& .MuiTab-root": {
+              minHeight: 36,
+              py: 0.5,
+              px: 1.5,
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textTransform: "none",
+              minWidth: 0,
+            },
+          }}
+        >
+          <Tab label="Paid" />
+          <Tab label="Refunded" />
+        </Tabs>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={exporting ? <CircularProgress size={14} /> : <DownloadIcon fontSize="small" />}
+          onClick={handleExportPdf}
+          disabled={exporting}
+          sx={{
+            mb: 0.5,
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            textTransform: "none",
+            borderColor: "#d1d5db",
+            color: "#374151",
+            "&:hover": { borderColor: "#9ca3af", bgcolor: "#f9fafb" },
+          }}
+        >
+          {exporting ? "Loading Preview…" : "Export PDF"}
+        </Button>
+      </Box>
+
       <CompactFilterBar
         fromDate={fromDate}
         toDate={toDate}
@@ -655,7 +860,7 @@ const Payments = () => {
       />
 
       <DataTable
-        columns={allColumns}
+        columns={columns}
         data={payments}
         loading={isLoading}
         getRowStyle={(row) =>
@@ -672,7 +877,7 @@ const Payments = () => {
           },
         }}
         onRowClick={handleRowClick}
-        emptyMessage="No payments found"
+        emptyMessage={activeTab === 0 ? "No paid payments found" : "No refunded payments found"}
       />
 
       {/* ── COLLECT PAYMENT MODAL ─────────────────────────────────────────── */}
@@ -717,6 +922,75 @@ const Payments = () => {
           refetch();
         }}
       />
+
+      {/* ── INVOICE DETAIL MODAL ─────────────────────────────────────────── */}
+      <InvoiceDetailModal
+        open={invoiceModalOpen}
+        onClose={() => { setInvoiceModalOpen(false); setInvoiceForModal(null); }}
+        invoice={invoiceForModal}
+        onRefresh={refetch}
+      />
+
+      {/* ── PATIENT DETAIL MODAL ─────────────────────────────────────────── */}
+      <PatientDetailModal
+        open={patientModalOpen}
+        onClose={() => { setPatientModalOpen(false); setPatientForModal(null); }}
+        patient={patientForModal}
+      />
+
+      {/* ── PDF PREVIEW DIALOG ────────────────────────────────────────────── */}
+      <Dialog
+        open={pdfPreviewOpen}
+        onClose={handlePreviewClose}
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: "90vw",
+            height: "90vh",
+            m: 2,
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            py: 1.5,
+            px: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexShrink: 0,
+            borderBottom: "1px solid #e5e7eb",
+          }}
+        >
+          <Typography variant="subtitle1" fontWeight={700}>
+            PDF Preview
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, flex: 1, minHeight: 0, overflow: "hidden" }}>
+          {pdfPreviewUrl && (
+            <iframe
+              src={pdfPreviewUrl}
+              style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+              title="Payment History PDF Preview"
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 2, py: 1.5, borderTop: "1px solid #e5e7eb", flexShrink: 0 }}>
+          <Button onClick={handlePreviewClose} color="inherit" sx={{ textTransform: "none" }}>
+            Close
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            onClick={handlePreviewDownload}
+            sx={{ textTransform: "none", bgcolor: "#16a34a", "&:hover": { bgcolor: "#15803d" } }}
+          >
+            Download
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── REVERSAL CONFIRM DIALOG ───────────────────────────────────────── */}
       <Dialog

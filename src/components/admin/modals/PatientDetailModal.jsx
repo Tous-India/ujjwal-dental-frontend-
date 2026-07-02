@@ -9,6 +9,7 @@
  * - Reports: Medical reports
  */
 import React, { useState, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogTitle,
@@ -61,6 +62,7 @@ import {
   getPatientPayments,
   getPatientReports,
   getPatientTests,
+  deletePatient,
 } from "../../../api/admin/patients.api";
 import { getBillingStats } from "../../../api/admin/billing.api";
 import EditAppointmentModal from "./EditAppointmentModal";
@@ -68,6 +70,8 @@ import RecordPaymentModal from "./RecordPaymentModal";
 import AssignMembershipModal from "./AssignMembershipModal";
 import ResetPasswordDialog from "./ResetPasswordDialog";
 import FollowUpReminderModal from "./FollowUpReminderModal";
+import ConfirmDialog from "../../common/ConfirmDialog";
+import { toast } from "react-toastify";
 
 /**
  * Tab Panel Component
@@ -768,12 +772,15 @@ const ReportsTab = ({ patientId }) => {
 /**
  * Main Component
  */
-const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReactivate, onPermanentDelete, onRefresh }) => {
+const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReactivate, onRefresh }) => {
+  const queryClient = useQueryClient();
+
   const [activeTab, setActiveTab] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [assignMembershipOpen, setAssignMembershipOpen] = useState(false);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [permDeleteConfirmOpen, setPermDeleteConfirmOpen] = useState(false);
 
   // Reset tab when modal opens
   useEffect(() => {
@@ -786,11 +793,26 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
     onRefresh?.();
   };
 
+  const handlePermDelete = async () => {
+    try {
+      setPermDeleteConfirmOpen(false);
+      const result = await deletePatient(patient._id);
+      const patientName = result?.data?.name || patient?.name || "Patient";
+      toast.success(`"${patientName}" has been permanently deleted.`);
+      onClose();
+      queryClient.invalidateQueries({ queryKey: ["admin", "patients"] });
+      queryClient.refetchQueries({ queryKey: ["admin", "patients"] });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete patient");
+    }
+  };
+
   if (!patient) return null;
 
   const { name, isActive, hasMembership, membership, currentDiscount, createdAt, updatedAt } = patient;
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={onClose}
@@ -799,7 +821,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
       PaperProps={{ sx: { borderRadius: "8px", maxHeight: "90vh" } }}
     >
       {/* Header */}
-      <DialogTitle className="bg-linear-to-r from-blue-600 to-blue-700 text-white" sx={{ p: 0 }}>
+      <DialogTitle className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white" sx={{ p: 0 }}>
         <Box className="flex items-center justify-between px-4 py-2">
           <Box className="flex items-center gap-3">
             <Avatar className="bg-white text-blue-600 font-bold" sx={{ width: 40, height: 40, fontSize: "1rem" }}>
@@ -820,7 +842,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
                   <Chip
                     label={`${membership?.planName} (${currentDiscount}% off)`}
                     size="small"
-                    className="bg-yellow-100 text-yellow-700"
+                    sx={{ bgcolor: "#fef9c3", color: "#92400e", fontWeight: 500 }}
                   />
                 )}
               </Box>
@@ -916,15 +938,23 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
             Add Follow-up Reminder
           </Button>
           {onDelete && isActive && (
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={() => onDelete(patient)}
-              sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
+            <Tooltip
+              title={hasMembership ? "Patient has an active membership — cannot deactivate." : ""}
+              arrow
             >
-              Deactivate
-            </Button>
+              <span>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => onDelete(patient)}
+                  disabled={hasMembership}
+                  sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
+                >
+                  Deactivate
+                </Button>
+              </span>
+            </Tooltip>
           )}
           {onDelete && !isActive && (
             <>
@@ -940,11 +970,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
                 variant="outlined"
                 color="error"
                 startIcon={<DeleteIcon />}
-                onClick={() => {
-                  if (window.confirm(`Permanently delete ${name}? This cannot be undone.`)) {
-                    if (onPermanentDelete) onPermanentDelete(patient);
-                  }
-                }}
+                onClick={() => setPermDeleteConfirmOpen(true)}
                 sx={{ textTransform: "none", fontSize: "12px", py: 0.5, px: 1.5 }}
               >
                 Delete Permanently
@@ -993,6 +1019,17 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         patient={patient}
       />
     </Dialog>
+
+    <ConfirmDialog
+      open={permDeleteConfirmOpen}
+      onClose={() => setPermDeleteConfirmOpen(false)}
+      onConfirm={handlePermDelete}
+      title="Permanently Delete Patient"
+      message={`Permanently delete ${name}? This cannot be undone.`}
+      confirmText="Delete Permanently"
+      confirmColor="error"
+    />
+    </>
   );
 };
 

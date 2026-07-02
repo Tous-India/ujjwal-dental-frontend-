@@ -58,8 +58,10 @@ export const updatePatient = (id, patientData) =>
  * @param {string} id - Patient ID
  * @returns {Promise}
  */
-export const deletePatient = (id) =>
-  api.delete(`/patients/${id}`).then((res) => res.data);
+export const deletePatient = async (id) => {
+  const res = await api.delete(`/patients/${id}`);
+  return res.data;
+};
 
 /**
  * Reactivate (un-deactivate) patient

@@ -70,7 +70,7 @@ const CancelAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
         <Box className="flex items-center justify-between">
           <Box className="flex items-center gap-2">
             <WarningAmberIcon className="text-white" />
-            <Typography variant="h6" className="font-bold text-white">
+            <Typography variant="h6" component="span" className="font-bold text-white">
               Cancel Appointment
             </Typography>
           </Box>

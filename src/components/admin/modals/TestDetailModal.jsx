@@ -90,7 +90,7 @@ const TestDetailModal = ({ open, onClose, test, onEdit, onDelete }) => {
               <BiotechIcon />
             </Avatar>
             <Box>
-              <Typography variant="h6" className="font-bold">
+              <Typography variant="h6" component="span" className="font-bold">
                 {name || "Test"}
               </Typography>
               <Box className="flex items-center gap-2 mt-1">

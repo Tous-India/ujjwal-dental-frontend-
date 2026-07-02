@@ -28,7 +28,6 @@ const Payments = lazy(() => import("./pages/patient/Payments"));
 const Invoices = lazy(() => import("./pages/patient/Invoices"));
 const Reports = lazy(() => import("./pages/patient/Reports"));
 const Treatments = lazy(() => import("./pages/patient/Treatments"));
-const BookTreatment = lazy(() => import("./pages/patient/BookTreatment"));
 const Membership = lazy(() => import("./pages/patient/Membership"));
 const Profile = lazy(() => import("./pages/patient/Profile"));
 const PatientNotifications = lazy(() => import("./pages/patient/Notifications"));
@@ -165,7 +164,6 @@ const App = () => {
             <Route path="invoices" element={<Invoices />} />
             <Route path="reports" element={<Reports />} />
             <Route path="my-treatments" element={<Treatments />} />
-            <Route path="book-treatment" element={<BookTreatment />} />
             <Route path="membership" element={<Membership />} />
             {/* <Route path="membership-plans" element={<MembershipPlans />} /> */}
             <Route path="profile" element={<Profile />} />

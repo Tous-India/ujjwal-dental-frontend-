@@ -110,14 +110,14 @@ const MembershipDetailModal = ({ open, onClose, plan, onEdit, onDelete }) => {
               <CardMembershipIcon className={tierStyle.text} fontSize="large" />
             </Box>
             <Box>
-              <Typography variant="h5" className="font-bold">
+              <Typography variant="h5" component="span" className="font-bold">
                 {name}
               </Typography>
               <Box className="flex items-center gap-2 mt-1">
                 <Chip
                   label={code}
                   size="small"
-                  className="bg-white/20 text-white font-mono"
+                  sx={{ bgcolor: "#ffffff", color: "#5b21b6", fontFamily: "monospace", fontSize: "0.7rem" }}
                 />
                 <Chip
                   label={isActive ? "Active" : "Inactive"}

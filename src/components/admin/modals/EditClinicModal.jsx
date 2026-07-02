@@ -134,7 +134,7 @@ const EditClinicModal = ({ open, onClose, clinic, onSuccess }) => {
         <Box className="flex items-center justify-between">
           <Box className="flex items-center gap-2">
             <EditIcon />
-            <Typography variant="h6" className="font-bold">
+            <Typography variant="h6" component="span" className="font-bold">
               Edit Clinic - {clinic.name}
             </Typography>
           </Box>

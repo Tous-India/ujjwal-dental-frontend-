@@ -10,7 +10,7 @@ import api from "../axios";
 
 /**
  * Get all invoices (paginated, filterable)
- * @param {Object} params - { page, limit, search, patient, status, paymentStatus, clinic, from, to }
+ * @param {Object} params - { page, limit, search, patient, status, paymentStatus, clinic, from, to, itemType }
  */
 export const getInvoices = (params = {}) =>
   api.get("/billing/invoices", { params }).then((res) => res.data);

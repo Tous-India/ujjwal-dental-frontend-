@@ -37,18 +37,19 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { toast } from "react-toastify";
 import { useInvoice, useBillingMutations } from "../../../hooks/admin/useBilling";
-import { downloadInvoicePDF } from "../../../utils/downloadInvoicePDF";
+import InvoicePreviewModal from "../../InvoicePreviewModal";
+import ConfirmDialog from "../../common/ConfirmDialog";
 
 /**
  * Status config
  */
 const statusConfig = {
-  draft: { color: "default", label: "Draft" },
-  sent: { color: "info", label: "Sent" },
-  partially_paid: { color: "warning", label: "Partially Paid" },
-  paid: { color: "success", label: "Paid" },
-  overdue: { color: "error", label: "Overdue" },
-  cancelled: { color: "default", label: "Cancelled" },
+  draft:          { label: "Draft",          sx: { bgcolor: "#64748b", color: "#fff" } },
+  sent:           { label: "Sent",           sx: { bgcolor: "#0369a1", color: "#fff" } },
+  partially_paid: { label: "Partially Paid", sx: { bgcolor: "#b45309", color: "#fff" } },
+  paid:           { label: "Paid",           sx: { bgcolor: "#15803d", color: "#fff" } },
+  overdue:        { label: "Overdue",        sx: { bgcolor: "#9f1239", color: "#fff" } },
+  cancelled:      { label: "Cancelled",      sx: { bgcolor: "#374151", color: "#fff" } },
 };
 
 const paymentStatusConfig = {
@@ -102,6 +103,9 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [cancelReason, setCancelReason] = useState("");
+  const [issueConfirmOpen, setIssueConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
 
   // Fetch full details
   const { data: fullData, isLoading, isError, refetch: refetchInvoice } = useInvoice(invoice?._id);
@@ -132,8 +136,11 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
 
   const handleIssue = () => {
     if (isIssuing) return;
-    if (!window.confirm("Issue this invoice? It cannot be edited after issuing."))
-      return;
+    setIssueConfirmOpen(true);
+  };
+
+  const doIssue = () => {
+    setIssueConfirmOpen(false);
     issueInvoice(inv._id, {
       onSuccess: () => {
         refetchInvoice();
@@ -192,7 +199,11 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
 
   const handleDeleteInvoice = () => {
     if (isDeleting) return;
-    if (!window.confirm("Permanently delete this invoice? This action cannot be undone.")) return;
+    setDeleteConfirmOpen(true);
+  };
+
+  const doDeleteInvoice = () => {
+    setDeleteConfirmOpen(false);
     deleteInvoice(inv._id, {
       onSuccess: () => {
         toast.success("Deleted successfully");
@@ -211,6 +222,7 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
     paymentStatusConfig[inv?.paymentStatus] || paymentStatusConfig.unpaid;
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -224,22 +236,21 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
           <Box className="flex items-center gap-3">
             <ReceiptLongIcon />
             <Box>
-              <Typography variant="h6" className="font-bold">
+              <Typography variant="h6" component="span" className="font-bold">
                 {inv?.invoiceNumber || "Invoice"}
               </Typography>
               <Box className="flex gap-2 mt-1">
                 <Chip
                   label={status.label}
                   size="small"
-                  color={status.color}
+                  sx={status.sx}
                   className="text-xs"
                 />
                 <Chip
                   label={payStatus.label}
                   size="small"
                   color={payStatus.color}
-                  variant="outlined"
-                  className="text-xs border-white/50 text-white"
+                  className="text-xs"
                 />
               </Box>
             </Box>
@@ -613,12 +624,12 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
             </>
           )}
 
-          {/* Download PDF — available for all non-draft statuses */}
+          {/* Download PDF — opens preview modal first */}
           {inv?.status && inv.status !== "draft" && (
             <Button
               variant="outlined"
               startIcon={<PictureAsPdfIcon />}
-              onClick={() => downloadInvoicePDF(inv)}
+              onClick={() => setPdfPreviewOpen(true)}
             >
               Download PDF
             </Button>
@@ -639,6 +650,32 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
         </DialogActions>
       )}
     </Dialog>
+
+    <ConfirmDialog
+      open={issueConfirmOpen}
+      onClose={() => setIssueConfirmOpen(false)}
+      onConfirm={doIssue}
+      title="Issue Invoice"
+      message="Issue this invoice? It cannot be edited after issuing."
+      confirmText="Issue Invoice"
+      confirmColor="primary"
+    />
+    <ConfirmDialog
+      open={deleteConfirmOpen}
+      onClose={() => setDeleteConfirmOpen(false)}
+      onConfirm={doDeleteInvoice}
+      title="Delete Invoice"
+      message="Permanently delete this invoice? This action cannot be undone."
+      confirmText="Delete Permanently"
+      confirmColor="error"
+      loading={isDeleting}
+    />
+    <InvoicePreviewModal
+      open={pdfPreviewOpen}
+      onClose={() => setPdfPreviewOpen(false)}
+      invoice={inv}
+    />
+    </>
   );
 };
 

@@ -176,7 +176,7 @@ const AddMembershipModal = ({ open, onClose, onSuccess }) => {
         <Box className="flex items-center justify-between">
           <Box className="flex items-center gap-2">
             <CardMembershipIcon />
-            <Typography variant="h6" className="font-bold">
+            <Typography variant="h6" component="span" className="font-bold">
               Add Membership Plan
             </Typography>
           </Box>

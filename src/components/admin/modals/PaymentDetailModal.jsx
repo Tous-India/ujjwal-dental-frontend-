@@ -26,8 +26,10 @@ import ReceiptIcon from "@mui/icons-material/Receipt";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from "@mui/icons-material/Delete";
+import UndoIcon from "@mui/icons-material/Undo";
 import { toast } from "react-toastify";
-import { usePaymentMutations } from "../../../hooks/admin/usePayments";
+import { usePaymentMutations, useAdminPaymentMutations } from "../../../hooks/admin/usePayments";
+import ConfirmDialog from "../../common/ConfirmDialog";
 
 /**
  * Format date
@@ -104,20 +106,42 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
   const [showRefundForm, setShowRefundForm] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
+  const [refundAmountError, setRefundAmountError] = useState("");
+  const [showReverseForm, setShowReverseForm] = useState(false);
+  const [reverseReason, setReverseReason] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { processRefund, isRefunding, deletePayment, isDeleting } = usePaymentMutations();
+  const { reversePayment, isReversing } = useAdminPaymentMutations();
+
+  const handleRefundAmountChange = (e) => {
+    const val = e.target.value;
+    setRefundAmount(val);
+    if (val === "") {
+      setRefundAmountError("");
+      return;
+    }
+    const n = Number(val);
+    if (isNaN(n) || n <= 0) {
+      setRefundAmountError("Refund amount must be greater than ₹0");
+    } else if (n > payment.amount) {
+      setRefundAmountError(
+        `Cannot exceed the paid amount of ${formatCurrency(payment.amount)}`
+      );
+    } else {
+      setRefundAmountError("");
+    }
+  };
 
   const handleRefund = () => {
     if (!refundReason.trim()) {
       toast.error("Please provide a reason for refund");
       return;
     }
-
+    // Inline validation already blocks submission via disabled button;
+    // this is a defensive guard in case the button state is stale.
+    if (refundAmountError) return;
     const amount = refundAmount ? Number(refundAmount) : payment.amount;
-    if (amount <= 0 || amount > payment.amount) {
-      toast.error(`Refund amount must be between 1 and ${payment.amount}`);
-      return;
-    }
     processRefund(
       { id: payment._id, data: { amount, reason: refundReason } },
       {
@@ -125,6 +149,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           setShowRefundForm(false);
           setRefundReason("");
           setRefundAmount("");
+          setRefundAmountError("");
           onRefund?.();
           onClose();
         },
@@ -135,9 +160,29 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
     );
   };
 
+  const handleReverse = async () => {
+    if (!reverseReason.trim()) {
+      toast.error("Please provide a reason for reversal");
+      return;
+    }
+    try {
+      await reversePayment({ paymentId: payment._id, reason: reverseReason.trim() });
+      setShowReverseForm(false);
+      setReverseReason("");
+      onRefund?.();
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to reverse payment");
+    }
+  };
+
   const handleDelete = () => {
     if (isDeleting) return;
-    if (!window.confirm("Permanently delete this payment? This action cannot be undone.")) return;
+    setDeleteConfirmOpen(true);
+  };
+
+  const doDelete = () => {
+    setDeleteConfirmOpen(false);
     deletePayment(payment._id, {
       onSuccess: () => {
         toast.success("Deleted successfully");
@@ -151,19 +196,27 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
   };
 
   const handleClose = () => {
-    if (!isRefunding) {
+    if (!isRefunding && !isReversing) {
       setShowRefundForm(false);
       setRefundReason("");
       setRefundAmount("");
+      setRefundAmountError("");
+      setShowReverseForm(false);
+      setReverseReason("");
       onClose();
     }
   };
 
   if (!payment) return null;
 
-  const canRefund = payment.status === "paid";
+  // Only show refund for payments linked to a single invoice (payment.invoice).
+  // Payments recorded via collectPayment/recordAdminPayment use settledInvoices[]
+  // instead — those are handled by the Reverse flow below.
+  const canRefund = payment.status === "paid" && !payment.settledInvoices?.length;
+  const canReverse = !!(payment.settledInvoices?.length) && !payment.reversed && payment.status !== "reversed";
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -179,7 +232,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
             <Typography variant="subtitle1" className="font-bold">{payment.paymentNumber}</Typography>
             <Chip label={payment.status} size="small" color={statusColors[payment.status] || "default"} className="capitalize" />
           </Box>
-          <IconButton onClick={handleClose} disabled={isRefunding} size="small">
+          <IconButton onClick={handleClose} disabled={isRefunding || isReversing} size="small">
             <CloseIcon className="text-white" fontSize="small" />
           </IconButton>
         </Box>
@@ -268,6 +321,9 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
             <Grid size={{ xs: 12 }}>
               <Box sx={{ bgcolor: "#fef2f2", borderRadius: 1, p: 1.5, border: "1px solid #fecaca" }}>
                 <Typography variant="caption" className="font-semibold text-red-700 block mb-0.5">Refund Information</Typography>
+                {payment.refund.amount != null && (
+                  <InfoRow label="Refund Amount" value={<span className="font-numbers">{formatCurrency(payment.refund.amount)}</span>} highlight />
+                )}
                 <InfoRow label="Refunded At" value={formatDate(payment.refund.refundedAt)} />
                 <InfoRow label="Reason" value={payment.refund.reason} />
                 {payment.refund.razorpayRefundId && (
@@ -281,7 +337,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           {showRefundForm && canRefund && (
             <Grid size={{ xs: 12 }}>
               <Box sx={{ bgcolor: "#fef2f2", borderRadius: 1, p: 1.5, border: "1px solid #fecaca" }}>
-                <Typography variant="caption" className="font-semibold text-red-700 block mb-1">Process Refund</Typography>
+                <Typography variant="caption" className="font-semibold text-red-700 block mb-3">Process Refund</Typography>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
@@ -290,10 +346,16 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
                       type="number"
                       size="small"
                       value={refundAmount}
-                      onChange={(e) => setRefundAmount(e.target.value)}
-                      placeholder={`Max: ${payment.amount}`}
-                      inputProps={{ min: 1, max: payment.amount }}
-                      helperText={`Full amount: ${formatCurrency(payment.amount)}`}
+                      onChange={handleRefundAmountChange}
+                      placeholder={String(payment.amount)}
+                      error={!!refundAmountError}
+                      helperText={
+                        refundAmountError ||
+                        `Leave blank to refund the full ${formatCurrency(payment.amount)}`
+                      }
+                      slotProps={{
+                        htmlInput: { min: 1, max: payment.amount, step: 1 },
+                      }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12 }}>
@@ -315,7 +377,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
                     color="error"
                     size="small"
                     onClick={handleRefund}
-                    disabled={isRefunding}
+                    disabled={isRefunding || !!refundAmountError}
                     startIcon={isRefunding ? <CircularProgress size={16} /> : <RefreshIcon />}
                   >
                     {isRefunding ? "Processing..." : "Confirm Refund"}
@@ -325,8 +387,56 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
                     size="small"
                     onClick={() => {
                       setShowRefundForm(false);
+                      setRefundAmount("");
+                      setRefundAmountError("");
                     }}
                     disabled={isRefunding}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
+              </Box>
+            </Grid>
+          )}
+
+          {/* Reverse Form — for admin-recorded payments (settledInvoices) */}
+          {showReverseForm && canReverse && (
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ bgcolor: "#fef2f2", borderRadius: 1, p: 1.5, border: "1px solid #fecaca" }}>
+                <Typography variant="caption" className="font-semibold text-red-700 block mb-0.5">Reverse Payment</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+                  Restores the original balance on all invoices settled by this payment. The full amount is reversed.
+                </Typography>
+                <TextField
+                  fullWidth
+                  label="Reason for reversal *"
+                  size="small"
+                  value={reverseReason}
+                  onChange={(e) => setReverseReason(e.target.value)}
+                  placeholder="e.g. Payment recorded by mistake"
+                  multiline
+                  rows={2}
+                  disabled={isReversing}
+                />
+                <Box className="flex gap-2 mt-3">
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    onClick={handleReverse}
+                    disabled={isReversing || !reverseReason.trim()}
+                    startIcon={isReversing ? <CircularProgress size={16} /> : <UndoIcon />}
+                  >
+                    {isReversing ? "Reversing..." : "Confirm Reversal"}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      setShowReverseForm(false);
+                      setReverseReason("");
+                    }}
+                    disabled={isReversing}
                   >
                     Cancel
                   </Button>
@@ -350,22 +460,45 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
             Process Refund
           </Button>
         )}
+        {canReverse && !showReverseForm && (
+          <Button
+            variant="outlined"
+            color="warning"
+            startIcon={<UndoIcon />}
+            onClick={() => setShowReverseForm(true)}
+            sx={{ textTransform: "none", fontSize: "12px" }}
+          >
+            Reverse Payment
+          </Button>
+        )}
         <Button
           variant="outlined"
           color="error"
           startIcon={isDeleting ? <CircularProgress size={16} /> : <DeleteIcon />}
           onClick={handleDelete}
-          disabled={isDeleting || isRefunding}
+          disabled={isDeleting || isRefunding || isReversing}
           sx={{ textTransform: "none", fontSize: "12px" }}
         >
           Delete
         </Button>
         <Box className="flex-grow" />
-        <Button onClick={handleClose} color="inherit" disabled={isRefunding} sx={{ textTransform: "none", fontSize: "12px" }}>
+        <Button onClick={handleClose} color="inherit" disabled={isRefunding || isReversing} sx={{ textTransform: "none", fontSize: "12px" }}>
           Close
         </Button>
       </DialogActions>
     </Dialog>
+
+    <ConfirmDialog
+      open={deleteConfirmOpen}
+      onClose={() => setDeleteConfirmOpen(false)}
+      onConfirm={doDelete}
+      title="Delete Payment"
+      message="Permanently delete this payment? This action cannot be undone."
+      confirmText="Delete Permanently"
+      confirmColor="error"
+      loading={isDeleting}
+    />
+    </>
   );
 };
 

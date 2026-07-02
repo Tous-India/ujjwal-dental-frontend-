@@ -103,3 +103,6 @@ export const collectPayment = (data) =>
 
 export const reverseAdminPayment = (data) =>
   api.post("/payments/admin/reverse-payment", data).then((res) => res.data);
+
+export const exportPaymentsPdf = (params = {}) =>
+  api.get("/payments/export/pdf", { params, responseType: "blob" }).then((res) => res.data);

@@ -168,7 +168,7 @@ const RecordPaymentModal = ({ open, onClose, patient, onSuccess }) => {
         <Box className="flex items-center justify-between">
           <Box className="flex items-center gap-2">
             <PaymentIcon />
-            <Typography variant="h6" className="font-bold">
+            <Typography variant="h6" component="span" className="font-bold">
               Record Payment
             </Typography>
           </Box>

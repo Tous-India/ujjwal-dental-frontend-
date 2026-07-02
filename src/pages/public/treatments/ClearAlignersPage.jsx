@@ -4,6 +4,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import BreadcrumbBanner from "../../../components/public/BreadcrumbBanner";
 import submitEnquiry from "../../../utils/submitEnquiry";
 import { filterName, NAME_PLACEHOLDER } from "../../../utils/nameInput";
+import { toast } from "react-toastify";
 
 const navSections = [
   { id: "what-are-clear-aligners", label: "WHAT ARE CLEAR ALIGNERS?" },
@@ -90,7 +91,7 @@ const ClearAlignersPage = () => {
                   <div className="flex justify-center" style={{ transform: "scale(0.85)", transformOrigin: "center" }}>
                     <ReCAPTCHA ref={captchaRef} sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY} onChange={(token) => setCaptchaToken(token)} onExpired={() => setCaptchaToken(null)} />
                   </div>
-                  <button type="button" onClick={async () => { if (!captchaToken) { alert("Please complete the reCAPTCHA verification."); return; } const ok = await submitEnquiry({ name: form.name, email: form.email, phone: form.phone, treatment: form.treatment, pagePath: window.location.pathname, pageLabel: "Treatment Page" }); if (ok) { setForm({ name: "", email: "", phone: "", treatment: "" }); setCaptchaToken(null); captchaRef.current?.reset(); } }} className="w-full py-3 bg-[#003366] text-white rounded-full uppercase tracking-wide cursor-pointer hover:bg-[#004080] transition-colors" style={{ fontSize: "16px", fontWeight: 700, fontFamily: "'Poppins', sans-serif" }}>
+                  <button type="button" onClick={async () => { if (!captchaToken) { toast.warn("Please complete the reCAPTCHA verification."); return; } const ok = await submitEnquiry({ name: form.name, email: form.email, phone: form.phone, treatment: form.treatment, pagePath: window.location.pathname, pageLabel: "Treatment Page" }); if (ok) { setForm({ name: "", email: "", phone: "", treatment: "" }); setCaptchaToken(null); captchaRef.current?.reset(); } }} className="w-full py-3 bg-[#003366] text-white rounded-full uppercase tracking-wide cursor-pointer hover:bg-[#004080] transition-colors" style={{ fontSize: "16px", fontWeight: 700, fontFamily: "'Poppins', sans-serif" }}>
                     Submit
                   </button>
                 </div>

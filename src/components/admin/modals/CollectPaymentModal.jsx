@@ -101,7 +101,7 @@ const CollectPaymentModal = ({ open, onClose, invoice, patient, onSuccess }) => 
       <DialogTitle
         sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}
       >
-        <Typography variant="h6" fontWeight={700}>
+        <Typography variant="h6" component="span" fontWeight={700}>
           Collect Payment
         </Typography>
         <IconButton onClick={onClose} size="small" disabled={isCollecting}>

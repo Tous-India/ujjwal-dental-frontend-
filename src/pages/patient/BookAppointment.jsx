@@ -33,6 +33,7 @@ import {
   createPaymentOrder,
   verifyPayment,
   bookAppointmentWithPayment,
+  bookAppointmentFree,
   getAvailableSlots,
 } from "../../api/patient/appointments.api";
 import {
@@ -145,6 +146,10 @@ const BookAppointment = () => {
   // Auto-fill form if patient is logged in
   const patient = useAuthStore((state) => state.patient);
   const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
+
+  // True when the logged-in patient has an active membership — drives free-OPD path.
+  // hasMembership comes from the login response; backend re-verifies on /book-free.
+  const isMemberFree = isLoggedIn && !!patient?.hasMembership;
 
   useEffect(() => {
     if (isLoggedIn && patient) {
@@ -295,9 +300,56 @@ const BookAppointment = () => {
     return true;
   };
 
+  // Book free OPD for logged-in members (skips Razorpay entirely)
+  const handleFreeBooking = async () => {
+    setIsProcessing(true);
+    try {
+      const reason = appointmentReasons.find((r) => r.value === formData.reason);
+      const selectedClinic = clinics.find((c) => c._id === formData.clinic);
+      const response = await bookAppointmentFree({
+        clinic: formData.clinic,
+        date: formData.date,
+        timeSlot: formData.time,
+        reason: reason?.label || formData.reason,
+        type: reason?.type || "regular",
+        bookingType,
+      });
+      setSuccess(true);
+      setBookedAppointment({
+        ...response.data,
+        clinicName: selectedClinic?.name,
+        opdFee: 0,
+        isFree: true,
+      });
+      setActiveStep(3);
+    } catch (err) {
+      const msg = err?.response?.data?.message || "Failed to book appointment. Please try again.";
+      // If membership check fails server-side (e.g. membership expired since login),
+      // tell the user to proceed with normal payment instead.
+      toast.error(
+        err?.response?.status === 403
+          ? "Your membership appears to have expired. Please refresh and book with payment."
+          : msg,
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleNext = () => {
     if (activeStep === 0 && !validateStep1()) return;
-    if (activeStep === 1 && !validateStep2()) return;
+    if (activeStep === 1) {
+      if (isMemberFree) {
+        // Logged-in members: lighter validation — JWT auth replaces captcha requirement
+        if (!formData.name.trim()) { toast.info("Please enter your name"); return; }
+        if (!formData.phone.trim() || !/^\d{10}$/.test(formData.phone.replace(/\D/g, ""))) {
+          toast.info("Please enter a valid 10-digit phone number"); return;
+        }
+        handleFreeBooking();
+        return;
+      }
+      if (!validateStep2()) return;
+    }
     setActiveStep((prev) => prev + 1);
   };
 
@@ -512,9 +564,11 @@ const BookAppointment = () => {
                 </div>
                 <div className="col-span-2 border-t border-gray-200" />
                 <div>
-                  <p className="text-[13px] text-gray-500">OPD Fee Paid</p>
-                  <p className="text-[15px] font-semibold text-accent">
-                    {formatCurrency(bookedAppointment.opdFee)}
+                  <p className="text-[13px] text-gray-500">OPD Fee</p>
+                  <p className={`text-[15px] font-semibold ${bookedAppointment.isFree ? "text-green-600" : "text-accent"}`}>
+                    {bookedAppointment.isFree
+                      ? "Free — Membership Benefit"
+                      : formatCurrency(bookedAppointment.opdFee)}
                   </p>
                 </div>
                 <div>
@@ -795,6 +849,18 @@ const BookAppointment = () => {
                     Patient Information
                   </h2>
 
+                  {/* Member free-OPD notice */}
+                  {isMemberFree && (
+                    <div className="flex items-start gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-5">
+                      <CheckCircleIcon className="text-green-600 shrink-0 mt-0.5" style={{ fontSize: 18 }} />
+                      <p className="text-[14px] text-green-800">
+                        Your active membership makes OPD consultations{" "}
+                        <strong>free</strong>. Confirm your details and we'll book
+                        instantly — no payment needed.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className={labelCls}>Full Name *</label>
@@ -885,6 +951,17 @@ const BookAppointment = () => {
                     <PaymentIcon className="text-accent" />
                     Payment Details
                   </h2>
+
+                  {/* Nudge for non-logged-in visitors who may hold a membership */}
+                  {!isLoggedIn && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 mb-4 text-[14px] text-purple-900">
+                      Already a member?{" "}
+                      <Link to="/login" className="font-semibold underline">
+                        Log in
+                      </Link>{" "}
+                      to skip this payment and book your OPD appointment for free.
+                    </div>
+                  )}
 
                   {/* Booking Summary */}
                   <div className="bg-gray-50 rounded-xl border border-gray-100 p-5 mb-4">
@@ -985,7 +1062,7 @@ const BookAppointment = () => {
                   <button
                     type="button"
                     onClick={handleBack}
-                    disabled={activeStep === 0}
+                    disabled={activeStep === 0 || isProcessing}
                     className="inline-flex items-center gap-1 text-[15px] font-semibold text-[#003366] disabled:text-gray-300 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <ArrowBackIcon className="text-[18px]!" />
@@ -995,10 +1072,17 @@ const BookAppointment = () => {
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="inline-flex items-center gap-1 bg-accent hover:bg-accent-dark text-white rounded-xl px-8 py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer"
+                    disabled={isProcessing}
+                    className="inline-flex items-center gap-1 bg-accent hover:bg-accent-dark disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl px-8 py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer"
                   >
-                    Next
-                    <ArrowForwardIcon className="text-[18px]!" />
+                    {isProcessing && activeStep === 1 && isMemberFree ? (
+                      <CircularProgress size={18} sx={{ color: "#fff" }} />
+                    ) : (
+                      <ArrowForwardIcon className="text-[18px]!" />
+                    )}
+                    {activeStep === 1 && isMemberFree
+                      ? isProcessing ? "Booking…" : "Book for Free"
+                      : "Next"}
                   </button>
                 </div>
               )}

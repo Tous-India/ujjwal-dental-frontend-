@@ -17,6 +17,7 @@ import {
   IconButton,
   CircularProgress,
   Autocomplete,
+  Checkbox,
   FormControlLabel,
   Switch,
   Radio,
@@ -146,6 +147,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
 
   // FIX 3: Payment method state
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [feeCollected, setFeeCollected] = useState(false);
   const [slipPreviewOpen, setSlipPreviewOpen] = useState(false);
 
   // Active-membership discount for the selected patient (server re-verifies it).
@@ -390,7 +392,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       notes: formData.notes || undefined,
       visitType: formData.visitType,
       isFree: formData.isFree,
-      opdFeePaid: formData.isFree, // Mark as paid if free
+      opdFeePaid: formData.isFree || feeCollected,
       paymentMethod: formData.isFree ? "free" : paymentMethod,
       ...(formData.visitType === "treatment"
         ? {
@@ -433,6 +435,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         setFormData(getInitialFormState());
         setPatientOptions([]);
         setPaymentMethod("cash");
+        setFeeCollected(false);
         onSuccess?.(response);
         // Modal stays open to show success banner; user closes it manually
       },
@@ -518,6 +521,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       setShowAddPatient(false);
       setNewPatient({ name: "", phone: "", email: "" });
       setPaymentMethod("cash");
+      setFeeCollected(false);
       setBookedAppointment(null);
       onClose();
     }
@@ -906,7 +910,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               >
                 <CheckCircleIcon sx={{ fontSize: 14, color: "#059669" }} />
                 <Typography variant="caption" sx={{ color: "#059669", fontWeight: 600 }}>
-                  Patient has active membership — OPD is free
+                  Patient has {membership?.planName || "an active membership"} — OPD is free
                 </Typography>
               </Box>
             </Grid>
@@ -938,6 +942,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                     const newVisitType = e.target.value;
                     if (newVisitType === "treatment") {
                       setPaymentMethod("cash");
+                      setFeeCollected(false);
                       if (isActiveMember && formData.isFree) {
                         const defaultFee =
                           formData.appointmentType === "emergency"
@@ -1152,6 +1157,26 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                   )}
                 </Box>
               </Box>
+              {!formData.isFree && (
+                <Box className="flex items-center mt-2">
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={feeCollected}
+                        onChange={(e) => setFeeCollected(e.target.checked)}
+                        size="small"
+                        sx={{ py: 0.5, color: "#059669", "&.Mui-checked": { color: "#059669" } }}
+                      />
+                    }
+                    label={
+                      <Typography variant="caption" sx={{ color: feeCollected ? "#059669" : "text.secondary", fontWeight: feeCollected ? 600 : 400 }}>
+                        Payment collected
+                      </Typography>
+                    }
+                    sx={{ m: 0 }}
+                  />
+                </Box>
+              )}
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>

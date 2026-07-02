@@ -8,12 +8,14 @@
  * - Click to view patient details in modal
  * - Add, Edit, Delete (soft) patient via modals
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, Button, Avatar, Chip } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { toast } from "react-toastify";
+import { useSearchParams } from "react-router-dom";
 import DataTable from "../../components/common/DataTable";
 import { usePatients, usePatientMutations } from "../../hooks/admin/usePatients";
+import { getPatient } from "../../api/admin/patients.api";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
 import AddPatientModal from "../../components/admin/modals/AddPatientModal";
 import EditPatientModal from "../../components/admin/modals/EditPatientModal";
@@ -129,6 +131,8 @@ const filterOptions = [
 ];
 
 const Patients = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // Pagination and filter state
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -157,6 +161,25 @@ const Patients = () => {
   // Extract data from response
   const patients = data?.data || [];
   const pagination = data?.pagination || { total: 0 };
+
+  // Auto-open PatientDetailModal when navigated here with ?patientId=xxx
+  useEffect(() => {
+    const patientId = searchParams.get("patientId");
+    if (!patientId) return;
+    getPatient(patientId)
+      .then((res) => {
+        setSelectedPatient(res.data.patient);
+        setDetailModalOpen(true);
+      })
+      .catch(() => {
+        // Invalid or inaccessible patient ID — silently clear the param
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("patientId");
+          return next;
+        }, { replace: true });
+      });
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Handle search
@@ -316,7 +339,16 @@ const Patients = () => {
       {/* Patient Detail Modal */}
       <PatientDetailModal
         open={detailModalOpen}
-        onClose={() => setDetailModalOpen(false)}
+        onClose={() => {
+          setDetailModalOpen(false);
+          if (searchParams.has("patientId")) {
+            setSearchParams((prev) => {
+              const next = new URLSearchParams(prev);
+              next.delete("patientId");
+              return next;
+            }, { replace: true });
+          }
+        }}
         patient={selectedPatient}
         onEdit={handleEditPatient}
         onDelete={handleDeletePatient}

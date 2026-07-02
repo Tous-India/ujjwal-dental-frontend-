@@ -297,7 +297,7 @@ const EditPatientModal = ({ open, onClose, patient, onSuccess }) => {
               {patient.name?.[0]?.toUpperCase() || "P"}
             </Avatar>
             <Box>
-              <Typography variant="h6" className="font-bold text-white">
+              <Typography variant="h6" component="span" className="font-bold text-white">
                 Edit Patient
               </Typography>
               <Typography variant="caption" className="text-orange-100">

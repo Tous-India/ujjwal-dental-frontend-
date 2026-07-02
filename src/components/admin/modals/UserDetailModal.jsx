@@ -175,7 +175,7 @@ const UserDetailModal = ({ open, onClose, user, onRefresh }) => {
               {user.name?.[0]?.toUpperCase()}
             </Avatar>
             <Box>
-              <Typography variant="h6" className="font-bold">
+              <Typography variant="h6" component="span" className="font-bold">
                 {user.name}
               </Typography>
               <Box className="flex gap-2 mt-0.5">

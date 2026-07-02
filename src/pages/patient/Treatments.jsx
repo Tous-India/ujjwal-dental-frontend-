@@ -84,7 +84,7 @@ const Treatments = () => {
     <Box>
       {/* Page Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography variant="h5" fontWeight="bold" gutterBottom>
           My Treatments
         </Typography>
         <Typography variant="body1" color="text.secondary">

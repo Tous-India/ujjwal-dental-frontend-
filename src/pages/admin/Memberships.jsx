@@ -21,6 +21,8 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Popover,
+  Avatar,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -28,7 +30,9 @@ import DataTable from "../../components/common/DataTable";
 import {
   useMembershipPlans,
   useMembershipMutations,
+  usePlanSubscriberCounts,
 } from "../../hooks/admin/useMemberships";
+import { useNavigate } from "react-router-dom";
 import AddMembershipModal from "../../components/admin/modals/AddMembershipModal";
 import EditMembershipModal from "../../components/admin/modals/EditMembershipModal";
 import MembershipDetailModal from "../../components/admin/modals/MembershipDetailModal";
@@ -58,9 +62,18 @@ const Memberships = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuPlan, setMenuPlan] = useState(null);
 
+  // ── Subscriber popover state ───────────────────────────────────────────────
+  const [subPopover, setSubPopover] = useState({ anchorEl: null, planId: null });
+
+  const navigate = useNavigate();
+
   // React Query — pass active:"all" so admin sees every plan (active, inactive, discontinued)
   const { data, isLoading, refetch } = useMembershipPlans({ active: "all" });
   const { deletePlan, updatePlan, isDeleting } = useMembershipMutations();
+
+  // Subscriber counts per plan (bulk, one request)
+  const { data: subData } = usePlanSubscriberCounts();
+  const subscriberCounts = subData?.data?.subscriberCounts || {};
 
   const plans = data?.data?.plans || [];
 
@@ -225,6 +238,44 @@ const Memberships = () => {
       headerName: "Members",
       minWidth: 90,
       render: (value) => value,
+    },
+    // Active Subscribers — count of patients currently holding this plan as an active membership
+    {
+      field: "_subscribers",
+      headerName: "Active Subscribers",
+      minWidth: 140,
+      render: (_, row) => {
+        const sub = subscriberCounts[row._id] || { count: 0, subscribers: [], hasMore: false, moreCount: 0 };
+        if (sub.count === 0) {
+          return <Typography variant="body2" sx={{ color: "#9ca3af" }}>—</Typography>;
+        }
+        return (
+          <Box
+            component="span"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSubPopover({ anchorEl: e.currentTarget, planId: row._id });
+            }}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.5,
+              px: 1.5,
+              py: 0.4,
+              bgcolor: "#ede9fe",
+              color: "#5b21b6",
+              borderRadius: "4px",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              userSelect: "none",
+              "&:hover": { bgcolor: "#ddd6fe" },
+            }}
+          >
+            {sub.count} active
+          </Box>
+        );
+      },
     },
     {
       field: "isActive",
@@ -392,6 +443,67 @@ const Memberships = () => {
           Delete Plan
         </MenuItem>
       </Menu>
+
+      {/* ── SUBSCRIBER PREVIEW POPOVER ──────────────────────────────────────── */}
+      <Popover
+        open={Boolean(subPopover.anchorEl)}
+        anchorEl={subPopover.anchorEl}
+        onClose={() => setSubPopover({ anchorEl: null, planId: null })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        disableScrollLock
+        PaperProps={{ sx: { width: 260, p: 1.5, borderRadius: 2, boxShadow: 3 } }}
+      >
+        {(() => {
+          const sub = subscriberCounts[subPopover.planId] || {};
+          const subs = sub.subscribers || [];
+          return (
+            <>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "#374151", display: "block", mb: 1 }}>
+                Active Subscribers ({sub.count || 0})
+              </Typography>
+              {subs.length === 0 ? (
+                <Typography variant="body2" sx={{ color: "#9ca3af" }}>No subscribers</Typography>
+              ) : (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                  {subs.map((s) => (
+                    <Box
+                      key={s._id}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        py: 0.75,
+                        px: 1,
+                        borderRadius: 1,
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: "#f5f3ff" },
+                      }}
+                      onClick={() => {
+                        setSubPopover({ anchorEl: null, planId: null });
+                        navigate(`/admin/patients?patientId=${s._id}`);
+                      }}
+                    >
+                      <Avatar sx={{ width: 28, height: 28, fontSize: "0.7rem", bgcolor: "#ede9fe", color: "#5b21b6" }}>
+                        {s.name?.[0]?.toUpperCase() || "P"}
+                      </Avatar>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: "#1f2937" }}>
+                        {s.name}
+                      </Typography>
+                    </Box>
+                  ))}
+                  {sub.hasMore && (
+                    <Typography variant="caption" sx={{ color: "#6b7280", textAlign: "center", pt: 0.5 }}>
+                      +{sub.moreCount} more
+                    </Typography>
+                  )}
+                </Box>
+              )}
+            </>
+          );
+        })()}
+      </Popover>
+
 
       {/* Add Plan Modal */}
       <AddMembershipModal
