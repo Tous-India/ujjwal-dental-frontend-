@@ -24,6 +24,8 @@ export const useMyAppointments = () => {
     queryFn: () => getMyAppointments(patient?.phone),
     enabled: !!patient?.phone,
     staleTime: 30 * 1000,
+    refetchOnMount: "always",      // always fetch on mount so rescheduled data is immediately visible
+    refetchOnWindowFocus: true,    // override global false — refetch when patient switches back to tab
     refetchInterval: 60 * 1000,
   });
 };

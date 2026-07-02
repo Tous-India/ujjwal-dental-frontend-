@@ -28,6 +28,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { searchPatients } from "../../../api/admin/patients.api";
+import { getMembershipPlans } from "../../../api/admin/memberships.api";
 import { useClinics } from "../../../hooks/admin/useClinics";
 import { useBillingMutations } from "../../../hooks/admin/useBilling";
 
@@ -63,7 +64,7 @@ const blankItem = {
   quantity: 1,
   unitPrice: "",
   discountPercent: 0,
-  taxRate: 0,
+  planId: "",
 };
 
 /**
@@ -73,13 +74,11 @@ const calcItemTotal = (item) => {
   const qty = Number(item.quantity) || 0;
   const price = Number(item.unitPrice) || 0;
   const discPct = Number(item.discountPercent) || 0;
-  const taxRate = Number(item.taxRate) || 0;
 
   let amount = qty * price;
   amount -= (amount * discPct) / 100;
   amount = Math.max(0, amount);
-  const tax = (amount * taxRate) / 100;
-  return { amount, tax, total: amount + tax };
+  return { amount, tax: 0, total: amount };
 };
 
 const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
@@ -96,6 +95,8 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
   const [patientSearch, setPatientSearch] = useState("");
   const [patientOptions, setPatientOptions] = useState([]);
   const [patientLoading, setPatientLoading] = useState(false);
+  const [membershipPlans, setMembershipPlans] = useState([]);
+  const [plansLoading, setPlansLoading] = useState(false);
 
   const { data: clinicsData } = useClinics();
   const clinics = clinicsData?.data || [];
@@ -126,6 +127,25 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
     }
   }, [open, clinics]);
 
+  // Load active membership plans once when modal opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setPlansLoading(true);
+        const res = await getMembershipPlans();
+        if (!cancelled) setMembershipPlans(res?.data?.plans || []);
+      } catch {
+        if (!cancelled) setMembershipPlans([]);
+      } finally {
+        if (!cancelled) setPlansLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open]);
+
   // Search patients with debounce
   useEffect(() => {
     const searchAsync = async () => {
@@ -151,7 +171,27 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
   const handleItemChange = (index, field, value) => {
     setFormData((prev) => {
       const items = [...prev.items];
-      items[index] = { ...items[index], [field]: value };
+      const updated = { ...items[index], [field]: value };
+      // Category change clears the plan selection; description/price are unaffected
+      // (they are always-visible editable fields, not driven by the plan dropdown)
+      if (field === "itemType") {
+        updated.planId = "";
+      }
+      items[index] = updated;
+      return { ...prev, items };
+    });
+  };
+
+  const handlePlanSelect = (index, planId) => {
+    const plan = membershipPlans.find((p) => p._id === planId);
+    setFormData((prev) => {
+      const items = [...prev.items];
+      items[index] = {
+        ...items[index],
+        planId,
+        description: plan?.name ?? "",
+        unitPrice: plan?.price ?? "",
+      };
       return { ...prev, items };
     });
   };
@@ -198,20 +238,16 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
     if (formData.items.length === 0) return toast.error("Add at least one item");
 
     const invalidItem = formData.items.find((item) => {
-      const qty = Number(item.quantity);
       const price = Number(item.unitPrice);
       const disc = Number(item.discountPercent) || 0;
-      const tax = Number(item.taxRate) || 0;
       return (
         !item.description.trim() ||
         !price || price <= 0 ||
-        !qty || qty <= 0 ||
-        disc < 0 || disc > 100 ||
-        tax < 0 || tax > 100
+        disc < 0 || disc > 100
       );
     });
     if (invalidItem)
-      return toast.error("Each item needs description, price > 0, qty > 0, and valid discount/tax (0-100%)");
+      return toast.error("Each item needs a description, price > 0, and valid discount (0–100%)");
 
     const overallDiscount = Number(formData.discountPercent) || 0;
     if (overallDiscount < 0 || overallDiscount > 100)
@@ -227,7 +263,6 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
           quantity: Number(item.quantity) || 1,
           unitPrice: Number(item.unitPrice),
           discount: { percentage: Number(item.discountPercent) || 0 },
-          taxRate: Number(item.taxRate) || 0,
         })),
         discount: {
           percentage: Number(formData.discountPercent) || 0,
@@ -259,23 +294,23 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
       PaperProps={{ className: "rounded-xl" }}
     >
       {/* Header */}
-      <DialogTitle className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white">
+      <DialogTitle className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white py-2 px-3">
         <Box className="flex items-center justify-between">
-          <Box className="flex items-center gap-2">
-            <ReceiptLongIcon />
-            <Typography variant="h6" className="font-bold">
-              Create Invoice22
+          <Box className="flex items-center gap-1.5">
+            <ReceiptLongIcon fontSize="small" />
+            <Typography variant="subtitle1" className="font-semibold">
+              Create Invoice
             </Typography>
           </Box>
-          <IconButton onClick={handleClose} disabled={isCreating}>
-            <CloseIcon className="text-white" />
+          <IconButton onClick={handleClose} disabled={isCreating} size="small">
+            <CloseIcon className="text-white" fontSize="small" />
           </IconButton>
         </Box>
       </DialogTitle>
 
       {/* Content */}
-      <DialogContent className="p-6 mt-8">
-        <Grid container spacing={3}>
+      <DialogContent className="p-4 mt-8">
+        <Grid container spacing={2}>
           {/* Patient Search */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <Autocomplete
@@ -350,8 +385,8 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
           {/* Items Section */}
           <Grid size={{ xs: 12 }}>
             <Divider className="my-2" />
-            <Box className="flex items-center justify-between mb-3 mt-3">
-              <Typography variant="subtitle1" className="font-semibold">
+            <Box className="flex items-center justify-between mb-2 mt-1.5">
+              <Typography variant="body2" className="font-semibold text-gray-700">
                 Line Items
               </Typography>
               <Button
@@ -359,20 +394,20 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                 startIcon={<AddIcon />}
                 onClick={addItem}
                 variant="outlined"
+                sx={{ textTransform: "none", fontSize: "12px", height: 30 }}
               >
                 Add Item
               </Button>
             </Box>
 
             {formData.items.map((item, index) => (
-              <Paper
+              <Box
                 key={index}
-                variant="outlined"
-                className="p-3 mb-3"
+                sx={{ border: "1px solid #e5e7eb", borderRadius: "6px", p: 1.5, mb: 1.5 }}
               >
-                <Grid container spacing={2} alignItems="center">
+                <Grid container spacing={1.5} alignItems="center">
                   {/* Type */}
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <TextField
                       select
                       fullWidth
@@ -392,7 +427,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Grid>
 
                   {/* Description */}
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <TextField
                       fullWidth
                       label="Description *"
@@ -405,23 +440,8 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     />
                   </Grid>
 
-                  {/* Qty */}
-                  <Grid size={{ xs: 6, sm: 4 }}>
-                    <TextField
-                      fullWidth
-                      label="Qty"
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) =>
-                        handleItemChange(index, "quantity", e.target.value)
-                      }
-                      size="small"
-                      inputProps={{ min: 1 }}
-                    />
-                  </Grid>
-
                   {/* Unit Price */}
-                  <Grid size={{ xs: 6, sm: 4 }}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <TextField
                       fullWidth
                       label="Price (₹) *"
@@ -436,7 +456,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   </Grid>
 
                   {/* Discount */}
-                  <Grid size={{ xs: 6, sm: 4 }}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <TextField
                       fullWidth
                       label="Disc %"
@@ -450,23 +470,37 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     />
                   </Grid>
 
-                  {/* Tax */}
-                  <Grid size={{ xs: 6, sm: 3 }}>
-                    <TextField
-                      fullWidth
-                      label="Tax %"
-                      type="number"
-                      value={item.taxRate}
-                      onChange={(e) =>
-                        handleItemChange(index, "taxRate", e.target.value)
-                      }
-                      size="small"
-                      inputProps={{ min: 0, max: 100 }}
-                    />
-                  </Grid>
+                  {/* Membership plan quick-fill — second sub-row, only when Category = Membership */}
+                  {item.itemType === "membership" && (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        select
+                        fullWidth
+                        label="Select Plan"
+                        value={item.planId || ""}
+                        onChange={(e) => handlePlanSelect(index, e.target.value)}
+                        size="small"
+                        disabled={plansLoading}
+                        helperText="Auto-fills Description and Price above"
+                      >
+                        <MenuItem value="" disabled>Choose a plan to auto-fill…</MenuItem>
+                        {plansLoading ? (
+                          <MenuItem value="" disabled>Loading…</MenuItem>
+                        ) : membershipPlans.length === 0 ? (
+                          <MenuItem value="" disabled>No active plans found</MenuItem>
+                        ) : (
+                          membershipPlans.map((plan) => (
+                            <MenuItem key={plan._id} value={plan._id}>
+                              {plan.name} — ₹{plan.price?.toLocaleString("en-IN")}
+                            </MenuItem>
+                          ))
+                        )}
+                      </TextField>
+                    </Grid>
+                  )}
 
                   {/* Line Total + Delete */}
-                  <Grid size={{ xs: 12, sm: 1 }}>
+                  <Grid size={{ xs: 12 }}>
                     <Box className="flex items-center justify-between">
                       <Typography
                         variant="body2"
@@ -479,20 +513,21 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                         color="error"
                         onClick={() => removeItem(index)}
                         disabled={formData.items.length <= 1}
+                        sx={{ p: 0.5 }}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>
                   </Grid>
                 </Grid>
-              </Paper>
+              </Box>
             ))}
           </Grid>
 
           {/* Totals Preview */}
           <Grid size={{ xs: 12 }}>
             <Box className="flex justify-end">
-              <Paper variant="outlined" className="p-4 min-w-[280px]">
+              <Paper variant="outlined" className="p-2.5 min-w-60">
                 <Box className="flex justify-between mb-1">
                   <Typography variant="body2" className="text-gray-600">
                     Subtotal:
@@ -508,16 +543,6 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     </Typography>
                     <Typography variant="body2" className="font-numbers text-red-500">
                       -₹{discountAmount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                    </Typography>
-                  </Box>
-                )}
-                {totalTax > 0 && (
-                  <Box className="flex justify-between mb-1">
-                    <Typography variant="body2" className="text-gray-600">
-                      Tax:
-                    </Typography>
-                    <Typography variant="body2" className="font-numbers">
-                      ₹{totalTax.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                     </Typography>
                   </Box>
                 )}
@@ -651,18 +676,20 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
       </DialogContent>
 
       {/* Actions */}
-      <DialogActions className="p-4 bg-gray-50">
-        <Button onClick={handleClose} color="inherit" disabled={isCreating}>
+      <DialogActions className="px-4 py-2 bg-gray-50">
+        <Button onClick={handleClose} color="inherit" disabled={isCreating} size="small">
           Cancel
         </Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={isCreating}
+          size="small"
           className="bg-indigo-600 hover:bg-indigo-700"
           startIcon={
-            isCreating ? <CircularProgress size={16} /> : <ReceiptLongIcon />
+            isCreating ? <CircularProgress size={14} /> : <ReceiptLongIcon fontSize="small" />
           }
+          sx={{ textTransform: "none", fontSize: "13px" }}
         >
           {isCreating ? "Creating..." : "Create Draft Invoice"}
         </Button>

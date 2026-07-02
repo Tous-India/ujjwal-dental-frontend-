@@ -23,6 +23,7 @@ import {
   Button,
 } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import { useNavigate } from "react-router-dom";
 import { useMyAppointments } from "../../hooks/patient/useMyAppointments";
 
@@ -45,6 +46,9 @@ const statusLabels = {
   cancelled: "Cancelled",
   no_show: "No Show",
 };
+
+const wasRescheduled = (apt) =>
+  typeof apt.notes === "string" && apt.notes.includes("Rescheduled from");
 
 const formatDate = (date) => {
   if (!date) return "-";
@@ -92,7 +96,7 @@ const Appointments = () => {
       {/* Page Header */}
       <Box className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
             My Appointments
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -104,7 +108,7 @@ const Appointments = () => {
           onClick={() => navigate("/book-appointment")}
           className="bg-indigo-600 hover:bg-indigo-700"
         >
-          Book Appointment
+          Book Appointment / Treatment
         </Button>
       </Box>
 
@@ -250,11 +254,29 @@ const Appointments = () => {
                         })()}
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          label={statusLabels[apt.status] || apt.status}
-                          size="small"
-                          color={statusColors[apt.status] || "default"}
-                        />
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "flex-start" }}>
+                          <Chip
+                            label={statusLabels[apt.status] || apt.status}
+                            size="small"
+                            color={statusColors[apt.status] || "default"}
+                          />
+                          {wasRescheduled(apt) && (
+                            <Chip
+                              icon={<EventRepeatIcon sx={{ fontSize: "0.75rem !important" }} />}
+                              label="Rescheduled"
+                              size="small"
+                              sx={{
+                                bgcolor: "#cffafe",
+                                color: "#0891b2",
+                                border: "1px solid #a5f3fc",
+                                fontWeight: 600,
+                                fontSize: "0.65rem",
+                                height: 20,
+                                "& .MuiChip-icon": { color: "#0891b2" },
+                              }}
+                            />
+                          )}
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))}

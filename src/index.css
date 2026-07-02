@@ -10,9 +10,25 @@
 *::after {
   box-sizing: border-box;
 }
-html,
-body {
+html {
   overflow-x: hidden;
+  max-width: 100%;
+  /* Always reserve the scrollbar gutter so content width never changes when the
+     scrollbar appears or disappears (belt-and-suspenders alongside disableScrollLock
+     in the MUI theme). Works because overflow-x:hidden forces overflow-y to auto,
+     making <html> the vertical scroll container. */
+  scrollbar-gutter: stable;
+}
+/* NOTE: overflow-x must NOT be set on body.
+   Setting it on body forces computed overflow-y to "auto" (CSS spec), which makes
+   <body> the scroll container instead of <html>. MUI's scroll-lock measures
+   window.innerWidth - document.documentElement.clientWidth to find the scrollbar
+   width — that measurement returns 0 when the scrollbar is on body, so MUI applies
+   overflow:hidden without the matching padding-right compensation, producing the
+   visible right-side gap/shift whenever a Select, Menu, or Modal opens.
+   Keeping overflow-x:hidden only on html clips horizontal overflow at the viewport
+   level (html is the root scroll container) without affecting MUI's measurement. */
+body {
   max-width: 100%;
 }
 /* In @layer base so Tailwind height/width utilities (e.g. h-12) still override

@@ -35,7 +35,7 @@ import { useMyAppointments } from "../../hooks/patient/useMyAppointments";
 import { useMyBillingSummary } from "../../hooks/patient/useMyInvoices";
 import { useMyReports } from "../../hooks/patient/useMyReports";
 import { useMyTreatments } from "../../hooks/patient/useMyTreatments";
-import { useMyMembership } from "../../hooks/patient/useMemberships";
+import { useMyMembership, useMembershipPlans } from "../../hooks/patient/useMemberships";
 import UpcomingFollowUps from "../../components/patient/UpcomingFollowUps";
 
 const formatDate = (date) => {
@@ -58,6 +58,7 @@ const Dashboard = () => {
   const { data: reportsData, isLoading: loadingRep } = useMyReports();
   const { data: treatmentsData, isLoading: loadingTreat } = useMyTreatments({ limit: 5 });
   const { data: membershipData, isLoading: loadingMembership } = useMyMembership();
+  const { data: plansData } = useMembershipPlans();
 
   const firstName = patient?.name?.split(" ")[0] || "Patient";
 
@@ -67,6 +68,8 @@ const Dashboard = () => {
     membership &&
     membership.status === "active" &&
     (!membership.expiryDate || new Date(membership.expiryDate) >= new Date());
+
+  const plans = plansData?.data || [];
 
   // Extract counts
   const allAppointments = appointmentsData?.data?.appointments || appointmentsData?.data || [];
@@ -130,6 +133,49 @@ const Dashboard = () => {
 
   return (
     <Box>
+      {/* Quick Actions */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                Quick Actions
+              </Typography>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<EventIcon />}
+                  onClick={() => navigate("/book-appointment")}
+                >
+                  Book Appointment / Treatment
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<PaymentIcon />}
+                  onClick={() => navigate("/payments")}
+                >
+                  Payment History
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<DescriptionIcon />}
+                  onClick={() => navigate("/reports")}
+                >
+                  Medical Reports
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<MedicalServicesIcon />}
+                  onClick={() => navigate("/my-treatments")}
+                >
+                  Treatment History
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
       {/* Welcome Section */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
@@ -409,6 +455,63 @@ const Dashboard = () => {
                   </Typography>
                 </Box>
               )}
+
+              {/* All Available Plans */}
+              {plans.length > 0 && (
+                <>
+                  <Divider sx={{ my: 2 }} />
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Available Plans
+                    </Typography>
+                    <Button size="small" onClick={() => navigate("/membership-plans")}>
+                      View All →
+                    </Button>
+                  </Box>
+                  <Grid container spacing={1.5}>
+                    {plans.map((plan) => {
+                      const isCurrent = hasActiveMembership && membership.planName === plan.name;
+                      return (
+                        <Grid key={plan._id} size={{ xs: 12, sm: 6, md: 4 }}>
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              border: "1px solid",
+                              borderColor: isCurrent ? "#ed6c02" : "divider",
+                              borderRadius: 1.5,
+                              bgcolor: isCurrent ? "#fff7ed" : "#fafafa",
+                              position: "relative",
+                            }}
+                          >
+                            {isCurrent && (
+                              <Chip
+                                label="Your Plan"
+                                size="small"
+                                color="warning"
+                                sx={{ position: "absolute", top: 8, right: 8, fontSize: "0.6rem", height: 18 }}
+                              />
+                            )}
+                            <Typography variant="body2" fontWeight="bold" sx={{ pr: isCurrent ? 9 : 0 }}>
+                              {plan.name}
+                            </Typography>
+                            {plan.discountPercentage > 0 && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {plan.discountPercentage}% off treatments
+                              </Typography>
+                            )}
+                            <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mt: 0.5 }}>
+                              ₹{plan.price.toLocaleString("en-IN")}
+                              <Typography component="span" variant="caption" color="text.secondary">
+                                {" "}/ {plan.durationMonths === 12 ? "year" : `${plan.durationMonths} months`}
+                              </Typography>
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -416,47 +519,6 @@ const Dashboard = () => {
         {/* Upcoming Follow-up Reminders (no payment) */}
         <Grid size={{ xs: 12 }}>
           <UpcomingFollowUps />
-        </Grid>
-
-        {/* Quick Actions */}
-        <Grid size={{ xs: 12 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                Quick Actions
-              </Typography>
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<EventIcon />}
-                  onClick={() => navigate("/book-appointment")}
-                >
-                  Book Appointment
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<PaymentIcon />}
-                  onClick={() => navigate("/payments")}
-                >
-                  Payment History
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<DescriptionIcon />}
-                  onClick={() => navigate("/reports")}
-                >
-                  Medical Reports
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<MedicalServicesIcon />}
-                  onClick={() => navigate("/my-treatments")}
-                >
-                  Treatment History
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
         </Grid>
       </Grid>
     </Box>

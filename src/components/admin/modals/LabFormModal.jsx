@@ -125,7 +125,7 @@ const LabFormModal = ({ open, onClose, lab, onSuccess }) => {
         <Box className="flex items-center justify-between">
           <Box className="flex items-center gap-2">
             <BusinessIcon />
-            <Typography variant="h6" className="font-bold">{isEdit ? "Edit Lab" : "Add Lab"}</Typography>
+            <Typography variant="h6" component="span" className="font-bold">{isEdit ? "Edit Lab" : "Add Lab"}</Typography>
           </Box>
           <IconButton onClick={handleClose} disabled={saving}><CloseIcon className="text-white" /></IconButton>
         </Box>

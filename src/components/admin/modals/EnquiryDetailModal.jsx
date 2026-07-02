@@ -34,6 +34,7 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import { toast } from "react-toastify";
 import { useEnquiry, useEnquiryMutations } from "../../../hooks/admin/useEnquiries";
 import { useUsers } from "../../../hooks/admin/useUsers";
+import ConfirmDialog from "../../common/ConfirmDialog";
 
 const statusConfig = {
   new: { color: "info", label: "New" },
@@ -85,6 +86,8 @@ const EnquiryDetailModal = ({ open, onClose, enquiry, onRefresh }) => {
   const [assignTo, setAssignTo] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [activeAction, setActiveAction] = useState(null); // "status" | "assign" | "note" | "followup"
+  const [spamConfirmOpen, setSpamConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { data: fullData, isLoading, refetch } = useEnquiry(enquiry?._id);
   const enq = fullData?.data?.enquiry || enquiry;
@@ -158,16 +161,20 @@ const EnquiryDetailModal = ({ open, onClose, enquiry, onRefresh }) => {
     );
   };
 
-  const handleSpam = () => {
-    if (!window.confirm("Mark this enquiry as spam?")) return;
+  const handleSpam = () => setSpamConfirmOpen(true);
+
+  const doSpam = () => {
+    setSpamConfirmOpen(false);
     markAsSpam(
       { id: enq._id, data: { isSpam: !enq?.isSpam } },
       { onSuccess: onMutationSuccess, onError: onMutationError }
     );
   };
 
-  const handleDelete = () => {
-    if (!window.confirm("Permanently delete this enquiry?")) return;
+  const handleDelete = () => setDeleteConfirmOpen(true);
+
+  const doDelete = () => {
+    setDeleteConfirmOpen(false);
     deleteEnquiry(enq._id, {
       onSuccess: () => { onRefresh?.(); handleClose(); },
       onError: onMutationError,
@@ -179,6 +186,7 @@ const EnquiryDetailModal = ({ open, onClose, enquiry, onRefresh }) => {
   const status = statusConfig[enq?.status] || statusConfig.new;
 
   return (
+    <>
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ className: "rounded-xl" }}>
       {/* Header */}
       <DialogTitle className="bg-linear-to-r from-teal-600 to-teal-700 text-white">
@@ -186,7 +194,7 @@ const EnquiryDetailModal = ({ open, onClose, enquiry, onRefresh }) => {
           <Box className="flex items-center gap-3">
             <PhoneIcon />
             <Box>
-              <Typography variant="h6" className="font-bold">
+              <Typography variant="h6" component="span" className="font-bold">
                 {enq?.name || "Enquiry"}
               </Typography>
               <Box className="flex gap-2 mt-0.5">
@@ -395,6 +403,26 @@ const EnquiryDetailModal = ({ open, onClose, enquiry, onRefresh }) => {
         </DialogActions>
       )}
     </Dialog>
+
+    <ConfirmDialog
+      open={spamConfirmOpen}
+      onClose={() => setSpamConfirmOpen(false)}
+      onConfirm={doSpam}
+      title={enq?.isSpam ? "Unmark Spam" : "Mark as Spam"}
+      message={enq?.isSpam ? "Remove spam flag from this enquiry?" : "Mark this enquiry as spam?"}
+      confirmText={enq?.isSpam ? "Unmark Spam" : "Mark as Spam"}
+      confirmColor="warning"
+    />
+    <ConfirmDialog
+      open={deleteConfirmOpen}
+      onClose={() => setDeleteConfirmOpen(false)}
+      onConfirm={doDelete}
+      title="Delete Enquiry"
+      message="Permanently delete this enquiry? This cannot be undone."
+      confirmText="Delete Permanently"
+      confirmColor="error"
+    />
+    </>
   );
 };
 

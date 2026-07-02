@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Box,
   Typography,
@@ -11,6 +12,7 @@ import {
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import EventIcon from "@mui/icons-material/Event";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import PaymentIcon from "@mui/icons-material/Payment";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import InfoIcon from "@mui/icons-material/Info";
@@ -23,6 +25,7 @@ const typeIcons = {
   appointment_confirmation: <EventIcon sx={{ color: "#2e7d32" }} />,
   appointment_cancellation: <EventIcon sx={{ color: "#d32f2f" }} />,
   appointment_reminder: <EventIcon sx={{ color: "#ed6c02" }} />,
+  appointment_reschedule: <EventRepeatIcon sx={{ color: "#0891b2" }} />,
   payment_received: <PaymentIcon sx={{ color: "#1976d2" }} />,
   payment_reminder: <PaymentIcon sx={{ color: "#ed6c02" }} />,
   membership_renewal: <CardMembershipIcon sx={{ color: "#9c27b0" }} />,
@@ -45,7 +48,14 @@ const timeAgo = (date) => {
 const PatientNotifications = () => {
   const { data, isLoading } = usePatientNotifications({ limit: 50 });
   const { markAsRead, markAllAsRead } = usePatientNotificationMutations();
-  const notifications = data?.data?.notifications || [];
+  const notifications = data?.data || [];
+
+  // Mark all unread notifications as read when the page loads so the bell resets to 0.
+  useEffect(() => {
+    if (notifications.some((n) => !n.isRead)) {
+      markAllAsRead();
+    }
+  }, [notifications, markAllAsRead]);
 
   return (
     <Box>

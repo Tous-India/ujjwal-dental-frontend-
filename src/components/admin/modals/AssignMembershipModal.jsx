@@ -29,8 +29,6 @@ import CardMembershipIcon from "@mui/icons-material/CardMembership";
 import { toast } from "react-toastify";
 import { getMembershipPlans, assignManualMembership } from "../../../api/admin/memberships.api";
 
-const CUSTOM_VALUE = "__custom__";
-
 const PAYMENT_METHODS = [
   { value: "cash", label: "Cash" },
   { value: "card", label: "Card" },
@@ -63,7 +61,6 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const [planSelection, setPlanSelection] = useState("");
-  const [customPlanName, setCustomPlanName] = useState("");
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
@@ -76,7 +73,6 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
     if (!open) return;
 
     setPlanSelection("");
-    setCustomPlanName("");
     setStartDate(today);
     setEndDate("");
     setAmountPaid("");
@@ -105,7 +101,6 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
     loadPlans();
   }, [open, today]);
 
-  const isCustom = planSelection === CUSTOM_VALUE;
   const selectedPlan = plans.find((p) => p._id === planSelection);
 
   // When a real plan is picked, prefill the end date (from duration) and amount
@@ -113,7 +108,7 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
     setPlanSelection(value);
     setErrors((e) => ({ ...e, plan: undefined }));
 
-    if (value && value !== CUSTOM_VALUE) {
+    if (value) {
       const plan = plans.find((p) => p._id === value);
       if (plan) {
         setEndDate(addMonths(startDate || today, plan.durationMonths));
@@ -133,8 +128,6 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
   const validate = () => {
     const e = {};
     if (!planSelection) e.plan = "Please choose a plan";
-    if (isCustom && !customPlanName.trim())
-      e.customPlanName = "Enter the custom plan name";
     if (!startDate) e.startDate = "Start date is required";
     if (!endDate) e.endDate = "End date is required";
     if (startDate && endDate && new Date(endDate) <= new Date(startDate))
@@ -154,8 +147,7 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
 
     const payload = {
       patientId: patient._id,
-      planId: isCustom ? undefined : planSelection,
-      planName: isCustom ? customPlanName.trim() : undefined,
+      planId: planSelection,
       startDate,
       endDate,
       amountPaid: amountPaid === "" ? undefined : Number(amountPaid),
@@ -178,7 +170,7 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
 
   return (
     <Dialog open={open} onClose={submitting ? undefined : onClose} maxWidth="sm" fullWidth>
-      <DialogTitle className="flex items-center justify-between bg-blue-600 text-white">
+      <DialogTitle className="flex items-center justify-between bg-linear-to-r from-purple-600 to-purple-700 text-white">
         <Box className="flex items-center gap-2">
           <CardMembershipIcon />
           <span>Assign Membership</span>
@@ -190,7 +182,7 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
 
       <DialogContent className="pt-6!">
         {patient && (
-          <Typography variant="body2" className="text-gray-500 mb-4">
+          <Typography variant="body2" className="text-gray-500" sx={{ mb: 3 }}>
             Patient: <span className="font-medium text-gray-800">{patient.name}</span>
             {patient.phone ? ` (${patient.phone})` : ""}
           </Typography>
@@ -217,30 +209,17 @@ const AssignMembershipModal = ({ open, onClose, patient, onSuccess }) => {
                 Select a plan
               </MenuItem>
               {plans.map((plan) => (
-                <MenuItem key={plan._id} value={plan._id}>
+                <MenuItem
+                  key={plan._id}
+                  value={plan._id}
+                  disabled={!plan.isActive || plan.discontinued}
+                  sx={(!plan.isActive || plan.discontinued) ? { color: "#9CA3AF", opacity: 1 } : undefined}
+                >
                   {plan.name}
-                  {!plan.isActive ? " (Discontinued)" : ""}
+                  {plan.discontinued ? " (Discontinued)" : !plan.isActive ? " (Inactive)" : ""}
                 </MenuItem>
               ))}
-              <MenuItem value={CUSTOM_VALUE}>Custom plan (not listed)…</MenuItem>
             </TextField>
-
-            {/* Custom plan name */}
-            {isCustom && (
-              <TextField
-                fullWidth
-                label="Custom Plan Name"
-                value={customPlanName}
-                onChange={(e) => {
-                  setCustomPlanName(e.target.value);
-                  setErrors((er) => ({ ...er, customPlanName: undefined }));
-                }}
-                error={Boolean(errors.customPlanName)}
-                helperText={errors.customPlanName}
-                disabled={submitting}
-                placeholder="e.g. Cosmodentofacial Family Dental Plan"
-              />
-            )}
 
             {/* Dates */}
             <Box className="flex gap-4">

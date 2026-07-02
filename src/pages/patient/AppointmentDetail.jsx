@@ -4,10 +4,11 @@
  * Shows full appointment details with patient info, timing, payment, and clinic.
  */
 import { useState } from "react";
-import { Box, Card, CardContent, Typography, Chip, CircularProgress, Button, Divider, TextField } from "@mui/material";
+import { Box, Card, CardContent, Typography, Chip, CircularProgress, Button, Divider, TextField, IconButton, Tooltip } from "@mui/material";
 import { toast } from "react-toastify";
 import Grid from "@mui/material/Grid";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import EventIcon from "@mui/icons-material/Event";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -80,7 +81,7 @@ const AppointmentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const patient = useAuthStore((state) => state.patient);
-  const { data, isLoading } = useMyAppointments();
+  const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useMyAppointments();
   const { cancelAppointment, isCancelling } = useAppointmentMutations();
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -120,17 +121,38 @@ const AppointmentDetail = () => {
             <Typography variant="h5" fontWeight="bold">
               Appointment Details
             </Typography>
-            <Typography variant="body2" color="text.secondary" className="font-mono">
-              {appointment.appointmentNumber || ""}
-            </Typography>
+            <Box className="flex items-center gap-2">
+              <Typography variant="body2" color="text.secondary" className="font-mono">
+                {appointment.appointmentNumber || ""}
+              </Typography>
+              {dataUpdatedAt > 0 && (
+                <Typography variant="caption" color="text.disabled">
+                  · updated {Math.round((Date.now() - dataUpdatedAt) / 1000)}s ago
+                </Typography>
+              )}
+            </Box>
           </Box>
         </Box>
-        <Chip
-          label={statusLabels[appointment.status] || appointment.status}
-          color={statusColors[appointment.status] || "default"}
-          size="medium"
-          sx={{ fontSize: "0.9rem", px: 1 }}
-        />
+        <Box className="flex items-center gap-2">
+          <Tooltip title="Refresh appointment data">
+            <span>
+              <IconButton
+                size="small"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                sx={{ color: "text.secondary" }}
+              >
+                <RefreshIcon fontSize="small" sx={{ animation: isFetching ? "spin 1s linear infinite" : "none", "@keyframes spin": { "0%": { transform: "rotate(0deg)" }, "100%": { transform: "rotate(360deg)" } } }} />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Chip
+            label={statusLabels[appointment.status] || appointment.status}
+            color={statusColors[appointment.status] || "default"}
+            size="medium"
+            sx={{ fontSize: "0.9rem", px: 1 }}
+          />
+        </Box>
       </Box>
 
       <Grid container spacing={3}>

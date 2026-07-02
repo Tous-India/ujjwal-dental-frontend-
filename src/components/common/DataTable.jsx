@@ -66,6 +66,9 @@ const DataTable = ({
   rowsPerPageOptions = [10, 25, 50],
   getRowStyle,
   getRowSx,
+  // "small" reduces MUI TableCell padding to 6px (vs 16px for default "medium").
+  // Defaults to "medium" so all existing call sites are unaffected.
+  size = "medium",
 }) => {
   // Local search state
   const [searchTerm, setSearchTerm] = useState("");
@@ -273,7 +276,7 @@ const DataTable = ({
             OVERFLOWS the container on narrow screens (phones/tablets/foldables)
             and the container scrolls horizontally, instead of cramming/wrapping
             columns. On wide screens width:100% still fills as before. */}
-        <Table sx={{ bgcolor: "white", minWidth: "max-content" }}>
+        <Table size={size} sx={{ bgcolor: "white", minWidth: "max-content" }}>
           <TableHead>
             <TableRow className="bg-gray-50">
               {columns.map((column) => (

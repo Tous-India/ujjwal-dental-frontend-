@@ -29,3 +29,11 @@ export const getMyInvoice = (invoiceId) =>
  */
 export const getMyBillingSummary = () =>
   api.get("/billing/my-summary").then((res) => res.data);
+
+/**
+ * Get the logged-in patient's payment history derived from invoices where
+ * amountPaid > 0. Token-derived & IDOR-safe. Returns payment-shaped entries
+ * even for invoices settled via invoice.amountPaid (no Payment doc needed).
+ */
+export const getMyPaymentHistory = () =>
+  api.get("/billing/invoices/my-payment-history").then((res) => res.data);

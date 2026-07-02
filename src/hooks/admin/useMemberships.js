@@ -13,6 +13,7 @@ import {
   seedDefaultPlans,
   getActiveMembers,
   getMembershipStats,
+  getPlanSubscriberCounts,
   assignMembership,
   renewMembership,
   cancelMembership,
@@ -27,6 +28,7 @@ const membershipKeys = {
   plan: (id) => [...membershipKeys.plans(), id],
   members: () => [...membershipKeys.all, "members"],
   stats: () => [...membershipKeys.all, "stats"],
+  subscriberCounts: () => [...membershipKeys.all, "subscriberCounts"],
 };
 
 /**
@@ -69,6 +71,17 @@ export const useMembershipStats = () => {
   return useQuery({
     queryKey: membershipKeys.stats(),
     queryFn: getMembershipStats,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+};
+
+/**
+ * Hook to fetch active subscriber counts + preview lists for all plans
+ */
+export const usePlanSubscriberCounts = () => {
+  return useQuery({
+    queryKey: membershipKeys.subscriberCounts(),
+    queryFn: getPlanSubscriberCounts,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };

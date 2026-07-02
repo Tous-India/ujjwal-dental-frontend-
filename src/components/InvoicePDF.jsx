@@ -37,8 +37,6 @@ const STATUS_LABELS = {
 
 const getStatusStyle = (status) => {
   const base = {
-    borderRadius: "4px",
-    padding: "4px 14px 4px 14px",
     fontSize: "11px",
     fontWeight: "700",
     letterSpacing: "1.5px",
@@ -46,13 +44,12 @@ const getStatusStyle = (status) => {
     display: "inline-block",
     fontFamily: "Inter, sans-serif",
     lineHeight: "1",
-    boxSizing: "border-box",
     verticalAlign: "middle",
   };
   const s = (status || "").toLowerCase();
-  if (s === "paid") return { ...base, background: "#e6f9f0", color: "#0d8a4a", border: "1.5px solid #0d8a4a" };
-  if (s.includes("partial")) return { ...base, background: "#fff7e6", color: "#c67a00", border: "1.5px solid #c67a00" };
-  return { ...base, background: "#fde8e8", color: "#c81e1e", border: "1.5px solid #c81e1e" };
+  if (s === "paid") return { ...base, color: "#16A34A" };
+  if (s.includes("partial")) return { ...base, color: "#D97706" };
+  return { ...base, color: "#DC2626" };
 };
 
 /* ── Tiny helpers ─────────────────────────────────────────────────── */

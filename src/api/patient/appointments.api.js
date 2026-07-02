@@ -89,3 +89,12 @@ export const verifyPayment = (data) =>
  */
 export const bookAppointmentWithPayment = (data) =>
   api.post("/appointments/book-with-payment", data).then((res) => res.data);
+
+/**
+ * Book a free OPD appointment for a logged-in patient with an active membership.
+ * Requires patient JWT (patientProtect). Server re-verifies membership server-side.
+ * @param {Object} data - { clinic, date, timeSlot, reason, type, bookingType }
+ * @returns {Promise}
+ */
+export const bookAppointmentFree = (data) =>
+  api.post("/appointments/book-free", data).then((res) => res.data);

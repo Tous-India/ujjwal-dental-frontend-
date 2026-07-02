@@ -5,6 +5,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import submitEnquiry from "../../utils/submitEnquiry";
 import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
+import { toast } from "react-toastify";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
 
 const doctors = [
@@ -328,7 +329,7 @@ const DoctorProfilePage = () => {
                   type="button"
                   onClick={async () => {
                     if (!captchaToken) {
-                      alert("Please complete the reCAPTCHA verification.");
+                      toast.warn("Please complete the reCAPTCHA verification.");
                       return;
                     }
                     const ok = await submitEnquiry({ name: form.name, email: form.email, phone: form.phone, treatment: `Appointment - ${doctor.name}`, pagePath: `/doctors/${doctor.slug}`, pageLabel: "Doctor Profile" });

@@ -83,6 +83,13 @@ export const getMembershipStats = () =>
   api.get("/memberships/stats").then((res) => res.data);
 
 /**
+ * Get active subscriber counts + preview lists for all plans (bulk)
+ * @returns {Promise<{ data: { subscriberCounts: Record<string, { count, subscribers, hasMore, moreCount }> } }>}
+ */
+export const getPlanSubscriberCounts = () =>
+  api.get("/memberships/plans/subscriber-counts").then((res) => res.data);
+
+/**
  * Assign membership to patient
  * @param {Object} data - { patientId, planId }
  * @returns {Promise}

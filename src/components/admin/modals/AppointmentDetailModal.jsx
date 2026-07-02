@@ -3,7 +3,7 @@
  *
  * Displays complete appointment information.
  */
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -30,6 +30,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PaymentIcon from "@mui/icons-material/Payment";
 import ReceiptIcon from "@mui/icons-material/Receipt";
+import ConfirmDialog from "../../common/ConfirmDialog";
 
 /**
  * Info row component
@@ -95,6 +96,8 @@ const typeLabels = {
 };
 
 const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew }) => {
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
   if (!appointment) return null;
 
   const {
@@ -113,6 +116,8 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
     opdFee,
     opdFeePaid,
     isFree,
+    invoice,
+    paymentStatus,
     source,
     createdAt,
     cancellation,
@@ -123,6 +128,7 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
   const patientPhone = patient?.phone || "-";
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={onClose}
@@ -138,7 +144,7 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
               <EventIcon />
             </Avatar>
             <Box>
-              <Typography variant="h6" className="font-bold">
+              <Typography variant="h6" component="span" className="font-bold">
                 {appointmentNumber || "Appointment"}
               </Typography>
               <Box className="flex items-center gap-2 mt-1">
@@ -217,13 +223,19 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
                 <Typography variant="body2" className="text-gray-600">Payment Status</Typography>
                 {isFree ? (
                   <Chip label="N/A" size="small" variant="outlined" />
-                ) : (
-                  <Chip
-                    label={opdFeePaid ? "Paid" : "Pending"}
-                    size="small"
-                    color={opdFeePaid ? "success" : "warning"}
-                  />
-                )}
+                ) : (() => {
+                  const invPs = invoice?.paymentStatus;
+                  if (invPs === "paid" || paymentStatus === "paid") {
+                    return <Chip label="Paid" size="small" color="success" />;
+                  }
+                  if (invPs === "partial") {
+                    return <Chip label="Partially Paid" size="small" color="warning" />;
+                  }
+                  if (opdFeePaid) {
+                    return <Chip label="Paid" size="small" color="success" />;
+                  }
+                  return <Chip label="Unpaid" size="small" color="error" />;
+                })()}
               </Box>
               {payment && (
                 <>
@@ -316,11 +328,7 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
               variant="outlined"
               color="error"
               startIcon={<DeleteIcon />}
-              onClick={() => {
-                if (window.confirm("Permanently delete this appointment? This cannot be undone.")) {
-                  onDelete(appointment);
-                }
-              }}
+              onClick={() => setDeleteConfirmOpen(true)}
             >
               Delete Permanently
             </Button>
@@ -353,6 +361,17 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
         </Box>
       </DialogActions>
     </Dialog>
+
+    <ConfirmDialog
+      open={deleteConfirmOpen}
+      onClose={() => setDeleteConfirmOpen(false)}
+      onConfirm={() => { setDeleteConfirmOpen(false); onDelete(appointment); }}
+      title="Delete Appointment"
+      message="Permanently delete this appointment? This cannot be undone."
+      confirmText="Delete Permanently"
+      confirmColor="error"
+    />
+    </>
   );
 };
 

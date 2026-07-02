@@ -42,7 +42,7 @@ const InvoicePreviewModal = ({ open, onClose, invoice }) => {
           borderColor: "divider",
         }}
       >
-        <Typography variant="h6" fontWeight="bold">
+        <Typography variant="h6" component="span" fontWeight="bold">
           Invoice Preview
         </Typography>
         <IconButton onClick={onClose} size="small">

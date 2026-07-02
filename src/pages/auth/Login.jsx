@@ -33,7 +33,8 @@ const Login = () => {
   const login = useAuthStore((state) => state.login);
 
   const [loginMethod, setLoginMethod] = useState(0); // 0 = OTP, 1 = Password
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("");            // OTP tab: email address
+  const [identifier, setIdentifier] = useState(""); // Password tab: phone or email
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -77,9 +78,17 @@ const Login = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
-    const validEmail = validateEmail();
-    if (!validEmail) return;
-
+    const trimmed = identifier.trim();
+    if (!trimmed) {
+      toast.error("Please enter your phone number or email");
+      return;
+    }
+    const isPhone = /^[6-9]\d{9}$/.test(trimmed);
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+    if (!isPhone && !isEmail) {
+      toast.error("Please enter a valid 10-digit phone number or email address");
+      return;
+    }
     if (!password) {
       toast.error("Please enter your password");
       return;
@@ -88,12 +97,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await loginWithPassword(validEmail, password);
+      const response = await loginWithPassword(trimmed, password);
       login(response.data.patient, response.data.token);
       navigate(redirect || "/dashboard", { replace: true });
     } catch (err) {
       const message =
-        err.response?.data?.message || "Invalid email or password";
+        err.response?.data?.message || "Invalid credentials";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -235,18 +244,19 @@ const Login = () => {
           {loginMethod === 1 && (
             <form onSubmit={handlePasswordSubmit}>
               <input
-                type="email"
+                type="text"
                 className={`${fieldCls} mb-4`}
-                placeholder="Enter your registered email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Phone number or email"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                autoComplete="username"
                 disabled={loading}
               />
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   className={`${fieldCls} pr-12`}
-                  placeholder="Enter password given by doctor"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -276,7 +286,7 @@ const Login = () => {
                 )}
               </button>
               <p className="text-[13px] text-gray-400 text-center mt-3">
-                Use the password provided by the clinic staff
+                Enter your registered phone number or email with your password
               </p>
             </form>
           )}

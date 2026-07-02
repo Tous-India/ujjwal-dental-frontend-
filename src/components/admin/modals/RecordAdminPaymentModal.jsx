@@ -182,7 +182,7 @@ const RecordAdminPaymentModal = ({ open, onClose, onSuccess }) => {
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <PaymentIcon sx={{ color: "#1e3a5f" }} />
-          <Typography variant="h6" fontWeight="bold">Record Payment</Typography>
+          <Typography variant="h6" component="span" fontWeight="bold">Record Payment</Typography>
         </Box>
         <IconButton onClick={onClose} size="small" disabled={isRecording}>
           <CloseIcon />

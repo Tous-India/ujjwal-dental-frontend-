@@ -38,6 +38,37 @@ const muiTheme = createTheme({
         },
       },
     },
+    // Disable MUI's scroll-lock globally for all Modal-based components.
+    //
+    // Root cause: MUI's Modal (the shared base for Dialog, Popover, Menu, Drawer)
+    // adds body.style.overflow='hidden' + body.style.paddingRight=<scrollbarWidth>px
+    // whenever any of these open. Since <html> (not <body>) is the scroll container
+    // here, the scrollbar never disappears when body.overflow is hidden — but the
+    // padding-right is still added, narrowing the content area by ~15px and creating
+    // a visible right-side gap on every open/close.
+    //
+    // disableScrollLock: true prevents MUI from measuring/modifying body padding at
+    // all. scrollbar-gutter: stable on <html> (in index.css) acts as belt-and-
+    // suspenders: it reserves a permanent gutter so content width never changes even
+    // if some other code triggers scroll-lock unexpectedly.
+    //
+    // Each MUI Modal-based component needs its own entry — theme defaultProps do NOT
+    // cascade from MuiModal to its consumers (Dialog, Popover, etc.).
+    MuiDialog: {
+      defaultProps: {
+        disableScrollLock: true,
+      },
+    },
+    MuiPopover: {
+      defaultProps: {
+        disableScrollLock: true,
+      },
+    },
+    MuiMenu: {
+      defaultProps: {
+        disableScrollLock: true,
+      },
+    },
   },
 });
 

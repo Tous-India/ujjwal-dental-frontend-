@@ -43,13 +43,13 @@ export const resendOtp = (email) =>
   api.post("/auth/patient/resend-otp", { email }).then((res) => res.data);
 
 /**
- * Login with password (given by doctor)
- * @param {string} email - Patient's email address
+ * Login with password — accepts phone number OR email as identifier.
+ * @param {string} identifier - Patient's 10-digit phone number or email address
  * @param {string} password - Password
  * @returns {Promise} - { patient, token }
  */
-export const loginWithPassword = (email, password) =>
-  api.post("/auth/patient/login-password", { email, password }).then((res) => res.data);
+export const loginWithPassword = (identifier, password) =>
+  api.post("/auth/patient/login-password", { identifier, password }).then((res) => res.data);
 
 export const logoutPatient = () =>
   api.post("/auth/patient/logout").then((res) => res.data);

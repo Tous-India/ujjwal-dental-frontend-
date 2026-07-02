@@ -35,6 +35,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import DownloadIcon from "@mui/icons-material/Download";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AppointmentSlipPreviewModal from "../../components/AppointmentSlipPreviewModal";
 import DataTable from "../../components/common/DataTable";
@@ -47,6 +48,7 @@ import AppointmentDetailModal from "../../components/admin/modals/AppointmentDet
 import AddAppointmentModal from "../../components/admin/modals/AddAppointmentModal";
 import EditAppointmentModal from "../../components/admin/modals/EditAppointmentModal";
 import CancelAppointmentModal from "../../components/admin/modals/CancelAppointmentModal";
+import RescheduleAppointmentModal from "../../components/admin/modals/RescheduleAppointmentModal";
 
 /**
  * Status color mapping
@@ -220,7 +222,7 @@ const rowPaymentStatus = (row) => {
 };
 
 // Function to get columns with action handlers
-const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId, onStatusChange, updatingStatusId) => [
+const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId, onStatusChange, updatingStatusId, onRescheduleRow) => [
   ...columns.filter((c) => c.field !== "paymentStatus" && c.field !== "status"),
   {
     field: "status",
@@ -299,6 +301,7 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
     minWidth: 160,
     render: (_, row) => {
       const canCancel = !["cancelled", "completed", "no_show"].includes(row?.status);
+      const canReschedule = ["scheduled", "confirmed"].includes(row?.status);
       return (
         <Box className="flex items-center gap-1">
           <IconButton
@@ -323,6 +326,19 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
           >
             <EditIcon fontSize="small" />
           </IconButton>
+          {canReschedule && (
+            <IconButton
+              size="small"
+              title="Reschedule Appointment"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRescheduleRow(row);
+              }}
+              sx={{ color: "#0891b2" }}
+            >
+              <EventRepeatIcon fontSize="small" />
+            </IconButton>
+          )}
           {canCancel && (
             <IconButton
               size="small"
@@ -400,6 +416,7 @@ const Appointments = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [slipPreviewOpen, setSlipPreviewOpen] = useState(false);
   const [slipAppointment, setSlipAppointment] = useState(null);
@@ -797,6 +814,7 @@ const Appointments = () => {
           updatingPaymentId,
           handleStatusChange,
           updatingStatusId,
+          (row) => { setSelectedAppointment(row); setRescheduleModalOpen(true); },
         )}
         getRowSx={(row) => {
           const today = isToday(row?.date);
@@ -869,6 +887,14 @@ const Appointments = () => {
         onClose={() => setCancelModalOpen(false)}
         appointment={selectedAppointment}
         onSuccess={handleAppointmentCancelled}
+      />
+
+      {/* Reschedule Appointment Modal */}
+      <RescheduleAppointmentModal
+        open={rescheduleModalOpen}
+        onClose={() => setRescheduleModalOpen(false)}
+        appointment={selectedAppointment}
+        onSuccess={() => { setRescheduleModalOpen(false); refetch(); }}
       />
 
       {/* Appointment Slip Preview Modal */}

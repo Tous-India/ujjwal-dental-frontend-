@@ -2,13 +2,13 @@
  * Admin Billing Page
  *
  * Displays list of all invoices with:
- * - Stats cards (total invoices, amount, paid, balance due)
+ * - Stats cards (total invoices, amount, paid, balance due, OPD collection)
  * - Search by invoice number/patient
  * - Filter by status, payment status
  * - Date range filter
  * - Pagination
  * - Create new invoice
- * - View invoice details
+ * - View / Edit / Print / Reminder actions per row
  */
 import { useState } from "react";
 import {
@@ -23,6 +23,12 @@ import {
   Tooltip,
   Snackbar,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  Divider,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -30,160 +36,47 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import PrintIcon from "@mui/icons-material/Print";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import { useQueryClient } from "@tanstack/react-query";
 import InvoicePreviewModal from "../../components/InvoicePreviewModal";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
 import { useInvoices, useBillingStats } from "../../hooks/admin/useBilling";
+import { usePatient } from "../../hooks/admin/usePatients";
 import CreateInvoiceModal from "../../components/admin/modals/CreateInvoiceModal";
 import InvoiceDetailModal from "../../components/admin/modals/InvoiceDetailModal";
 import CollectPaymentModal from "../../components/admin/modals/CollectPaymentModal";
+import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
+import api from "../../api/axios";
+
+// Shared date formatter — matches DataTable's built-in type="date" format
+const fmtDate = (val) =>
+  val
+    ? new Date(val).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "-";
 
 /**
- * Status color/label maps
+ * Derive a single consolidated payment-status label + MUI Chip color from
+ * an invoice row.  Priority order:
+ *   1. status === "overdue"  → "Overdue"  (error / red)
+ *   2. paymentStatus === "paid"   → "Paid"     (success / green)
+ *   3. paymentStatus === "partial" → "Partial"  (warning / amber)
+ *   4. else                        → "Unpaid"   (default outlined / gray)
  */
-const statusColors = {
-  draft: "default",
-  sent: "info",
-  partially_paid: "warning",
-  paid: "success",
-  overdue: "error",
-  cancelled: "default",
+const getPaymentBadge = (row) => {
+  if (row.status === "overdue") return { label: "Overdue", color: "error", variant: "filled" };
+  if (row.paymentStatus === "paid") return { label: "Paid", color: "success", variant: "filled" };
+  if (row.paymentStatus === "partial") return { label: "Partial", color: "warning", variant: "filled" };
+  return { label: "Unpaid", color: "default", variant: "outlined" };
 };
-
-const statusLabels = {
-  draft: "Draft",
-  sent: "Sent",
-  partially_paid: "Partial Paid",
-  paid: "Paid",
-  overdue: "Overdue",
-  cancelled: "Cancelled",
-};
-
-const paymentStatusColors = {
-  unpaid: "error",
-  partial: "warning",
-  paid: "success",
-};
-
-const paymentStatusLabels = {
-  unpaid: "Unpaid",
-  partial: "Partial",
-  paid: "Paid",
-};
-
-/**
- * Table columns
- */
-const columns = [
-  {
-    field: "invoiceNumber",
-    headerName: "Invoice #",
-    minWidth: 150,
-    render: (value) => (
-      <Typography variant="body2" className="font-mono font-medium text-indigo-600">
-        {value || "-"}
-      </Typography>
-    ),
-  },
-  {
-    field: "patient",
-    headerName: "Patient",
-    minWidth: 180,
-    render: (value) => (
-      <Box className="flex items-center gap-2">
-        <Avatar className="bg-indigo-100 text-indigo-600" sx={{ width: 32, height: 32 }}>
-          {value?.name?.[0]?.toUpperCase() || "P"}
-        </Avatar>
-        <Box>
-          <Typography variant="body2" className="font-medium">
-            {value?.name || "Unknown"}
-          </Typography>
-          <Typography variant="caption" className="text-gray-500">
-            {value?.phone || ""}
-          </Typography>
-        </Box>
-      </Box>
-    ),
-  },
-  {
-    field: "invoiceDate",
-    headerName: "Date",
-    minWidth: 110,
-    type: "date",
-  },
-  {
-    field: "items",
-    headerName: "Items",
-    minWidth: 80,
-    render: (value) => (
-      <Chip
-        label={`${value?.length || 0} items`}
-        size="small"
-        variant="outlined"
-      />
-    ),
-  },
-  {
-    field: "grandTotal",
-    headerName: "Total",
-    minWidth: 120,
-    render: (value) => (
-      <Typography variant="body2" className="font-numbers font-semibold">
-        ₹{(value || 0).toLocaleString("en-IN")}
-      </Typography>
-    ),
-  },
-  {
-    field: "amountPaid",
-    headerName: "Paid",
-    minWidth: 110,
-    render: (value) => (
-      <Typography variant="body2" className="font-numbers text-green-600">
-        ₹{(value || 0).toLocaleString("en-IN")}
-      </Typography>
-    ),
-  },
-  {
-    field: "balanceDue",
-    headerName: "Balance",
-    minWidth: 110,
-    render: (value) => (
-      <Typography
-        variant="body2"
-        className={`font-numbers ${value > 0 ? "text-red-600 font-medium" : "text-gray-500"}`}
-      >
-        ₹{(value || 0).toLocaleString("en-IN")}
-      </Typography>
-    ),
-  },
-  {
-    field: "status",
-    headerName: "Status",
-    minWidth: 130,
-    render: (value) => (
-      <Chip
-        label={statusLabels[value] || value}
-        size="small"
-        color={statusColors[value] || "default"}
-      />
-    ),
-  },
-  {
-    field: "paymentStatus",
-    headerName: "Payment",
-    minWidth: 100,
-    render: (value) => (
-      <Chip
-        label={paymentStatusLabels[value] || value}
-        size="small"
-        color={paymentStatusColors[value] || "default"}
-        variant="outlined"
-      />
-    ),
-  },
-];
 
 /**
  * Filter options
@@ -213,17 +106,28 @@ const filterOptions = [
 ];
 
 /**
- * Stat card component
+ * Stat card component.
+ * isActive — when true, renders a 2px #F57C00 (accent) border to match the
+ * existing border-accent convention used on featured plan cards (PlansPage)
+ * and active CTA buttons (Login, HomePage). Click the active card again to
+ * toggle the filter off.
  */
-const StatCard = ({ icon: Icon, label, value, color, onClick }) => (
+const StatCard = ({ icon: Icon, label, value, color, onClick, isActive }) => (
   <Card
     variant="outlined"
     onClick={onClick}
-    sx={onClick ? {
-      cursor: "pointer",
-      transition: "all 0.2s ease",
-      "&:hover": { transform: "translateY(-2px)", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" },
-    } : undefined}
+    sx={{
+      ...(onClick && {
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        "&:hover": { transform: "translateY(-2px)", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" },
+      }),
+      ...(isActive && {
+        borderColor: "#F57C00",
+        borderWidth: 2,
+        boxShadow: "0 0 0 1px rgba(245,124,0,0.15)",
+      }),
+    }}
   >
     <CardContent className="flex items-center gap-3 py-3">
       <Box className={`p-2 rounded-lg ${color}`}>
@@ -244,7 +148,7 @@ const StatCard = ({ icon: Icon, label, value, color, onClick }) => (
 const Billing = () => {
   const queryClient = useQueryClient();
 
-  // State
+  // ── Pagination / search / filter state ──────────────────────────────────
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
@@ -252,7 +156,13 @@ const Billing = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // Modal states
+  // ── Active stat-card filter state ────────────────────────────────────────
+  // Tracks which stat card is currently driving the table filter so we can
+  // show a highlighted border and toggle it off on a second click.
+  // null | "paid" | "unpaid" | "opd"
+  const [activeStatCard, setActiveStatCard] = useState(null);
+
+  // ── Modal states ─────────────────────────────────────────────────────────
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -262,7 +172,22 @@ const Billing = () => {
   const [collectInvoice, setCollectInvoice] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  // Fetch data
+  // ── Payment reminder dialog state ─────────────────────────────────────────
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [reminderInvoice, setReminderInvoice] = useState(null);
+  const [reminderSending, setReminderSending] = useState(false);
+
+  // ── Patient detail modal state ────────────────────────────────────────────
+  // patientForModal is the partial patient object from the invoice row.
+  // usePatient fetches the full record so the modal's header (Active/Inactive,
+  // membership) renders correctly. The modal opens immediately with partial
+  // data and re-renders when the full fetch resolves (< 1 s normally).
+  const [patientModalOpen, setPatientModalOpen] = useState(false);
+  const [patientForModal, setPatientForModal] = useState(null);
+  const { data: fullPatientData } = usePatient(patientForModal?._id);
+  const patientToShow = fullPatientData?.data?.patient || patientForModal;
+
+  // ── Data fetching ────────────────────────────────────────────────────────
   const { data, isLoading, refetch } = useInvoices({
     page,
     limit,
@@ -275,21 +200,32 @@ const Billing = () => {
   const invoices = data?.data || [];
   const pagination = data?.pagination || { total: 0 };
 
-  // Stats
   const { data: statsData } = useBillingStats({
     ...(fromDate && { from: fromDate }),
     ...(toDate && { to: toDate }),
   });
   const stats = statsData?.data?.stats || {};
 
-  // Handlers
-  const handleSearch = (value) => {
-    setSearch(value);
+  // ── Handlers ─────────────────────────────────────────────────────────────
+  const handleSearch = (value) => { setSearch(value); setPage(1); };
+
+  const handleFilterChange = (key, value) => {
+    // Manual dropdown use deactivates any stat-card-driven filter so the
+    // card border doesn't stay highlighted after the user overrides it.
+    setActiveStatCard(null);
+    setFilters((prev) => ({ ...prev, [key]: value || undefined }));
     setPage(1);
   };
 
-  const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value || undefined }));
+  // Toggle a stat card's filter on/off. Clicking the same card twice clears.
+  const handleStatCardClick = (cardKey, filterToSet) => {
+    if (activeStatCard === cardKey) {
+      setActiveStatCard(null);
+      setFilters({});
+    } else {
+      setActiveStatCard(cardKey);
+      setFilters(filterToSet);
+    }
     setPage(1);
   };
 
@@ -298,100 +234,306 @@ const Billing = () => {
     setDetailModalOpen(true);
   };
 
-  const handleCreateSuccess = () => {
-    refetch();
+  const handleFromDateChange = (e) => { setFromDate(e.target.value); setPage(1); };
+  const handleToDateChange = (e) => { setToDate(e.target.value); setPage(1); };
+  const handleClearDates = () => { setFromDate(""); setToDate(""); setPage(1); };
+
+  const formatCurrency = (val) => `₹${(val || 0).toLocaleString("en-IN")}`;
+
+  // Step 1 — bell icon click: open the confirmation dialog
+  const handleReminderClick = (invoice) => {
+    setReminderInvoice(invoice);
+    setReminderDialogOpen(true);
   };
 
-  const handleFromDateChange = (e) => {
-    setFromDate(e.target.value);
-    setPage(1);
+  // Step 2 — dialog Send button: call the endpoint
+  const handleSendReminderConfirm = async () => {
+    if (!reminderInvoice) return;
+    setReminderSending(true);
+    try {
+      await api.post("/notifications/reminder/payment", {
+        invoiceId: reminderInvoice._id,
+        patientId: reminderInvoice.patient?._id,
+      });
+      setReminderDialogOpen(false);
+      setReminderInvoice(null);
+      setSnackbar({ open: true, message: "Payment reminder sent to patient", severity: "success" });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || "Failed to send reminder",
+        severity: "error",
+      });
+    } finally {
+      setReminderSending(false);
+    }
   };
 
-  const handleToDateChange = (e) => {
-    setToDate(e.target.value);
-    setPage(1);
-  };
-
-  const handleClearDates = () => {
-    setFromDate("");
-    setToDate("");
-    setPage(1);
-  };
-
-  const formatCurrency = (val) =>
-    `₹${(val || 0).toLocaleString("en-IN")}`;
-
-  const allColumns = [
-    // Replace the balanceDue column in-place with an enhanced version that includes the Collect button
-    ...columns.map((col) => {
-      if (col.field !== "balanceDue") return col;
-      return {
-        ...col,
-        minWidth: 170,
-        render: (value, row) => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+  // ── Column definitions (inside component for state-setter access) ─────────
+  const columns = [
+    // 1. Invoice No.
+    {
+      field: "invoiceNumber",
+      headerName: "Invoice No.",
+      minWidth: 140,
+      render: (value) => (
+        <Typography variant="body2" className="font-mono font-medium text-indigo-600">
+          {value || "-"}
+        </Typography>
+      ),
+    },
+    // 2. Date
+    {
+      field: "invoiceDate",
+      headerName: "Date",
+      minWidth: 110,
+      type: "date",
+    },
+    // 3. Patient — linked to PatientDetailModal
+    {
+      field: "patient",
+      headerName: "Patient",
+      minWidth: 170,
+      render: (value) => (
+        <Box
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            setPatientForModal(value);
+            setPatientModalOpen(true);
+          }}
+        >
+          <Avatar className="bg-indigo-100 text-indigo-600" sx={{ width: 28, height: 28, fontSize: "0.75rem" }}>
+            {value?.name?.[0]?.toUpperCase() || "P"}
+          </Avatar>
+          <Box>
             <Typography
               variant="body2"
-              className={`font-numbers ${value > 0 ? "text-red-600 font-medium" : "text-gray-500"}`}
+              className="font-medium text-indigo-700 hover:underline"
+              sx={{ lineHeight: 1.3 }}
             >
-              ₹{(value || 0).toLocaleString("en-IN")}
+              {value?.name || "Unknown"}
             </Typography>
-            {value > 0 && row.paymentStatus !== "paid" && row.status !== "cancelled" && (
-              <Button
-                size="small"
-                variant="contained"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCollectInvoice(row);
-                  setCollectOpen(true);
-                }}
-                sx={{
-                  bgcolor: "#f59e0b",
-                  color: "#fff",
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "11px",
-                  borderRadius: "6px",
-                  px: 1.5,
-                  py: 0.4,
-                  minWidth: "auto",
-                  lineHeight: 1.4,
-                  "&:hover": { bgcolor: "#d97706" },
-                }}
-              >
-                Collect
-              </Button>
+            <Typography variant="caption" className="text-gray-500">
+              {value?.phone || ""}
+            </Typography>
+          </Box>
+        </Box>
+      ),
+    },
+    // 4. Treatment — first item description + "+N more" if multiple
+    {
+      field: "items",
+      headerName: "Treatment",
+      minWidth: 190,
+      render: (value) => {
+        const items = value || [];
+        if (items.length === 0) return <span className="text-gray-400">-</span>;
+        const primary = items[0]?.description || "-";
+        const extra = items.length - 1;
+        return (
+          <Box>
+            <Typography
+              variant="body2"
+              className="font-medium"
+              sx={{ maxWidth: 170, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            >
+              {primary}
+            </Typography>
+            {extra > 0 && (
+              <Typography variant="caption" className="text-gray-500">
+                +{extra} more
+              </Typography>
             )}
           </Box>
-        ),
-      };
-    }),
+        );
+      },
+    },
+    // 5. Total Amount
+    {
+      field: "grandTotal",
+      headerName: "Total Amount",
+      minWidth: 120,
+      render: (value) => (
+        <Typography variant="body2" className="font-numbers font-semibold">
+          ₹{(value || 0).toLocaleString("en-IN")}
+        </Typography>
+      ),
+    },
+    // 6. Paid
+    {
+      field: "amountPaid",
+      headerName: "Paid",
+      minWidth: 100,
+      render: (value) => (
+        <Typography variant="body2" className="font-numbers text-green-600">
+          ₹{(value || 0).toLocaleString("en-IN")}
+        </Typography>
+      ),
+    },
+    // 7. Due — red when positive; inline Collect button
+    {
+      field: "balanceDue",
+      headerName: "Due",
+      minWidth: 160,
+      render: (value, row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            variant="body2"
+            className={`font-numbers ${value > 0 ? "text-red-600 font-medium" : "text-gray-500"}`}
+          >
+            ₹{(value || 0).toLocaleString("en-IN")}
+          </Typography>
+          {value > 0 && row.paymentStatus !== "paid" && row.status !== "cancelled" && (
+            <Button
+              size="small"
+              variant="contained"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCollectInvoice(row);
+                setCollectOpen(true);
+              }}
+              sx={{
+                bgcolor: "#f59e0b",
+                color: "#fff",
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "11px",
+                borderRadius: "6px",
+                px: 1.5,
+                py: 0.4,
+                minWidth: "auto",
+                lineHeight: 1.4,
+                "&:hover": { bgcolor: "#d97706" },
+              }}
+            >
+              Collect
+            </Button>
+          )}
+        </Box>
+      ),
+    },
+    // 8. Payment Status — single consolidated badge
+    {
+      field: "paymentStatus",
+      headerName: "Payment Status",
+      minWidth: 130,
+      render: (_value, row) => {
+        const { label, color, variant } = getPaymentBadge(row);
+        return <Chip label={label} size="small" color={color} variant={variant} sx={{ fontSize: '11px' }} />;
+      },
+    },
+    // 9. Due Date — red text when overdue and unpaid
+    {
+      field: "dueDate",
+      headerName: "Due Date",
+      minWidth: 115,
+      render: (value, row) => {
+        if (!value) return <span className="text-gray-400">-</span>;
+        const isOverdue =
+          new Date(value) < new Date() && row.paymentStatus !== "paid";
+        return (
+          <Typography
+            variant="body2"
+            className={isOverdue ? "text-red-600 font-medium" : ""}
+          >
+            {fmtDate(value)}
+          </Typography>
+        );
+      },
+    },
+    // 10. Action — Print / View / Edit / Reminder
     {
       field: "_id",
-      headerName: "Preview",
-      minWidth: 70,
+      headerName: "Action",
+      minWidth: 160,
       align: "center",
-      render: (_value, row) => (
-        <Tooltip title="Preview Invoice">
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPreviewInvoice(row);
-              setPreviewOpen(true);
-            }}
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      ),
+      render: (_value, row) => {
+        const isDraft = row.status === "draft";
+        const reminderDisabled =
+          row.status === "cancelled" ||
+          row.status === "draft" ||
+          row.paymentStatus === "paid";
+
+        return (
+          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
+            {/* Print / Download PDF — opens preview modal first */}
+            <Tooltip title="Print / Download PDF">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPreviewInvoice(row);
+                  setPreviewOpen(true);
+                }}
+              >
+                <PrintIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            {/* View — opens InvoicePreviewModal */}
+            <Tooltip title="Preview Invoice">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPreviewInvoice(row);
+                  setPreviewOpen(true);
+                }}
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            {/* Edit — draft only; opens InvoiceDetailModal */}
+            <Tooltip title={isDraft ? "Edit Draft Invoice" : "Only draft invoices can be edited"}>
+              {/* Wrap in span so Tooltip works on disabled buttons */}
+              <span>
+                <IconButton
+                  size="small"
+                  disabled={!isDraft}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedInvoice(row);
+                    setDetailModalOpen(true);
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            {/* Reminder — disabled for draft / cancelled / paid */}
+            <Tooltip
+              title={
+                reminderDisabled
+                  ? "Reminder not available for this invoice"
+                  : "Send payment reminder to patient"
+              }
+            >
+              <span>
+                <IconButton
+                  size="small"
+                  disabled={reminderDisabled}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReminderClick(row);
+                  }}
+                >
+                  <NotificationsActiveIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Box>
+        );
+      },
     },
   ];
 
   return (
     <Box>
       {/* Header */}
-      <Box className="flex flex-wrap justify-between items-center gap-4 mb-6">
+      <Box className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <Box>
           <Typography variant="h4" className="font-bold text-gray-800">
             Billing & Invoices
@@ -411,46 +553,60 @@ const Billing = () => {
       </Box>
 
       {/* Stats Cards */}
-      <Grid container spacing={2} className="mb-4">
-        <Grid size={{ xs: 6, md: 3 }}>
+      <Grid container spacing={2} className="mb-3">
+        {/* "Show all" reset cards — no active state, always clear filters */}
+        <Grid size={{ xs: 6, md: 2.4 }}>
           <StatCard
             icon={ReceiptLongIcon}
             label="Total Invoices"
             value={stats.totalInvoices || 0}
             color="bg-indigo-500"
-            onClick={() => { setFilters({}); setPage(1); }}
+            onClick={() => { setActiveStatCard(null); setFilters({}); setPage(1); }}
           />
         </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
+        <Grid size={{ xs: 6, md: 2.4 }}>
           <StatCard
             icon={AttachMoneyIcon}
             label="Total Amount"
             value={formatCurrency(stats.totalAmount)}
             color="bg-blue-500"
-            onClick={() => { setFilters({}); setPage(1); }}
+            onClick={() => { setActiveStatCard(null); setFilters({}); setPage(1); }}
           />
         </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
+        {/* Filter cards — togglable; show accent border when active */}
+        <Grid size={{ xs: 6, md: 2.4 }}>
           <StatCard
             icon={AccountBalanceWalletIcon}
             label="Total Paid"
             value={formatCurrency(stats.totalPaid)}
             color="bg-green-500"
-            onClick={() => { setFilters({ paymentStatus: "paid" }); setPage(1); }}
+            isActive={activeStatCard === "paid"}
+            onClick={() => handleStatCardClick("paid", { paymentStatus: "paid" })}
           />
         </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
+        <Grid size={{ xs: 6, md: 2.4 }}>
           <StatCard
             icon={WarningAmberIcon}
             label="Balance Due"
             value={formatCurrency(stats.totalDue)}
             color="bg-red-500"
-            onClick={() => { setFilters({ paymentStatus: "unpaid" }); setPage(1); }}
+            isActive={activeStatCard === "unpaid"}
+            onClick={() => handleStatCardClick("unpaid", { paymentStatus: "unpaid" })}
+          />
+        </Grid>
+        <Grid size={{ xs: 6, md: 2.4 }}>
+          <StatCard
+            icon={LocalHospitalIcon}
+            label="OPD Collection"
+            value={formatCurrency(stats.opdCollection)}
+            color="bg-teal-500"
+            isActive={activeStatCard === "opd"}
+            onClick={() => handleStatCardClick("opd", { itemType: "opd_fee" })}
           />
         </Grid>
       </Grid>
 
-      {/* Filters — single compact row */}
+      {/* Filters */}
       <CompactFilterBar
         fromDate={fromDate}
         toDate={toDate}
@@ -468,7 +624,8 @@ const Billing = () => {
 
       {/* Data Table */}
       <DataTable
-        columns={allColumns}
+        size="small"
+        columns={columns}
         data={invoices}
         loading={isLoading}
         pagination={{
@@ -489,17 +646,17 @@ const Billing = () => {
       <CreateInvoiceModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        onSuccess={handleCreateSuccess}
+        onSuccess={() => refetch()}
       />
 
-      {/* Invoice Preview Modal */}
+      {/* Invoice Preview Modal (View action) */}
       <InvoicePreviewModal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         invoice={previewInvoice}
       />
 
-      {/* Invoice Detail Modal */}
+      {/* Invoice Detail Modal (row click + Edit action for drafts) */}
       <InvoiceDetailModal
         open={detailModalOpen}
         onClose={() => {
@@ -528,7 +685,113 @@ const Billing = () => {
         }}
       />
 
-      {/* Snackbar */}
+      {/* Patient Detail Modal (Patient column link) */}
+      <PatientDetailModal
+        open={patientModalOpen}
+        onClose={() => {
+          setPatientModalOpen(false);
+          setPatientForModal(null);
+        }}
+        patient={patientToShow}
+      />
+
+      {/* Payment Reminder Confirmation Dialog */}
+      <Dialog
+        open={reminderDialogOpen}
+        onClose={() => {
+          if (reminderSending) return;
+          setReminderDialogOpen(false);
+          setReminderInvoice(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ className: "rounded-xl" }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box className="flex items-center gap-2">
+            <NotificationsActiveIcon sx={{ color: "#6366f1", fontSize: 22 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, fontSize: 16 }}>
+              Send Payment Reminder
+            </Typography>
+          </Box>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent sx={{ pt: 2, pb: 1 }}>
+          {/* Patient + invoice summary */}
+          <Box className="flex flex-col gap-2">
+            <Box className="flex justify-between items-center">
+              <Typography variant="body2" className="text-gray-500">Patient</Typography>
+              <Typography variant="body2" className="font-medium text-right">
+                {reminderInvoice?.patient?.name || "—"}
+                {reminderInvoice?.patient?.phone && (
+                  <span className="text-gray-400 font-normal"> · {reminderInvoice.patient.phone}</span>
+                )}
+              </Typography>
+            </Box>
+            <Box className="flex justify-between items-center">
+              <Typography variant="body2" className="text-gray-500">Invoice</Typography>
+              <Typography variant="body2" className="font-mono font-medium text-indigo-600">
+                {reminderInvoice?.invoiceNumber || "—"}
+              </Typography>
+            </Box>
+            <Box className="flex justify-between items-center">
+              <Typography variant="body2" className="text-gray-500">Outstanding</Typography>
+              <Typography variant="body2" className="font-numbers font-semibold text-red-600">
+                {formatCurrency(reminderInvoice?.balanceDue)}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              mt: 2,
+              px: 1.5,
+              py: 1,
+              bgcolor: "#f0f9ff",
+              border: "1px solid #bae6fd",
+              borderRadius: "6px",
+            }}
+          >
+            <Typography variant="caption" sx={{ color: "#0369a1", lineHeight: 1.5 }}>
+              An <strong>in-app notification</strong> will be sent to the patient's dashboard.
+              SMS and email reminders are not yet configured.
+            </Typography>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            size="small"
+            onClick={() => {
+              setReminderDialogOpen(false);
+              setReminderInvoice(null);
+            }}
+            disabled={reminderSending}
+            sx={{ textTransform: "none" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={handleSendReminderConfirm}
+            disabled={reminderSending}
+            startIcon={reminderSending ? <CircularProgress size={14} color="inherit" /> : <NotificationsActiveIcon fontSize="small" />}
+            sx={{
+              textTransform: "none",
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              fontWeight: 600,
+            }}
+          >
+            {reminderSending ? "Sending…" : "Send Reminder"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar — used for payment collection success + reminder feedback */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={5000}

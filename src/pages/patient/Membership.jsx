@@ -297,14 +297,6 @@ const Membership = () => {
               You don't have a membership plan yet. Explore the options below to enjoy exclusive
               benefits and discounts on treatments.
             </Typography>
-            <Button
-              variant="contained"
-              onClick={handleScrollToPlans}
-              startIcon={<ArrowDownwardIcon />}
-              sx={{ bgcolor: "#0d9488", "&:hover": { bgcolor: "#0f766e" } }}
-            >
-              View Plans
-            </Button>
           </CardContent>
         </Card>
       )}
