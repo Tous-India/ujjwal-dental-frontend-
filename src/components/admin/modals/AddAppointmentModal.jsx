@@ -2,6 +2,7 @@
  * Add Appointment Modal
  *
  * Form modal to create a new appointment.
+ * Fields reordered to Date/Time/Type/Reason single row for tablet admin UX — 2026-07-03
  */
 import React, { useState, useEffect } from "react";
 import {
@@ -624,7 +625,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         {!bookedAppointment && (
         <Grid container spacing={1.5} sx={{ mt: 1 }}>
 
-          {/* ─── ROW 1: Patient + Time + Type + Reason ─── */}
+          {/* ─── ROW 1: Patient ─── */}
           <Grid size={{ xs: 12 }}>
             <Autocomplete
               options={patientOptions}
@@ -675,7 +676,24 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               }
             />
           </Grid>
-          <Grid size={{ xs: 6, sm: 3 }}>
+          {/* ─── ROW 2: Date → Time → Appointment Type → Reason ─── */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              label="Appointment Date"
+              name="date"
+              type="date"
+              value={formData.date}
+              onChange={handleDateChange}
+              error={!!errors.date}
+              helperText={errors.date}
+              required
+              size="small"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: todayStr(), max: MAX_DATE, ...dateGuards }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               label="Time Slot"
@@ -708,7 +726,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               })}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 6, sm: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               label="Appointment Type"
@@ -725,7 +743,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
               label="Reason for Visit"
@@ -827,7 +845,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             <Divider />
           </Grid>
 
-          {/* ─── ROW 2: Clinic + Source + Date ─── */}
+          {/* ─── ROW 3: Clinic + Source ─── */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Autocomplete
               options={clinics}
@@ -871,22 +889,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 6, sm: 3, md: 4 }}>
-            <TextField
-              fullWidth
-              label="Appointment Date"
-              name="date"
-              type="date"
-              value={formData.date}
-              onChange={handleDateChange}
-              error={!!errors.date}
-              helperText={errors.date}
-              required
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: todayStr(), max: MAX_DATE, ...dateGuards }}
-            />
-          </Grid>
 
           {/* ─── SECTION DIVIDER ─── */}
           <Grid size={{ xs: 12 }}>
@@ -916,7 +918,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             </Grid>
           )}
 
-          {/* ─── ROW 3: Visit Config (bordered group) ─── */}
+          {/* ─── ROW 4: Visit Config (bordered group) ─── */}
           <Grid size={{ xs: 12 }}>
             <Box
               sx={{
@@ -1085,7 +1087,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             )}
           </Grid>
 
-          {/* ─── ROW 4: Fee Summary + Notes (same row, same height) ─── */}
+          {/* ─── ROW 5: Fee Summary + Notes (same row, same height) ─── */}
           <Grid size={{ xs: 12, md: 8 }}>
             <Paper variant="outlined" className="p-3 bg-gray-50">
               <Box className="flex justify-between items-center py-1">
