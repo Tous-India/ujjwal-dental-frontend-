@@ -2,6 +2,19 @@
 
 A modern dental clinic management system built with React, MUI, and TailwindCSS.
 
+## Production
+
+| | URL |
+|---|---|
+| **Frontend (Vercel)** | `https://ujjwaldentalplanet.com` |
+| **Backend (Vercel)** | `https://ujjwal-dental-backend-zni7.vercel.app` |
+
+**Vercel environment variable required (frontend project):**
+```
+VITE_API_URL=https://ujjwal-dental-backend-zni7.vercel.app/api
+```
+Without this, `axios.js` falls back to `http://localhost:5000/api` and all API calls fail on production.
+
 ## Tech Stack
 
 - **React 19.2** - UI Library
@@ -421,31 +434,27 @@ frontend/src/
 - Auto-generated report numbers (REP-XXXXXX)
 
 ### Settings Page
-Comprehensive admin settings with four tabs:
+Comprehensive admin settings with **five tabs** (Profile, Clinic, Notifications, System, Popup):
 
-#### Profile Settings
+> **Note:** "Fees" (OPD/consultation fees) and "Plan Pricing" (dental plan prices) tabs were removed. Their associated state, hooks (`useFeeSettings`, `useFeeSettingsMutations`), and handlers were also removed from `Settings.jsx`.
+
+#### Tab 0 — Profile Settings
 - Personal information (name, email, phone)
 - Profile picture upload
 - Password change functionality
 - Account preferences
 
-#### Clinic Settings
+#### Tab 1 — Clinic Settings
 - Clinic name and contact information
 - Full address details
 - Working hours configuration
 - Operating days selection
 
-#### Notification Preferences
-- Email notifications toggle:
-  - Appointment reminders
-  - Payment confirmations
-  - System alerts
-- SMS notifications toggle:
-  - Appointment reminders
-  - Payment confirmations
-  - System alerts
+#### Tab 2 — Notification Preferences
+- Email notifications toggle (appointment reminders, payment confirmations, system alerts)
+- SMS notifications toggle (appointment reminders, payment confirmations, system alerts)
 
-#### System Configuration
+#### Tab 3 — System Configuration
 - Timezone selection
 - Currency format (INR, USD, etc.)
 - Language preference
@@ -453,17 +462,28 @@ Comprehensive admin settings with four tabs:
 - Time format (12-hour, 24-hour)
 - Data backup settings
 
+#### Tab 4 — Popup Settings
+- Popup content and display configuration
+
 ## Patient Portal Features
 
-### Email OTP Authentication
-- Passwordless login using email OTP
-- Enter email address to request OTP
-- Receive 6-digit OTP via email
-- Verify OTP to access patient portal
-- OTP expires after 10 minutes
-- Resend OTP functionality
-- Protected routes - all patient pages require authentication
-- Auto-redirect to login if not authenticated
+### Authentication — Two Login Methods
+
+**Method 1 — Email OTP (passwordless):**
+- Enter email address → receive 6-digit OTP via email → enter OTP to login
+- OTP expires after 10 minutes; resend available
+- Route: `POST /api/auth/patient/login` + `POST /api/auth/patient/verify-otp`
+
+**Method 2 — Password login (phone or email + password):**
+- Enter phone number (10-digit) or email address + password
+- Default password for all admin-created patients: **`account123`**
+- Patients created via self-service membership purchase receive a random cryptographic password by email at signup
+- Route: `POST /api/auth/patient/login-password`
+- Both methods set a `patient_token` cookie and return a JWT
+
+**Password reset:** Patients can use `/forgot-password` — receives an email link valid for 30 minutes. New password must be ≥10 characters with at least one letter and one number.
+
+Protected routes — all patient pages require authentication. Auto-redirect to login if not authenticated.
 
 ### My Reports
 - View all medical reports uploaded by admin
@@ -690,6 +710,46 @@ All `window.alert`, `window.confirm`, and `window.prompt` calls have been remove
   - When a date range is active: shows the formatted range, e.g. "1 Jul – 15 Jul" (or "From 1 Jul" / "Until 15 Jul" when only one end is set).
   - No new API calls or state — derived purely from existing `fromDate`/`toDate` state. `StatCard` accepts a new optional `dateLabel` prop; unchanged if omitted.
 
+### [2026-07-03] Admin — Filter Reset (↺) Fixed on 11 Admin Pages
+
+The refresh/reset (↺) button was calling `refetch()` only on all pages except Patients — this refetched data from the server but did NOT clear the visible filter state (search text, dropdowns, date pickers remained active). Fixed by adding `handleReset` functions that reset all filter state variables and wiring the button to `handleReset` instead of `refetch()`.
+
+**Pages fixed (batch 1):** `Billing.jsx`, `Appointments.jsx`, `Payments.jsx`, `Memberships.jsx`, `Lab.jsx`
+**Pages fixed (batch 2):** `Enquiries.jsx`, `Treatments.jsx`, `Notifications.jsx`, `Clinics.jsx`, `User.jsx`
+**Already correct:** `Patients.jsx`
+
+| Page | States reset by ↺ | Notes |
+|---|---|---|
+| Billing | `search`, `filters`, `fromDate`, `toDate`, `activeStatCard`, `page` | |
+| Appointments | `search`, `filters`, `dateFilter`, `page` | `dateFilter` resets the quick-filter button highlight |
+| Payments | `search`, `filters`, `fromDate`, `toDate`, `page` | `selectedPatient` (collect payment) left alone — not a filter |
+| Memberships | `search`, `filters` | Client-side filter; also added `searchValue={search}` to DataTable so visual input clears |
+| Lab | `filters` (including `filters.search`), `fromDate`, `toDate`, `page`, `view` | Search stored inside `filters` object; resets Active/Archived toggle too |
+| Enquiries | `search`, `filters`, `fromDate`, `toDate`, `page` | |
+| Treatments | `search`, `filters` | Client-side filter; added `searchValue={search}` |
+| Notifications | `search`, `filters`, `fromDate`, `toDate`, `page` | |
+| Clinics | `search`, `filters` | Client-side filter; added `searchValue={search}` |
+| User | `search`, `filters`, `page` | Staff Management page |
+
+`searchValue={search}` prop is required on DataTable for client-side filtered pages (Memberships, Treatments, Clinics) because DataTable has its own internal `searchTerm` state — without `searchValue`, resetting parent `search` state doesn't clear the visible input.
+
+### [2026-07-03] Admin — Lab Page Filter Bar Reorganised (4-Column Grid)
+
+`Lab.jsx` (`LabOrdersTab` component): filter bar changed from a single flex row to a MUI Grid layout:
+- **Top row** (flex, space-between): "New Lab Order" button (left) + Refresh ↺ (right, above filter rows)
+- **Grid row 1** (4 × `md=3`): Active/Archived toggle | From date | To date (+inline Clear) | Search
+- **Grid row 2** (3 × `md=3`): Lab dropdown | Delivery dropdown | Payment dropdown
+
+Requires `import Grid from "@mui/material/Grid"` (separate import, not from `@mui/material`).
+
+### [2026-07-03] Admin — Settings: "Fees" and "Plan Pricing" Tabs Removed
+
+`Settings.jsx`: removed two tabs and all their associated code:
+- **"Fees" tab** (was index 2): OPD/consultation fee settings, called `useFeeSettings` + `useFeeSettingsMutations` hooks
+- **"Plan Pricing" tab** (was index 6): dental plan prices stored in `localStorage`
+
+Removed: `PaymentIcon` import, `useFeeSettings`, `useFeeSettingsMutations` hook calls, `feeForm` and `planPricingForm` state, two `useEffect`s, four handlers (`handleFeeChange`, `handleSaveFees`, `handlePlanPriceChange`, `handleSavePlanPricing`), both Tab components and both TabPanel blocks. Remaining tabs re-indexed: Notifications 3→2, System 4→3, Popup 5→4.
+
 ### [2026-07-02] Admin — AppointmentDetailModal Payment Status Fix
 **File:** `components/admin/modals/AppointmentDetailModal.jsx`
 
@@ -701,13 +761,17 @@ All `window.alert`, `window.confirm`, and `window.prompt` calls have been remove
   4. Default → "Unpaid" chip (error)
 - ✅ Added `invoice` and `paymentStatus` to the destructured fields from `appointment`
 
+### [2026-07-03] Admin — `minHeight: 100vh` on 6 Page Wrappers
+
+Added `sx={{ minHeight: "100vh" }}` to the outermost `<Box>` in: `Billing.jsx`, `Patients.jsx`, `Appointments.jsx`, `Payments.jsx`, `Lab.jsx` (LabsTab), `Memberships.jsx`. Combined with `scrollbar-gutter: stable` on `html` in `index.css`, this prevents the layout shift (scrollbar appearing/disappearing) that caused a brief right-side gap when navigating between pages with and without enough content to scroll.
+
 ## Getting Started
 
 ```bash
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (requires backend running on port 5001)
 npm run dev
 
 # Build for production
@@ -716,10 +780,14 @@ npm run build
 
 ## Environment Variables
 
-Create `.env` file:
-
+Local development — create `.env` file:
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5001/api
+```
+
+Production (set in Vercel dashboard for the frontend project):
+```env
+VITE_API_URL=https://ujjwal-dental-backend-zni7.vercel.app/api
 ```
 
 ## Color Scheme
