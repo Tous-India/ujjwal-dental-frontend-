@@ -2,6 +2,7 @@
  * Appointment Detail Modal
  *
  * Displays complete appointment information.
+ * Compact detail modal layout v2 — banner + section grouping fixes — 2026-07-04
  */
 import React, { useState } from "react";
 import {
@@ -33,20 +34,34 @@ import ReceiptIcon from "@mui/icons-material/Receipt";
 import ConfirmDialog from "../../common/ConfirmDialog";
 
 /**
- * Info row component
+ * Info row — single-line inline: [icon] [label] [value]
  */
-const InfoRow = ({ icon: Icon, label, value, color = "text-gray-600" }) => (
-  <Box className="flex items-start gap-3 py-2">
-    {Icon && <Icon className={`${color} mt-0.5`} fontSize="small" />}
-    <Box>
-      <Typography variant="caption" className="text-gray-500 block">
-        {label}
-      </Typography>
-      <Typography variant="body2" className="font-medium">
-        {value || "-"}
-      </Typography>
-    </Box>
+const InfoRow = ({ icon: Icon, label, value, color = "text-gray-500" }) => (
+  <Box className="flex items-center gap-2 py-0.5">
+    {Icon && <Icon className={color} sx={{ fontSize: 14 }} />}
+    <Typography variant="caption" className="text-gray-600 shrink-0" sx={{ minWidth: 100 }}>
+      {label}
+    </Typography>
+    <Typography
+      variant="caption"
+      className="font-semibold text-gray-900 truncate"
+      title={typeof value === "string" ? value : undefined}
+    >
+      {value || "-"}
+    </Typography>
   </Box>
+);
+
+/**
+ * Section title — compact uppercase label with strong contrast
+ */
+const SectionTitle = ({ children, className = "" }) => (
+  <Typography
+    variant="caption"
+    className={`text-xs font-semibold uppercase tracking-wide text-gray-700 mb-1.5 block ${className}`}
+  >
+    {children}
+  </Typography>
 );
 
 /**
@@ -136,18 +151,18 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
       fullWidth
       PaperProps={{ className: "rounded-xl" }}
     >
-      {/* Header */}
+      {/* Header — slim strip */}
       <DialogTitle className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-0">
-        <Box className="flex items-center justify-between p-0">
-          <Box className="flex items-center gap-4">
-            <Avatar className="bg-white text-indigo-600 w-14 h-14">
-              <EventIcon />
+        <Box className="flex items-center justify-between px-4 py-2">
+          <Box className="flex items-center gap-3">
+            <Avatar className="bg-white text-indigo-600 w-10 h-10">
+              <EventIcon fontSize="small" />
             </Avatar>
             <Box>
-              <Typography variant="h6" component="span" className="font-bold">
+              <Typography variant="h6" component="span" className="font-bold leading-tight">
                 {appointmentNumber || "Appointment"}
               </Typography>
-              <Box className="flex items-center gap-2 mt-1">
+              <Box className="flex items-center gap-2 mt-0.5">
                 <Chip
                   label={status?.replace("_", " ").toUpperCase()}
                   size="small"
@@ -169,24 +184,20 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
       </DialogTitle>
 
       {/* Content */}
-      <DialogContent className="p-6 mt-8">
-        <Grid container spacing={4}>
+      <DialogContent className="p-5 mt-3">
+        <Grid container spacing={3}>
           {/* Left Column */}
           <Grid size={{ xs: 12, md: 6 }}>
             {/* Patient Info */}
-            <Typography variant="subtitle2" className="font-semibold text-gray-700">
-              Patient Information
-            </Typography>
-            <Box className="bg-gray-50 rounded-lg p-4 mb-4 mt-3">
-              <InfoRow icon={PersonIcon} label="Patient Name" value={patientName} color="text-indigo-600" />
-              <InfoRow icon={PhoneIcon} label="Phone" value={patientPhone} color="text-indigo-600" />
+            <SectionTitle>Patient Information</SectionTitle>
+            <Box className="bg-gray-50/60 rounded px-3 py-2 mb-2">
+              <InfoRow icon={PersonIcon} label="Patient Name" value={patientName} color="text-indigo-500" />
+              <InfoRow icon={PhoneIcon} label="Phone" value={patientPhone} color="text-indigo-500" />
             </Box>
 
             {/* Appointment Details */}
-            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3">
-              Appointment Details
-            </Typography>
-            <Box className="bg-gray-50 rounded-lg p-4 mt-3">
+            <SectionTitle>Appointment Details</SectionTitle>
+            <Box className="bg-gray-50/60 rounded px-3 py-2 mb-2">
               <InfoRow icon={EventIcon} label="Date" value={formatDate(date)} />
               <InfoRow icon={AccessTimeIcon} label="Time Slot" value={timeSlot} />
               <InfoRow icon={ConfirmationNumberIcon} label="Token Number" value={`#${tokenNumber}`} />
@@ -197,30 +208,26 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
           {/* Right Column */}
           <Grid size={{ xs: 12, md: 6 }}>
             {/* Timing Info */}
-            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3">
-              Timing Information
-            </Typography>
-            <Box className="bg-gray-50 rounded-lg p-4 mb-4 mt-3">
+            <SectionTitle>Timing Information</SectionTitle>
+            <Box className="bg-gray-50/60 rounded px-3 py-2 mb-2">
               <InfoRow label="Check-in Time" value={checkInTime ? formatTime(checkInTime) : "Not checked in"} />
               <InfoRow label="Start Time" value={startTime ? formatTime(startTime) : "Not started"} />
               <InfoRow label="End Time" value={endTime ? formatTime(endTime) : "Not ended"} />
             </Box>
 
-            {/* Payment Info */}
-            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3">
-              Payment & Source
-            </Typography>
-            <Box className="bg-gray-50 rounded-lg p-4 mt-3 mb-3">
-              <Box className="flex justify-between items-center py-2">
-                <Typography variant="body2" className="text-gray-600">OPD Fee</Typography>
+            {/* Payment & Source */}
+            <SectionTitle>Payment & Source</SectionTitle>
+            <Box className="bg-gray-50/60 rounded px-3 py-2 mb-2">
+              <Box className="flex justify-between items-center py-1">
+                <Typography variant="caption" className="text-gray-600">OPD Fee</Typography>
                 {isFree ? (
                   <Chip label="Free" size="small" color="info" />
                 ) : (
-                  <Typography variant="body2" className="font-numbers font-medium">₹{opdFee || 300}</Typography>
+                  <Typography variant="caption" className="font-numbers font-semibold text-gray-900">₹{opdFee || 300}</Typography>
                 )}
               </Box>
-              <Box className="flex justify-between items-center py-2">
-                <Typography variant="body2" className="text-gray-600">Payment Status</Typography>
+              <Box className="flex justify-between items-center py-1">
+                <Typography variant="caption" className="text-gray-600">Payment Status</Typography>
                 {isFree ? (
                   <Chip label="N/A" size="small" variant="outlined" />
                 ) : (() => {
@@ -239,14 +246,14 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
               </Box>
               {payment && (
                 <>
-                  <Box className="flex justify-between items-center py-2">
-                    <Typography variant="body2" className="text-gray-600">Payment ID</Typography>
-                    <Typography variant="body2" className="font-mono font-medium text-xs">
+                  <Box className="flex justify-between items-center py-1">
+                    <Typography variant="caption" className="text-gray-600">Payment ID</Typography>
+                    <Typography variant="caption" className="font-mono font-semibold text-gray-900">
                       {payment.paymentNumber || payment.razorpayPaymentId || "-"}
                     </Typography>
                   </Box>
-                  <Box className="flex justify-between items-center py-2">
-                    <Typography variant="body2" className="text-gray-600">Payment Mode</Typography>
+                  <Box className="flex justify-between items-center py-1">
+                    <Typography variant="caption" className="text-gray-600">Payment Mode</Typography>
                     <Chip
                       label={payment.paymentMode?.toUpperCase() || "ONLINE"}
                       size="small"
@@ -255,17 +262,17 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
                     />
                   </Box>
                   {payment.paidAt && (
-                    <Box className="flex justify-between items-center py-2">
-                      <Typography variant="body2" className="text-gray-600">Paid On</Typography>
-                      <Typography variant="body2" className="font-medium">
+                    <Box className="flex justify-between items-center py-1">
+                      <Typography variant="caption" className="text-gray-600">Paid On</Typography>
+                      <Typography variant="caption" className="font-semibold text-gray-900">
                         {formatDate(payment.paidAt)}
                       </Typography>
                     </Box>
                   )}
                 </>
               )}
-              <Box className="flex justify-between items-center py-2 ">
-                <Typography variant="body2" className="text-gray-600">Booking Source</Typography>
+              <Box className="flex justify-between items-center py-1">
+                <Typography variant="caption" className="text-gray-600">Booking Source</Typography>
                 <Chip label={source?.replace("_", " ") || "Walk-in"} size="small" variant="outlined" />
               </Box>
             </Box>
@@ -273,11 +280,9 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
             {/* Notes */}
             {notes && (
               <>
-                <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3">
-                  Notes
-                </Typography>
-                <Box className="bg-yellow-50 rounded-lg p-4 border border-yellow-200 mb-5 mt-2">
-                  <Typography variant="body2">{notes}</Typography>
+                <SectionTitle>Notes</SectionTitle>
+                <Box className="bg-yellow-50 rounded px-3 py-2 border border-yellow-200 mb-2">
+                  <Typography variant="caption">{notes}</Typography>
                 </Box>
               </>
             )}
@@ -285,11 +290,14 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
             {/* Cancellation Info */}
             {status === "cancelled" && cancellation && (
               <>
-                <Typography variant="subtitle2" className="font-semibold text-red-600 mb-3 mt-4">
+                <Typography
+                  variant="caption"
+                  className="text-xs font-semibold uppercase tracking-wide text-red-600 mb-1.5 block"
+                >
                   Cancellation Details
                 </Typography>
-                <Box className="bg-red-50 rounded-lg p-4 border border-red-200">
-                  <Typography variant="body2" className="text-red-700">
+                <Box className="bg-red-50 rounded px-3 py-2 border border-red-200">
+                  <Typography variant="caption" className="text-red-700 block">
                     Reason: {cancellation.reason || "No reason provided"}
                   </Typography>
                   <Typography variant="caption" className="text-red-500">
@@ -302,14 +310,14 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
         </Grid>
 
         {/* Footer Info */}
-        <Divider className="my-4" />
-        <Box className="flex justify-between text-gray-400">
-          <Typography variant="caption">Created: {formatDate(createdAt)}</Typography>
+        <Divider className="my-2" />
+        <Box className="flex justify-between">
+          <Typography variant="caption" className="text-gray-600">Created: {formatDate(createdAt)}</Typography>
         </Box>
       </DialogContent>
 
       {/* Actions */}
-      <DialogActions className="p-4 bg-gray-50 justify-between">
+      <DialogActions className="p-3 bg-gray-50 justify-between">
         <Box className="flex gap-2">
           {/* Cancel — only for active appointments */}
           {onCancel && !["cancelled", "completed", "no_show"].includes(status) && (
