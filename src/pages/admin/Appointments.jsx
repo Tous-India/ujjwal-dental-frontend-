@@ -271,6 +271,9 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
     minWidth: 120,
     render: (_, row) => {
       const current = rowPaymentStatus(row);
+      if (current === "free") {
+        return <Chip size="small" label="Free" color="info" variant="outlined" />;
+      }
       return (
         <Select
           value={current}
@@ -290,7 +293,6 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
         >
           <MenuItem value="paid" dense>Paid</MenuItem>
           <MenuItem value="unpaid" dense>Unpaid</MenuItem>
-          <MenuItem value="free" dense>Free</MenuItem>
         </Select>
       );
     },
@@ -464,7 +466,9 @@ const Appointments = () => {
   // Delete guard — appointment must be cancelled first
   const handleDeleteRow = (row) => {
     if (row.status !== "cancelled") {
-      toast.warning("Please cancel the appointment before deleting.");
+      toast.warning(
+        "Active appointments must be cancelled first to preserve patient history. Cancel this appointment, then delete."
+      );
       return;
     }
     setConfirmDelete(row);
