@@ -35,6 +35,7 @@ import EventIcon from "@mui/icons-material/Event";
 import AddIcon from "@mui/icons-material/Add";
 import DownloadIcon from "@mui/icons-material/Download";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import AppointmentSlipPreviewModal from "../../AppointmentSlipPreviewModal";
 import { useAppointmentMutations } from "../../../hooks/admin/useAppointments";
 import { searchPatients, createPatient } from "../../../api/admin/patients.api";
@@ -166,6 +167,15 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
   const discountedFee =
     discountPercent > 0 ? Math.max(0, Math.round(baseFee * (1 - discountPercent / 100))) : baseFee;
 
+  // Derived OPD default (feeSettings x urgency) — used to pre-fill the editable
+  // fee field and to detect when a manual override differs from it.
+  const derivedOpdDefault =
+    formData.appointmentType === "emergency" ? feeSettings.opdFeeEmergency : feeSettings.opdFeeRegular;
+  const opdFeeDiffersFromDefault =
+    formData.visitType === "opd" &&
+    !formData.isFree &&
+    Number(formData.opdFee) !== Number(derivedOpdDefault);
+
   // Fetch slot availability whenever clinic + date are both chosen, so full and
   // past slots can be disabled in the dropdown.
   useEffect(() => {
@@ -273,16 +283,36 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
     }));
   }, [formData.appointmentType, feeSettings, formData.isFree]);
 
-  // Membership auto-free: active membership + OPD → automatically set free
+  // Membership auto-free: active membership + OPD → automatically set free,
+  // and reset back when the patient/visit no longer qualifies (e.g. admin
+  // switches to a non-member patient while still on OPD) — otherwise isFree
+  // stays stuck at true and the visit never gets charged (revenue leak).
+  // formData.isFree is read directly (not in the dep array) so this only acts
+  // on an actual patient/visitType transition, not on every render — that way
+  // a manual Free-toggle override for a non-member is left alone.
   useEffect(() => {
-    if (!open || !formData.patient) return;
-    const m = formData.patient.membership;
+    if (!open) return;
+    const m = formData.patient?.membership;
     const isMember =
       m?.status === "active" && (!m.expiryDate || new Date(m.expiryDate) > new Date());
-    if (isMember && formData.visitType === "opd") {
+    const shouldBeFree = isMember && formData.visitType === "opd";
+
+    if (formData.isFree === shouldBeFree) return;
+
+    if (shouldBeFree) {
       setFormData((prev) => ({ ...prev, isFree: true, opdFee: 0 }));
       setPaymentMethod("free");
+    } else {
+      const defaultFee =
+        formData.appointmentType === "emergency" ? feeSettings.opdFeeEmergency : feeSettings.opdFeeRegular;
+      setFormData((prev) => ({
+        ...prev,
+        isFree: false,
+        opdFee: prev.visitType === "opd" ? defaultFee : prev.opdFee,
+      }));
+      setPaymentMethod("cash");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.patient, formData.visitType, open]);
 
   /**
@@ -566,6 +596,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             visibility: "hidden",
           },
           "& .MuiInputBase-root": { height: "40px", fontSize: "13px" },
+          "& .notes-field .MuiInputBase-root": { height: "auto" },
           "& .MuiInputBase-input": { fontSize: "13px", paddingTop: "5px", paddingBottom: "5px" },
           "& .MuiInputLabel-root": { fontSize: "13px" },
           "& .MuiAutocomplete-root .MuiInputBase-root": { height: "40px" },
@@ -994,6 +1025,49 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </RadioGroup>
               </FormControl>
 
+              {/* OPD Fee — editable, pre-filled from feeSettings default.
+                  Disabled + shown as "Free (Membership)" when the membership
+                  auto-detect effect has marked this visit free. */}
+              {formData.visitType === "opd" && (
+                <Box sx={{ flex: "0 0 auto", minWidth: 180 }}>
+                  <TextField
+                    label={
+                      formData.isFree
+                        ? "OPD Fee — Free (Membership)"
+                        : `OPD Fee (₹) — ${formData.appointmentType === "emergency" ? "Emergency" : "Regular"}`
+                    }
+                    name="opdFee"
+                    type="number"
+                    value={formData.opdFee}
+                    onChange={handleChange}
+                    size="small"
+                    disabled={formData.isFree}
+                    inputProps={{ min: 0 }}
+                  />
+                  {formData.isFree ? (
+                    <Typography
+                      variant="caption"
+                      sx={{ display: "block", color: "#059669", fontSize: "0.65rem", mt: 0.25 }}
+                    >
+                      Membership benefit — cannot be overridden
+                    </Typography>
+                  ) : (
+                    opdFeeDiffersFromDefault && (
+                      <Button
+                        size="small"
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, opdFee: derivedOpdDefault }))
+                        }
+                        startIcon={<RestartAltIcon sx={{ fontSize: 14 }} />}
+                        sx={{ textTransform: "none", fontSize: "0.65rem", mt: 0.25, p: 0, minWidth: 0 }}
+                      >
+                        Reset to default
+                      </Button>
+                    )
+                  )}
+                </Box>
+              )}
+
               {/* Treatment dropdown (only when treatment selected) */}
               {formData.visitType === "treatment" && (
                 <Box sx={{ flex: "0 0 auto", minWidth: 220 }}>
@@ -1181,6 +1255,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
+              className="notes-field"
               fullWidth
               label="Notes"
               name="notes"
