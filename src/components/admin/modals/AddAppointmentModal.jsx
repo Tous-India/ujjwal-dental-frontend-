@@ -44,7 +44,6 @@ import api from "../../../api/axios";
 import { getClinics } from "../../../api/admin/clinics.api";
 import { getFeeSettings } from "../../../api/admin/settings.api";
 import { getAvailableSlots } from "../../../api/admin/appointments.api";
-import { getTreatmentMaster } from "../../../api/admin/treatments.api";
 import {
   MAX_DATE,
   todayStr,
@@ -94,10 +93,6 @@ const timeSlots = [
   "18:30",
 ];
 
-// Sentinel option appended to the Treatment dropdown for one-off custom
-// treatments not in Treatment Master.
-const OTHER_TREATMENT = { _id: "other", name: "Other (custom treatment)", price: null };
-
 const formatCurrency = (val) => `₹${(Number(val) || 0).toLocaleString("en-IN")}`;
 
 // Factory so every reset gets today's date fresh (not the module-load date).
@@ -115,7 +110,6 @@ const getInitialFormState = () => ({
   isFree: false,
   // Visit type & treatment fields
   visitType: "opd", // "opd" | "treatment"
-  treatment: null,
   treatmentName: "",
   fee: "",
 });
@@ -134,7 +128,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
     consultationFee: 500,
   });
   const [feeLoading, setFeeLoading] = useState(false);
-  const [treatments, setTreatments] = useState([]);
   // null = not fetched yet (no clinic+date); otherwise array of open "HH:MM" slots
   const [availableSlots, setAvailableSlots] = useState(null);
   const { createAppointment, isCreating } = useAppointmentMutations();
@@ -243,19 +236,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       }
     };
 
-    const fetchTreatments = async () => {
-      try {
-        const res = await getTreatmentMaster();
-        setTreatments(res.data?.treatmentTypes || []);
-      } catch (err) {
-        console.error("Failed to fetch treatments", err);
-        setTreatments([]);
-      }
-    };
-
     fetchClinics();
     fetchFeeSettings();
-    fetchTreatments();
   }, [open]);
 
   // FIX 2: Auto-select Delhi Road clinic once the list loads
@@ -393,11 +375,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
     if (!validateForm()) return;
 
     if (formData.visitType === "treatment") {
-      if (!formData.treatment) {
-        setErrors((prev) => ({ ...prev, treatment: "Select a treatment" }));
-        return;
-      }
-      if (formData.treatment?._id === "other" && !formData.treatmentName.trim()) {
+      if (!formData.treatmentName.trim()) {
         setErrors((prev) => ({ ...prev, treatmentName: "Enter the treatment name" }));
         return;
       }
@@ -427,11 +405,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       paymentMethod: formData.isFree ? "free" : paymentMethod,
       ...(formData.visitType === "treatment"
         ? {
-            treatmentId: formData.treatment?._id,
-            treatmentName:
-              formData.treatment?._id === "other"
-                ? formData.treatmentName.trim()
-                : undefined,
+            treatmentId: "other",
+            treatmentName: formData.treatmentName.trim(),
             fee: formData.isFree ? 0 : Number(formData.fee),
           }
         : {
@@ -994,7 +969,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                       ...prev,
                       visitType: newVisitType,
                       ...(newVisitType === "opd"
-                        ? { treatment: null, treatmentName: "", fee: "" }
+                        ? { treatmentName: "", fee: "" }
                         : {}),
                     }));
                   }}
@@ -1070,55 +1045,39 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </Box>
               )}
 
-              {/* Treatment dropdown (only when treatment selected) */}
+              {/* Treatment name + fee TextFields (only when treatment selected) */}
               {formData.visitType === "treatment" && (
-                <Box sx={{ flex: "0 0 auto", minWidth: 220 }}>
-                  <Autocomplete
-                    options={[...treatments, OTHER_TREATMENT]}
-                    getOptionLabel={(o) => (o ? o.name || "" : "")}
-                    value={formData.treatment}
-                    isOptionEqualToValue={(opt, val) => opt._id === val?._id}
-                    onChange={(_, value) => {
-                      const isOther = value?._id === "other";
-                      setFormData((prev) => ({
-                        ...prev,
-                        treatment: value,
-                        fee: isOther ? "" : value?.price ?? prev.fee,
-                        treatmentName: isOther ? prev.treatmentName : "",
-                      }));
-                      setErrors((prev) => ({ ...prev, treatment: "", treatmentName: "", fee: "" }));
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Treatment"
-                        placeholder="Select a treatment"
-                        required
-                        size="small"
-                        error={!!errors.treatment}
-                        helperText={errors.treatment}
-                      />
-                    )}
-                  />
-                </Box>
-              )}
-
-              {/* Custom treatment name (only when "Other" selected) */}
-              {formData.visitType === "treatment" && formData.treatment?._id === "other" && (
-                <Box sx={{ flex: "0 0 auto", minWidth: 200 }}>
-                  <TextField
-                    fullWidth
-                    label="Treatment name"
-                    name="treatmentName"
-                    value={formData.treatmentName}
-                    onChange={handleChange}
-                    required
-                    size="small"
-                    error={!!errors.treatmentName}
-                    helperText={errors.treatmentName || "Enter the custom treatment name"}
-                    placeholder="e.g., Custom procedure"
-                  />
-                </Box>
+                <>
+                  <Box sx={{ flex: "1 1 200px", minWidth: 200 }}>
+                    <TextField
+                      fullWidth
+                      label="Treatment Name"
+                      name="treatmentName"
+                      value={formData.treatmentName}
+                      onChange={handleChange}
+                      required
+                      size="small"
+                      error={!!errors.treatmentName}
+                      helperText={errors.treatmentName}
+                      placeholder="e.g., Root Canal (Session 1 of 4)"
+                    />
+                  </Box>
+                  <Box sx={{ flex: "0 0 auto", minWidth: 130 }}>
+                    <TextField
+                      fullWidth
+                      label="Fee (₹)"
+                      name="fee"
+                      type="number"
+                      value={formData.fee}
+                      onChange={handleChange}
+                      required
+                      size="small"
+                      error={!!errors.fee}
+                      helperText={errors.fee}
+                      inputProps={{ min: 0, step: 50 }}
+                    />
+                  </Box>
+                </>
               )}
 
               {/* Free toggle */}
@@ -1167,9 +1126,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               <Box className="flex justify-between items-center py-1">
                 <Typography variant="caption" className="text-gray-600">
                   {formData.visitType === "treatment"
-                    ? formData.treatment?._id === "other"
-                      ? formData.treatmentName.trim() || "Custom treatment"
-                      : formData.treatment?.name || "Treatment fee"
+                    ? formData.treatmentName.trim() || "Treatment fee"
                     : "OPD / Consultation fee"}
                 </Typography>
                 {discountPercent > 0 && !formData.isFree ? (
