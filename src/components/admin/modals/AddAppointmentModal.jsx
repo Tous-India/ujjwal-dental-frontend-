@@ -40,6 +40,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import AppointmentSlipPreviewModal from "../../AppointmentSlipPreviewModal";
 import { useAppointmentMutations } from "../../../hooks/admin/useAppointments";
 import { usePatientActiveContext } from "../../../hooks/admin/usePatients";
+import { useAdminPaymentMutations } from "../../../hooks/admin/usePayments";
 import { searchPatients, createPatient } from "../../../api/admin/patients.api";
 import api from "../../../api/axios";
 import { getClinics } from "../../../api/admin/clinics.api";
@@ -115,6 +116,12 @@ const getInitialFormState = () => ({
   fee: "",
   parentAppointment: null,
   sessionNumber: null,
+  // Session payment (Fix 5)
+  collectSessionPayment: false,
+  sessionPaymentAmount: 0,
+  sessionPaymentMode: "cash",
+  selectedTreatmentInvoiceId: null,
+  selectedTreatmentInvoiceBalance: 0,
 });
 
 const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
@@ -134,6 +141,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
   // null = not fetched yet (no clinic+date); otherwise array of open "HH:MM" slots
   const [availableSlots, setAvailableSlots] = useState(null);
   const { createAppointment, isCreating } = useAppointmentMutations();
+  const { collectPayment: collectPaymentMutation } = useAdminPaymentMutations();
 
   // Appointment data after successful booking (drives success banner + slip download)
   const [bookedAppointment, setBookedAppointment] = useState(null);
@@ -343,6 +351,11 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       opdFeePaid: false,
       opdFee: 0,
       reason: `Session ${treatment.nextSessionNumber} — ${treatment.treatmentName}`,
+      collectSessionPayment: false,
+      sessionPaymentAmount: 0,
+      sessionPaymentMode: "cash",
+      selectedTreatmentInvoiceId: treatment.invoice?._id || null,
+      selectedTreatmentInvoiceBalance: treatment.invoice?.balanceDue || 0,
     }));
     setPaymentMethod("cash");
     setFeeCollected(false);
@@ -362,6 +375,11 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       isFree: false,
       opdFee: feeSettings.opdFeeRegular,
       reason: "",
+      collectSessionPayment: false,
+      sessionPaymentAmount: 0,
+      sessionPaymentMode: "cash",
+      selectedTreatmentInvoiceId: null,
+      selectedTreatmentInvoiceBalance: 0,
     }));
   };
 
@@ -474,12 +492,19 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       ...paymentOverrides,
     };
 
+    // Capture session payment fields before async reset
+    const shouldCollectPayment =
+      formData.visitType === "treatment_session" &&
+      formData.collectSessionPayment &&
+      formData.sessionPaymentAmount > 0 &&
+      formData.selectedTreatmentInvoiceId;
+    const capturedInvoiceId = formData.selectedTreatmentInvoiceId;
+    const capturedAmount = formData.sessionPaymentAmount;
+    const capturedMode = formData.sessionPaymentMode;
+
     createAppointment(appointmentData, {
-      onSuccess: (response) => {
+      onSuccess: async (response) => {
         const token = response?.data?.tokenNumber;
-        toast.success(
-          token ? `Appointment booked — Token #${token}` : "Appointment booked",
-        );
         // Build slip object from formData (before reset) + server response
         const slipData = {
           ...response?.data,
@@ -502,6 +527,25 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         setPaymentMethod("cash");
         setFeeCollected(false);
         onSuccess?.(response);
+
+        // Collect session payment (after session appointment created successfully)
+        if (shouldCollectPayment) {
+          try {
+            await collectPaymentMutation({
+              invoiceId: capturedInvoiceId,
+              amount: capturedAmount,
+              mode: capturedMode,
+            });
+            toast.success(
+              `Session booked${token ? ` — Token #${token}` : ""} + ₹${capturedAmount.toLocaleString("en-IN")} payment recorded`,
+            );
+          } catch {
+            toast.success(token ? `Session booked — Token #${token}` : "Session booked");
+            toast.warning("Payment could not be recorded — collect via session detail");
+          }
+        } else {
+          toast.success(token ? `Appointment booked — Token #${token}` : "Appointment booked");
+        }
         // Modal stays open to show success banner; user closes it manually
       },
       onError: (error) => {
@@ -1271,6 +1315,75 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               </Typography>
             )}
           </Grid>
+
+          {/* ─── SESSION PAYMENT (optional, treatment_session only) ─── */}
+          {isSessionMode && (
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 2,
+                  px: 2,
+                  py: 1.5,
+                  bgcolor: "#fafafa",
+                }}
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.collectSessionPayment}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, collectSessionPayment: e.target.checked, sessionPaymentAmount: 0 }))
+                      }
+                      size="small"
+                      color="success"
+                      sx={{ py: 0.5 }}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                      Collect session payment now
+                    </Typography>
+                  }
+                />
+                {formData.collectSessionPayment && (
+                  <Box sx={{ mt: 1, display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "flex-end" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ display: "block", color: "#6b7280", width: "100%", mt: -0.5 }}
+                    >
+                      Recording against parent invoice · Outstanding: ₹{(formData.selectedTreatmentInvoiceBalance || 0).toLocaleString("en-IN")}
+                    </Typography>
+                    <TextField
+                      label="Amount (₹)"
+                      type="number"
+                      value={formData.sessionPaymentAmount || ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, sessionPaymentAmount: Number(e.target.value) }))
+                      }
+                      size="small"
+                      inputProps={{ min: 0, max: formData.selectedTreatmentInvoiceBalance || 999999 }}
+                      sx={{ width: 140 }}
+                    />
+                    <TextField
+                      label="Method"
+                      select
+                      value={formData.sessionPaymentMode}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, sessionPaymentMode: e.target.value }))
+                      }
+                      size="small"
+                      sx={{ width: 110 }}
+                    >
+                      <MenuItem value="cash">Cash</MenuItem>
+                      <MenuItem value="upi">UPI</MenuItem>
+                      <MenuItem value="card">Card</MenuItem>
+                    </TextField>
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+          )}
 
           {/* ─── ROW 5: Fee Summary + Notes (same row, same height) ─── */}
           <Grid size={{ xs: 12, md: 8 }}>
