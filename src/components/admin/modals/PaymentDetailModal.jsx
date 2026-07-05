@@ -17,6 +17,7 @@ import {
   IconButton,
   TextField,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import CloseIcon from "@mui/icons-material/Close";
@@ -373,7 +374,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           {showRefundForm && canRefund && (
             <Grid size={{ xs: 12 }}>
               <Box sx={{ bgcolor: "#fef2f2", borderRadius: 1, p: 1.5, border: "1px solid #fecaca" }}>
-                <Typography variant="caption" className="font-semibold text-red-700 block mb-3">Process Refund</Typography>
+                <Typography variant="caption" className="font-semibold text-red-700 block mb-3">Refund Payment</Typography>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
@@ -495,7 +496,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           {showReverseForm && canReverse && (
             <Grid size={{ xs: 12 }}>
               <Box sx={{ bgcolor: "#fef2f2", borderRadius: 1, p: 1.5, border: "1px solid #fecaca" }}>
-                <Typography variant="caption" className="font-semibold text-red-700 block mb-0.5">Reverse Payment</Typography>
+                <Typography variant="caption" className="font-semibold text-red-700 block mb-0.5">Void Payment (Data Error)</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
                   Restores the original balance on all invoices settled by this payment. The full amount is reversed.
                 </Typography>
@@ -542,26 +543,30 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
       {/* Actions */}
       <DialogActions className="p-2 bg-gray-50">
         {canRefund && !showRefundForm && (
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<RefreshIcon />}
-            onClick={() => setShowRefundForm(true)}
-            sx={{ textTransform: "none", fontSize: "12px" }}
-          >
-            Process Refund
-          </Button>
+          <Tooltip title="Return money to the patient (cash/UPI/Razorpay)" placement="top">
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<RefreshIcon />}
+              onClick={() => setShowRefundForm(true)}
+              sx={{ textTransform: "none", fontSize: "12px" }}
+            >
+              Refund Payment
+            </Button>
+          </Tooltip>
         )}
         {canReverse && !showReverseForm && (
-          <Button
-            variant="outlined"
-            color="warning"
-            startIcon={<UndoIcon />}
-            onClick={() => setShowReverseForm(true)}
-            sx={{ textTransform: "none", fontSize: "12px" }}
-          >
-            Reverse Payment
-          </Button>
+          <Tooltip title="Undo a data-entry mistake — no money changes hands" placement="top">
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<UndoIcon />}
+              onClick={() => setShowReverseForm(true)}
+              sx={{ textTransform: "none", fontSize: "12px" }}
+            >
+              Void Payment (Data Error)
+            </Button>
+          </Tooltip>
         )}
         <Button
           variant="outlined"
