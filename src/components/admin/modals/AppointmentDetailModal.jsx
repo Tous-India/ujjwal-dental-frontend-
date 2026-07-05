@@ -32,6 +32,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PaymentIcon from "@mui/icons-material/Payment";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import ConfirmDialog from "../../common/ConfirmDialog";
+import CollectPaymentModal from "./CollectPaymentModal";
 
 /**
  * Info row — single-line inline: [icon] [label] [value]
@@ -112,8 +113,15 @@ const typeLabels = {
 
 const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew }) => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [collectPaymentOpen, setCollectPaymentOpen] = useState(false);
 
   if (!appointment) return null;
+
+  const isSession = appointment.visitType === "treatment_session";
+  const canCollectSessionPayment =
+    isSession &&
+    appointment.invoice &&
+    (appointment.invoice.paymentStatus === "unpaid" || appointment.invoice.paymentStatus === "partial");
 
   const {
     appointmentNumber,
@@ -287,6 +295,42 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
               </>
             )}
 
+            {/* Treatment Payment Status — session appointments only */}
+            {isSession && appointment.invoice && (
+              <>
+                <SectionTitle>Treatment Payment Status</SectionTitle>
+                <Box
+                  sx={{
+                    border: "1px solid #bbf7d0",
+                    borderRadius: 1.5,
+                    px: 2,
+                    py: 1.5,
+                    mb: 2,
+                    backgroundColor: "#f0fdf4",
+                  }}
+                >
+                  <Box className="flex justify-between items-center">
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: "#065f46" }}>
+                      {appointment.invoice.invoiceNumber}
+                    </Typography>
+                    <Chip
+                      label={appointment.invoice.paymentStatus === "paid" ? "Paid" : appointment.invoice.paymentStatus === "partial" ? "Partial" : "Unpaid"}
+                      size="small"
+                      color={appointment.invoice.paymentStatus === "paid" ? "success" : appointment.invoice.paymentStatus === "partial" ? "warning" : "error"}
+                    />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: "#6b7280", display: "block", mt: 0.5 }}>
+                    Total: ₹{(appointment.invoice.grandTotal || 0).toLocaleString("en-IN")} · Paid: ₹{(appointment.invoice.amountPaid || 0).toLocaleString("en-IN")}
+                  </Typography>
+                  {appointment.invoice.balanceDue > 0 && (
+                    <Typography variant="caption" sx={{ color: "#dc2626", fontWeight: 700, display: "block", mt: 0.25 }}>
+                      ₹{(appointment.invoice.balanceDue || 0).toLocaleString("en-IN")} outstanding
+                    </Typography>
+                  )}
+                </Box>
+              </>
+            )}
+
             {/* Cancellation Info */}
             {status === "cancelled" && cancellation && (
               <>
@@ -353,6 +397,20 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
           )}
         </Box>
         <Box className="flex gap-2">
+          {canCollectSessionPayment && (
+            <Button
+              variant="contained"
+              startIcon={<PaymentIcon />}
+              onClick={() => setCollectPaymentOpen(true)}
+              sx={{
+                textTransform: "none",
+                backgroundColor: "#059669",
+                "&:hover": { backgroundColor: "#047857" },
+              }}
+            >
+              Collect Session Payment
+            </Button>
+          )}
           <Button onClick={onClose} color="inherit">
             Close
           </Button>
@@ -379,6 +437,19 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
       confirmText="Delete Permanently"
       confirmColor="error"
     />
+
+    {collectPaymentOpen && appointment.invoice && (
+      <CollectPaymentModal
+        open={collectPaymentOpen}
+        onClose={() => setCollectPaymentOpen(false)}
+        invoice={appointment.invoice}
+        patient={appointment.patient}
+        onSuccess={() => {
+          setCollectPaymentOpen(false);
+          onClose();
+        }}
+      />
+    )}
     </>
   );
 };
