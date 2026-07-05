@@ -41,7 +41,6 @@ const itemTypeOptions = [
   { value: "membership", label: "Membership" },
   { value: "test", label: "Test" },
   { value: "medicine", label: "Medicine" },
-  { value: "opd_fee", label: "OPD Fee" },
   { value: "other", label: "Other" },
 ];
 
@@ -424,6 +423,11 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                         </MenuItem>
                       ))}
                     </TextField>
+                    {index === 0 && (
+                      <Typography variant="caption" sx={{ color: "#6b7280", display: "block", mt: 0.5, lineHeight: 1.3 }}>
+                        OPD Fee invoices are created automatically when booking an appointment.
+                      </Typography>
+                    )}
                   </Grid>
 
                   {/* Description */}
