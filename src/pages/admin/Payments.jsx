@@ -195,7 +195,7 @@ const Payments = () => {
   } = usePatientUnpaidInvoices(selectedPatient?._id);
 
   // ── Payment history ────────────────────────────────────────────────────────
-  const activeStatus = activeTab === 0 ? "paid" : "refunded";
+  const activeStatus = activeTab === 0 ? "paid" : "refunded,refund_pending";
   const { data, isLoading, refetch } = usePayments({
     page,
     limit,
@@ -354,11 +354,30 @@ const Payments = () => {
     {
       field: "paymentNumber",
       headerName: "Receipt No.",
-      minWidth: 150,
-      render: (value) => (
-        <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 700, color: "#16a34a" }}>
-          {value || "—"}
-        </Typography>
+      minWidth: 180,
+      render: (value, row) => (
+        <Box className="flex items-center gap-1 flex-wrap">
+          <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 700, color: "#16a34a" }}>
+            {value || "—"}
+          </Typography>
+          {row.status === "refund_pending" && (
+            <Tooltip title="Razorpay refund failed — needs manual confirmation" placement="top">
+              <Chip
+                label="Pending"
+                size="small"
+                sx={{ bgcolor: "#fef3c7", color: "#92400e", fontWeight: 700, fontSize: 10, height: 18, cursor: "help" }}
+              />
+            </Tooltip>
+          )}
+          {row.status === "refunded" && activeTab === 1 && (
+            <Chip
+              label="Refunded"
+              size="small"
+              color="success"
+              sx={{ fontWeight: 700, fontSize: 10, height: 18 }}
+            />
+          )}
+        </Box>
       ),
     },
     // 2. Date & Time
@@ -503,6 +522,18 @@ const Payments = () => {
           {row.status === "paid" && !row.settledInvoices?.length && (
             <Tooltip title="Process Refund">
               <IconButton size="small" sx={{ color: "#dc2626" }} onClick={(e) => {
+                e.stopPropagation();
+                setSelectedPayment(row);
+                setDetailModalOpen(true);
+              }}>
+                <ReplayIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {/* Confirm Manual Refund — for refund_pending rows (Razorpay API previously failed) */}
+          {row.status === "refund_pending" && (
+            <Tooltip title="Confirm manual refund (Razorpay failed)">
+              <IconButton size="small" sx={{ color: "#ea580c" }} onClick={(e) => {
                 e.stopPropagation();
                 setSelectedPayment(row);
                 setDetailModalOpen(true);
@@ -885,7 +916,7 @@ const Payments = () => {
           },
         }}
         onRowClick={handleRowClick}
-        emptyMessage={activeTab === 0 ? "No paid payments found" : "No refunded payments found"}
+        emptyMessage={activeTab === 0 ? "No paid payments found" : "No refunded or pending-refund payments found"}
       />
 
       {/* ── COLLECT PAYMENT MODAL ─────────────────────────────────────────── */}
