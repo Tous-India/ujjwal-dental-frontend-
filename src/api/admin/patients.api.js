@@ -143,3 +143,6 @@ export const getPatientInvoices = (id, params = {}) =>
  */
 export const getPatientTests = (id, params = {}) =>
   api.get(`/patients/${id}/tests`, { params }).then((res) => res.data);
+
+export const getPatientActiveContext = (patientId) =>
+  api.get(`/patients/${patientId}/active-context`).then((res) => res.data);
