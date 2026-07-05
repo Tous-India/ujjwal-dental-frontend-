@@ -33,7 +33,6 @@ import api from "../../api/axios";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import EventIcon from "@mui/icons-material/Event";
-import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import BiotechIcon from "@mui/icons-material/Biotech";
 import PaymentIcon from "@mui/icons-material/Payment";
 import AssessmentIcon from "@mui/icons-material/Assessment";
@@ -60,7 +59,6 @@ const navItems = [
   { label: "Patients", path: "/admin/patients", icon: PeopleIcon, badgeKey: "patients" },
   { label: "Enquiries", path: "/admin/enquiries", icon: ContactPhoneIcon, badgeKey: "enquiries", badgeColor: "#ef4444" },
   { label: "Appointments", path: "/admin/appointments", icon: EventIcon, badgeKey: "appointments", badgeColor: "#3b82f6" },
-  { label: "Treatments", path: "/admin/treatments", icon: MedicalServicesIcon },
   { label: "Lab", path: "/admin/lab", icon: BiotechIcon },
   { label: "Payment History", path: "/admin/payments", icon: PaymentIcon, badgeKey: "payments", badgeColor: "#f59e0b" },
   { label: "Billing", path: "/admin/billing", icon: ReceiptLongIcon },
