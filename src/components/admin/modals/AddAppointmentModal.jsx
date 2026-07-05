@@ -39,6 +39,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import AppointmentSlipPreviewModal from "../../AppointmentSlipPreviewModal";
 import { useAppointmentMutations } from "../../../hooks/admin/useAppointments";
+import { usePatientActiveContext } from "../../../hooks/admin/usePatients";
 import { searchPatients, createPatient } from "../../../api/admin/patients.api";
 import api from "../../../api/axios";
 import { getClinics } from "../../../api/admin/clinics.api";
@@ -109,9 +110,11 @@ const getInitialFormState = () => ({
   opdFee: 300,
   isFree: false,
   // Visit type & treatment fields
-  visitType: "opd", // "opd" | "treatment"
+  visitType: "opd", // "opd" | "treatment" | "treatment_session"
   treatmentName: "",
   fee: "",
+  parentAppointment: null,
+  sessionNumber: null,
 });
 
 const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
@@ -145,6 +148,11 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
   const [feeCollected, setFeeCollected] = useState(false);
   const [slipPreviewOpen, setSlipPreviewOpen] = useState(false);
 
+  // Active treatment context — fires when a patient is selected
+  const patientId = formData.patient?._id;
+  const { data: contextData } = usePatientActiveContext(patientId);
+  const activeTreatments = contextData?.data?.activeTreatments || [];
+
   // Active-membership discount for the selected patient (server re-verifies it).
   const membership = formData.patient?.membership;
   const isActiveMember =
@@ -153,7 +161,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
   const discountPercent = isActiveMember ? membership.discountPercent || 0 : 0;
 
   // Effective base fee for this visit (before membership discount).
-  const baseFee = formData.isFree
+  const isSessionMode = formData.visitType === "treatment_session";
+  const baseFee = formData.isFree || isSessionMode
     ? 0
     : formData.visitType === "treatment"
     ? Number(formData.fee) || 0
@@ -320,6 +329,43 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
   };
 
   /**
+   * One-click: configure formData for a treatment session booking
+   */
+  const handleContinueTreatment = (treatment) => {
+    setFormData((prev) => ({
+      ...prev,
+      visitType: "treatment_session",
+      parentAppointment: treatment.parentAppointmentId,
+      sessionNumber: treatment.nextSessionNumber,
+      treatmentName: treatment.treatmentName,
+      fee: 0,
+      isFree: true,
+      opdFeePaid: false,
+      opdFee: 0,
+      reason: `Session ${treatment.nextSessionNumber} — ${treatment.treatmentName}`,
+    }));
+    setPaymentMethod("cash");
+    setFeeCollected(false);
+  };
+
+  /**
+   * Exit session mode and reset to standard booking flow
+   */
+  const handleCancelSessionMode = () => {
+    setFormData((prev) => ({
+      ...prev,
+      visitType: "opd",
+      parentAppointment: null,
+      sessionNumber: null,
+      treatmentName: "",
+      fee: "",
+      isFree: false,
+      opdFee: feeSettings.opdFeeRegular,
+      reason: "",
+    }));
+  };
+
+  /**
    * Handle input change
    */
   const handleChange = (e) => {
@@ -385,6 +431,13 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       }
     }
 
+    if (formData.visitType === "treatment_session") {
+      if (!formData.parentAppointment) {
+        toast.error("Session must be linked to a parent treatment appointment.");
+        return;
+      }
+    }
+
     const appointmentData = {
       // Backend createAppointment expects `patientId` (existing patient) and
       // requires `phone` in its top-level validation — send both.
@@ -408,6 +461,12 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             treatmentId: "other",
             treatmentName: formData.treatmentName.trim(),
             fee: formData.isFree ? 0 : Number(formData.fee),
+          }
+        : formData.visitType === "treatment_session"
+        ? {
+            parentAppointment: formData.parentAppointment,
+            sessionNumber: formData.sessionNumber,
+            treatmentName: formData.treatmentName,
           }
         : {
             opdFee: formData.isFree ? 0 : Number(formData.opdFee),
@@ -682,6 +741,69 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               }
             />
           </Grid>
+          {/* ─── ACTIVE TREATMENT BANNER ─── */}
+          {!isSessionMode && activeTreatments.length > 0 && (
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  border: "1px solid #fde68a",
+                  borderRadius: 2,
+                  backgroundColor: "#fffbeb",
+                  p: 1.5,
+                }}
+              >
+                <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#92400e", mb: 1 }}>
+                  Active Treatments — Outstanding Balance
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {activeTreatments.map((t) => (
+                    <Box
+                      key={t.parentAppointmentId}
+                      sx={{
+                        border: "1px solid #fcd34d",
+                        borderRadius: 1.5,
+                        px: 1.5,
+                        py: 1,
+                        backgroundColor: "#fff",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0.5,
+                        minWidth: 200,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#1a1a1a" }}>
+                        {t.treatmentName}
+                      </Typography>
+                      <Typography sx={{ fontSize: "11px", color: "#6b7280" }}>
+                        Sessions booked: {t.sessionsBooked} · Next: #{t.nextSessionNumber}
+                      </Typography>
+                      {t.invoice && (
+                        <Typography sx={{ fontSize: "11px", color: "#dc2626" }}>
+                          Balance: ₹{(t.invoice.balanceDue || 0).toLocaleString("en-IN")} ({t.invoice.invoiceNumber})
+                        </Typography>
+                      )}
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => handleContinueTreatment(t)}
+                        sx={{
+                          mt: 0.5,
+                          fontSize: "11px",
+                          textTransform: "none",
+                          height: 26,
+                          backgroundColor: "#f59e0b",
+                          "&:hover": { backgroundColor: "#d97706" },
+                        }}
+                      >
+                        Book Session #{t.nextSessionNumber}
+                      </Button>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </Grid>
+          )}
+
           {/* ─── ROW 2: Date → Time → Appointment Type → Reason ─── */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
@@ -939,49 +1061,81 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               }}
             >
               {/* Visit Type */}
-              <FormControl>
-                <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
-                  Visit Type
-                </FormLabel>
-                <RadioGroup
-                  row
-                  value={formData.visitType}
-                  onChange={(e) => {
-                    const newVisitType = e.target.value;
-                    if (newVisitType === "treatment") {
-                      setPaymentMethod("cash");
-                      setFeeCollected(false);
-                      if (isActiveMember && formData.isFree) {
-                        const defaultFee =
-                          formData.appointmentType === "emergency"
-                            ? feeSettings.opdFeeEmergency
-                            : feeSettings.opdFeeRegular;
-                        setFormData((prev) => ({
-                          ...prev,
-                          visitType: "treatment",
-                          isFree: false,
-                          opdFee: defaultFee,
-                        }));
-                        return;
+              {isSessionMode ? (
+                <Box>
+                  <Typography sx={{ fontSize: "0.7rem", fontWeight: 600, color: "#374151", mb: 0.5 }}>
+                    Visit Type
+                  </Typography>
+                  <Chip
+                    label={`Treatment Session #${formData.sessionNumber}`}
+                    size="small"
+                    sx={{
+                      backgroundColor: "#f59e0b",
+                      color: "#fff",
+                      fontWeight: 700,
+                      fontSize: "0.75rem",
+                      height: 26,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{ display: "block", fontSize: "0.65rem", color: "#6b7280", mt: 0.5 }}
+                  >
+                    {formData.treatmentName} · Session linked to parent appointment · No charge
+                  </Typography>
+                  <Button
+                    size="small"
+                    onClick={handleCancelSessionMode}
+                    sx={{ p: 0, mt: 0.5, fontSize: "0.65rem", textTransform: "none", color: "#dc2626", minWidth: 0 }}
+                  >
+                    Cancel session mode
+                  </Button>
+                </Box>
+              ) : (
+                <FormControl>
+                  <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
+                    Visit Type
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={formData.visitType}
+                    onChange={(e) => {
+                      const newVisitType = e.target.value;
+                      if (newVisitType === "treatment") {
+                        setPaymentMethod("cash");
+                        setFeeCollected(false);
+                        if (isActiveMember && formData.isFree) {
+                          const defaultFee =
+                            formData.appointmentType === "emergency"
+                              ? feeSettings.opdFeeEmergency
+                              : feeSettings.opdFeeRegular;
+                          setFormData((prev) => ({
+                            ...prev,
+                            visitType: "treatment",
+                            isFree: false,
+                            opdFee: defaultFee,
+                          }));
+                          return;
+                        }
                       }
-                    }
-                    setFormData((prev) => ({
-                      ...prev,
-                      visitType: newVisitType,
-                      ...(newVisitType === "opd"
-                        ? { treatmentName: "", fee: "" }
-                        : {}),
-                    }));
-                  }}
-                  sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.8rem" }, "& .MuiFormControlLabel-root": { mr: 1 } }}
-                >
-                  <FormControlLabel value="opd" control={<Radio size="small" />} label="OPD" />
-                  <FormControlLabel value="treatment" control={<Radio size="small" />} label="Treatment" />
-                </RadioGroup>
-              </FormControl>
+                      setFormData((prev) => ({
+                        ...prev,
+                        visitType: newVisitType,
+                        ...(newVisitType === "opd"
+                          ? { treatmentName: "", fee: "" }
+                          : {}),
+                      }));
+                    }}
+                    sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.8rem" }, "& .MuiFormControlLabel-root": { mr: 1 } }}
+                  >
+                    <FormControlLabel value="opd" control={<Radio size="small" />} label="OPD" />
+                    <FormControlLabel value="treatment" control={<Radio size="small" />} label="Treatment" />
+                  </RadioGroup>
+                </FormControl>
+              )}
 
-              {/* Urgency */}
-              <FormControl>
+              {/* Urgency — hidden in session mode */}
+              {!isSessionMode && <FormControl>
                 <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
                   Urgency
                 </FormLabel>
@@ -1000,12 +1154,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                     label="Emergency"
                   />
                 </RadioGroup>
-              </FormControl>
+              </FormControl>}
 
-              {/* OPD Fee — editable, pre-filled from feeSettings default.
-                  Disabled + shown as "Free (Membership)" when the membership
-                  auto-detect effect has marked this visit free. */}
-              {formData.visitType === "opd" && (
+              {/* OPD Fee — hidden in session mode */}
+              {!isSessionMode && formData.visitType === "opd" && (
                 <Box sx={{ flex: "0 0 auto", minWidth: 180 }}>
                   <TextField
                     label={
@@ -1045,8 +1197,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </Box>
               )}
 
-              {/* Treatment name + fee TextFields (only when treatment selected) */}
-              {formData.visitType === "treatment" && (
+              {/* Treatment name + fee TextFields (only when treatment selected, not in session mode) */}
+              {!isSessionMode && formData.visitType === "treatment" && (
                 <>
                   <Box sx={{ flex: "1 1 200px", minWidth: 200 }}>
                     <TextField
@@ -1080,8 +1232,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </>
               )}
 
-              {/* Free toggle */}
-              <FormControlLabel
+              {/* Free toggle — hidden in session mode */}
+              {!isSessionMode && <FormControlLabel
                 control={
                   <Switch
                     checked={formData.isFree}
@@ -1106,7 +1258,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                     Free
                   </Typography>
                 }
-              />
+              />}
             </Box>
             {formData.appointmentType === "emergency" && formData.visitType === "opd" && (
               <Typography variant="caption" className="text-red-600 font-medium" sx={{ fontSize: "0.7rem", display: "block", mt: 0.5 }}>
@@ -1125,7 +1277,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             <Paper variant="outlined" className="p-3 bg-gray-50">
               <Box className="flex justify-between items-center py-1">
                 <Typography variant="caption" className="text-gray-600">
-                  {formData.visitType === "treatment"
+                  {isSessionMode
+                    ? `Session #${formData.sessionNumber} — ${formData.treatmentName}`
+                    : formData.visitType === "treatment"
                     ? formData.treatmentName.trim() || "Treatment fee"
                     : "OPD / Consultation fee"}
                 </Typography>
