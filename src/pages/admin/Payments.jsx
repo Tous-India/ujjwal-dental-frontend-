@@ -195,7 +195,7 @@ const Payments = () => {
   } = usePatientUnpaidInvoices(selectedPatient?._id);
 
   // ── Payment history ────────────────────────────────────────────────────────
-  const activeStatus = activeTab === 0 ? "paid" : "refunded,refund_pending";
+  const activeStatus = activeTab === 0 ? "paid" : "refunded,refund_pending,reversed";
   const { data, isLoading, refetch } = usePayments({
     page,
     limit,
@@ -370,12 +370,23 @@ const Payments = () => {
             </Tooltip>
           )}
           {row.status === "refunded" && activeTab === 1 && (
-            <Chip
-              label="Refunded"
-              size="small"
-              color="success"
-              sx={{ fontWeight: 700, fontSize: 10, height: 18 }}
-            />
+            <Tooltip title="Money returned to patient" placement="top">
+              <Chip
+                label="Refunded"
+                size="small"
+                color="success"
+                sx={{ fontWeight: 700, fontSize: 10, height: 18, cursor: "help" }}
+              />
+            </Tooltip>
+          )}
+          {row.status === "reversed" && activeTab === 1 && (
+            <Tooltip title="Data entry correction — no money changed hands" placement="top">
+              <Chip
+                label="Voided"
+                size="small"
+                sx={{ bgcolor: "#f3f4f6", color: "#374151", fontWeight: 700, fontSize: 10, height: 18, cursor: "help" }}
+              />
+            </Tooltip>
           )}
         </Box>
       ),
@@ -563,26 +574,30 @@ const Payments = () => {
   // ── Refunded-tab extra columns ─────────────────────────────────────────────
   const refundedOnCol = {
     field: "_refundedAt",
-    headerName: "Refunded On",
+    headerName: "Actioned On",
     minWidth: 140,
-    render: (_, row) => (
-      <Typography variant="body2" sx={{ fontSize: 13 }}>
-        {row.refund?.refundedAt
-          ? new Date(row.refund.refundedAt).toLocaleDateString("en-IN", {
-              day: "2-digit", month: "short", year: "numeric",
-            })
-          : "—"}
-      </Typography>
-    ),
+    render: (_, row) => {
+      const ts = row.status === "reversed" ? row.reversedAt : row.refund?.refundedAt;
+      return (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {ts
+            ? new Date(ts).toLocaleDateString("en-IN", {
+                day: "2-digit", month: "short", year: "numeric",
+              })
+            : "—"}
+        </Typography>
+      );
+    },
   };
 
   const refundReasonCol = {
     field: "_refundReason",
-    headerName: "Refund Reason",
+    headerName: "Reason",
     minWidth: 200,
-    render: (_, row) =>
-      row.refund?.reason ? (
-        <Tooltip title={row.refund.reason} placement="top">
+    render: (_, row) => {
+      const reason = row.status === "reversed" ? row.reversalReason : row.refund?.reason;
+      return reason ? (
+        <Tooltip title={reason} placement="top">
           <Typography variant="body2" sx={{
             fontSize: 13,
             maxWidth: 190,
@@ -591,12 +606,13 @@ const Payments = () => {
             whiteSpace: "nowrap",
             display: "block",
           }}>
-            {row.refund.reason}
+            {reason}
           </Typography>
         </Tooltip>
       ) : (
         <Typography variant="body2" sx={{ color: "#9ca3af" }}>—</Typography>
-      ),
+      );
+    },
   };
 
   // For the Refunded tab, splice in the two extra columns before Actions
@@ -861,7 +877,7 @@ const Payments = () => {
           }}
         >
           <Tab label="Paid" />
-          <Tab label="Refunded" />
+          <Tab label="Refunded & Voided" />
         </Tabs>
         <Button
           size="small"
@@ -916,7 +932,7 @@ const Payments = () => {
           },
         }}
         onRowClick={handleRowClick}
-        emptyMessage={activeTab === 0 ? "No paid payments found" : "No refunded or pending-refund payments found"}
+        emptyMessage={activeTab === 0 ? "No paid payments found" : "No refunded or voided payments found"}
       />
 
       {/* ── COLLECT PAYMENT MODAL ─────────────────────────────────────────── */}
