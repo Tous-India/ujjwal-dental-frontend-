@@ -401,6 +401,7 @@ const filterOptions = [
     options: [
       { value: "opd", label: "OPD" },
       { value: "treatment", label: "Treatment" },
+      { value: "treatment_session", label: "Treatment Session" },
     ],
   },
 ];
