@@ -110,8 +110,10 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
   const [showReverseForm, setShowReverseForm] = useState(false);
   const [reverseReason, setReverseReason] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [manualConfirmPending, setManualConfirmPending] = useState(null);
+  const [manualMethod, setManualMethod] = useState("cash");
 
-  const { processRefund, isRefunding, deletePayment, isDeleting } = usePaymentMutations();
+  const { processRefund, isRefunding, deletePayment, isDeleting, confirmManualRefund, isConfirmingManual } = usePaymentMutations();
   const { reversePayment, isReversing } = useAdminPaymentMutations();
 
   const handleRefundAmountChange = (e) => {
@@ -154,7 +156,18 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           onClose();
         },
         onError: (err) => {
-          toast.error(err.response?.data?.message || "Failed to process refund");
+          const responseData = err.response?.data;
+          if (responseData?.code === "RAZORPAY_API_FAILED" && responseData?.canConfirmManual) {
+            setShowRefundForm(false);
+            setManualConfirmPending({
+              paymentId: responseData.paymentId,
+              amount: refundAmount ? Number(refundAmount) : payment.amount,
+              reason: refundReason,
+            });
+            toast.warning("Razorpay refund failed — refund is marked pending. Confirm manual refund to complete.");
+          } else {
+            toast.error(responseData?.message || "Failed to process refund");
+          }
         },
       }
     );
@@ -174,6 +187,27 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to reverse payment");
     }
+  };
+
+  const handleConfirmManualRefund = () => {
+    confirmManualRefund(
+      { id: manualConfirmPending.paymentId, data: { manualMethod } },
+      {
+        onSuccess: () => {
+          setManualConfirmPending(null);
+          setShowRefundForm(false);
+          setRefundReason("");
+          setRefundAmount("");
+          setManualMethod("cash");
+          onRefund?.();
+          onClose();
+          toast.success("Refund confirmed as manually processed");
+        },
+        onError: (err) => {
+          toast.error(err.response?.data?.message || "Failed to confirm manual refund");
+        },
+      }
+    );
   };
 
   const handleDelete = () => {
@@ -196,13 +230,15 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
   };
 
   const handleClose = () => {
-    if (!isRefunding && !isReversing) {
+    if (!isRefunding && !isReversing && !isConfirmingManual) {
       setShowRefundForm(false);
       setRefundReason("");
       setRefundAmount("");
       setRefundAmountError("");
       setShowReverseForm(false);
       setReverseReason("");
+      setManualConfirmPending(null);
+      setManualMethod("cash");
       onClose();
     }
   };
@@ -232,7 +268,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
             <Typography variant="subtitle1" className="font-bold">{payment.paymentNumber}</Typography>
             <Chip label={payment.status} size="small" color={statusColors[payment.status] || "default"} className="capitalize" />
           </Box>
-          <IconButton onClick={handleClose} disabled={isRefunding || isReversing} size="small">
+          <IconButton onClick={handleClose} disabled={isRefunding || isReversing || isConfirmingManual} size="small">
             <CloseIcon className="text-white" fontSize="small" />
           </IconButton>
         </Box>
@@ -399,6 +435,62 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
             </Grid>
           )}
 
+          {/* Manual Refund Confirmation — shown when Razorpay API failed */}
+          {manualConfirmPending && (
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ bgcolor: "#fff7ed", borderRadius: 1, p: 1.5, border: "1px solid #fed7aa" }}>
+                <Typography variant="caption" className="font-semibold text-orange-700 block mb-1">
+                  Razorpay refund failed — confirm manual refund
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+                  The refund is recorded as <strong>pending</strong>. Confirm that you have refunded{" "}
+                  <strong>{formatCurrency(manualConfirmPending.amount)}</strong> to the patient manually.
+                  This will mark the payment as fully refunded.
+                </Typography>
+                <Box className="flex items-center gap-2 mb-3">
+                  <Typography variant="caption" className="text-gray-600 shrink-0">Method used:</Typography>
+                  <select
+                    value={manualMethod}
+                    onChange={(e) => setManualMethod(e.target.value)}
+                    disabled={isConfirmingManual}
+                    style={{
+                      border: "1px solid #d1d5db",
+                      borderRadius: 6,
+                      padding: "4px 8px",
+                      fontSize: 13,
+                      background: "#fff",
+                    }}
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="upi">UPI</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                  </select>
+                </Box>
+                <Box className="flex gap-2">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleConfirmManualRefund}
+                    disabled={isConfirmingManual}
+                    startIcon={isConfirmingManual ? <CircularProgress size={16} color="inherit" /> : null}
+                    sx={{ bgcolor: "#ea580c", "&:hover": { bgcolor: "#c2410c" }, textTransform: "none", fontSize: 12 }}
+                  >
+                    {isConfirmingManual ? "Confirming..." : "Confirm Manual Refund"}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setManualConfirmPending(null)}
+                    disabled={isConfirmingManual}
+                    sx={{ textTransform: "none", fontSize: 12 }}
+                  >
+                    Later
+                  </Button>
+                </Box>
+              </Box>
+            </Grid>
+          )}
+
           {/* Reverse Form — for admin-recorded payments (settledInvoices) */}
           {showReverseForm && canReverse && (
             <Grid size={{ xs: 12 }}>
@@ -482,7 +574,7 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
           Delete
         </Button>
         <Box className="flex-grow" />
-        <Button onClick={handleClose} color="inherit" disabled={isRefunding || isReversing} sx={{ textTransform: "none", fontSize: "12px" }}>
+        <Button onClick={handleClose} color="inherit" disabled={isRefunding || isReversing || isConfirmingManual} sx={{ textTransform: "none", fontSize: "12px" }}>
           Close
         </Button>
       </DialogActions>
