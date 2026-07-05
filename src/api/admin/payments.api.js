@@ -106,3 +106,6 @@ export const reverseAdminPayment = (data) =>
 
 export const exportPaymentsPdf = (params = {}) =>
   api.get("/payments/export/pdf", { params, responseType: "blob" }).then((res) => res.data);
+
+export const confirmManualRefund = (id, data) =>
+  api.post(`/payments/${id}/confirm-manual-refund`, data).then((res) => res.data);
