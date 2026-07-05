@@ -16,6 +16,7 @@ import {
   updatePatient,
   deletePatient,
   reactivatePatient,
+  getPatientActiveContext,
 } from "../../api/admin/patients.api";
 
 /**
@@ -91,5 +92,14 @@ export const usePatientMutations = () => {
     isReactivating: reactivateMutation.isPending,
   };
 };
+
+export const usePatientActiveContext = (patientId, options = {}) =>
+  useQuery({
+    queryKey: ["admin", "patients", patientId, "active-context"],
+    queryFn: () => getPatientActiveContext(patientId),
+    enabled: !!patientId,
+    staleTime: 30_000,
+    ...options,
+  });
 
 export default usePatients;
