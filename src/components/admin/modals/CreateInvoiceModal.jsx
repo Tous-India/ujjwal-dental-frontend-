@@ -36,7 +36,6 @@ import { useBillingMutations } from "../../../hooks/admin/useBilling";
  * Line-item category options
  */
 const itemTypeOptions = [
-  { value: "treatment", label: "Treatment" },
   { value: "surgery", label: "Surgery" },
   { value: "membership", label: "Membership" },
   { value: "test", label: "Test" },
@@ -425,7 +424,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     </TextField>
                     {index === 0 && (
                       <Typography variant="caption" sx={{ color: "#6b7280", display: "block", mt: 0.5, lineHeight: 1.3 }}>
-                        OPD Fee invoices are created automatically when booking an appointment.
+                        OPD and Treatment invoices are created automatically when booking an appointment. Use this form only for Surgery, Membership, Test, Medicine, or Other.
                       </Typography>
                     )}
                   </Grid>
