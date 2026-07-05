@@ -14,6 +14,7 @@ import {
   recordAdminPayment,
   collectPayment,
   reverseAdminPayment,
+  confirmManualRefund as confirmManualRefundApi,
 } from "../../api/admin/payments.api";
 import { getPatientUnpaidInvoices } from "../../api/admin/billing.api";
 
@@ -86,6 +87,15 @@ export const usePaymentMutations = () => {
     },
   });
 
+  const confirmManual = useMutation({
+    mutationFn: ({ id, data }) => confirmManualRefundApi(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "payments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "billing"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+    },
+  });
+
   return {
     createPayment: create.mutate,
     createPaymentAsync: create.mutateAsync,
@@ -98,6 +108,9 @@ export const usePaymentMutations = () => {
 
     deletePayment: remove.mutate,
     isDeleting: remove.isPending,
+
+    confirmManualRefund: confirmManual.mutate,
+    isConfirmingManual: confirmManual.isPending,
   };
 };
 
