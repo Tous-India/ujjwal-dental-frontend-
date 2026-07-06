@@ -291,9 +291,15 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
             <SectionTitle>Payment & Source</SectionTitle>
             <Box className="bg-gray-50/60 rounded px-3 py-2 mb-2">
               <Box className="flex justify-between items-center py-1">
-                <Typography variant="caption" className="text-gray-600">OPD Fee</Typography>
+                <Typography variant="caption" className="text-gray-600">
+                  {(isParentTreatment || isSession) ? "Treatment Fee" : "OPD Fee"}
+                </Typography>
                 {isFree ? (
                   <Chip label="Free" size="small" color="info" />
+                ) : invoice ? (
+                  <Typography variant="caption" className="font-numbers font-semibold text-gray-900">
+                    ₹{(invoice.amountPaid || 0).toLocaleString("en-IN")} / ₹{(invoice.grandTotal || 0).toLocaleString("en-IN")}
+                  </Typography>
                 ) : (
                   <Typography variant="caption" className="font-numbers font-semibold text-gray-900">₹{opdFee || 300}</Typography>
                 )}
