@@ -42,7 +42,6 @@ import { useAppointmentMutations } from "../../../hooks/admin/useAppointments";
 import { usePatientActiveContext } from "../../../hooks/admin/usePatients";
 import { useAdminPaymentMutations } from "../../../hooks/admin/usePayments";
 import { searchPatients, createPatient } from "../../../api/admin/patients.api";
-import api from "../../../api/axios";
 import { getClinics } from "../../../api/admin/clinics.api";
 import { getFeeSettings } from "../../../api/admin/settings.api";
 import { getAvailableSlots } from "../../../api/admin/appointments.api";
@@ -117,6 +116,7 @@ const getInitialFormState = () => ({
   parentAppointment: null,
   sessionNumber: null,
   sessionsPlanned: null,
+  treatmentPaymentAmount: null, // partial advance for treatment bookings (null = full fee)
   // Session payment (Fix 5)
   collectSessionPayment: false,
   sessionPaymentAmount: 0,
@@ -138,7 +138,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
     opdFeeEmergency: 500,
     consultationFee: 500,
   });
-  const [feeLoading, setFeeLoading] = useState(false);
+  const [, setFeeLoading] = useState(false);
   // null = not fetched yet (no clinic+date); otherwise array of open "HH:MM" slots
   const [availableSlots, setAvailableSlots] = useState(null);
   const { createAppointment, isCreating } = useAppointmentMutations();
@@ -374,6 +374,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       sessionsPlanned: null,
       treatmentName: "",
       fee: "",
+      treatmentPaymentAmount: null,
       isFree: false,
       opdFee: feeSettings.opdFeeRegular,
       reason: "",
@@ -482,6 +483,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             treatmentName: formData.treatmentName.trim(),
             fee: formData.isFree ? 0 : Number(formData.fee),
             ...(formData.sessionsPlanned ? { sessionsPlanned: formData.sessionsPlanned } : {}),
+            ...(feeCollected && !formData.isFree && formData.treatmentPaymentAmount != null
+              ? { amountPaid: Number(formData.treatmentPaymentAmount) }
+              : {}),
           }
         : formData.visitType === "treatment_session"
         ? {
@@ -557,69 +561,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         );
       },
     });
-  };
-
-  /**
-   * FIX 4: Open Razorpay checkout, verify payment, then book appointment.
-   */
-  const handlePayOnline = async () => {
-    if (formData.visitType !== "opd") return;
-    if (!validateForm()) return;
-
-    try {
-      const res = await api.post("/payments/razorpay/create-order", {
-        type: "opd_fee",
-        patient: formData.patient._id,
-        clinic: formData.clinic._id,
-        isEmergency: formData.appointmentType === "emergency",
-      });
-
-      const { order, paymentId, key_id } = res.data.data;
-
-      const options = {
-        key: key_id,
-        amount: order.amount,
-        currency: "INR",
-        name: "Ujjwal Dental Clinic",
-        description: "OPD Consultation Fee",
-        order_id: order.id,
-        handler: async (paymentResponse) => {
-          try {
-            await api.post("/payments/razorpay/verify", {
-              razorpay_order_id: paymentResponse.razorpay_order_id,
-              razorpay_payment_id: paymentResponse.razorpay_payment_id,
-              razorpay_signature: paymentResponse.razorpay_signature,
-              paymentId,
-            });
-            handleSubmit({ opdFeePaid: true });
-          } catch (err) {
-            console.error("Payment verify error:", err);
-            toast.error("Payment verification failed. Please contact support.");
-          }
-        },
-        prefill: {
-          name: formData.patient?.name,
-          email: formData.patient?.email || "",
-          contact: formData.patient?.phone,
-        },
-        theme: { color: "#f59e0b" },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error("Payment initiation error:", err);
-      const msg = err?.response?.data?.message || err?.message || "";
-      if (
-        msg.toLowerCase().includes("duplicate") ||
-        msg.toLowerCase().includes("e11000") ||
-        msg.toLowerCase().includes("paymentnumber")
-      ) {
-        toast.warning("Payment number conflict detected. Please try again.", { autoClose: 4000 });
-      } else {
-        toast.error(msg || "Failed to initiate payment", { autoClose: 4000 });
-      }
-    }
   };
 
   /**
@@ -1417,14 +1358,13 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             </Grid>
           )}
 
-          {/* ─── ROW 5: Fee Summary + Notes (same row, same height) ─── */}
+          {/* ─── ROW 5: Fee Summary (hidden in session mode — session has its own payment block) ─── */}
+          {!isSessionMode && (
           <Grid size={{ xs: 12, md: 8 }}>
             <Paper variant="outlined" className="p-3 bg-gray-50">
               <Box className="flex justify-between items-center py-1">
                 <Typography variant="caption" className="text-gray-600">
-                  {isSessionMode
-                    ? `Session #${formData.sessionNumber} — ${formData.treatmentName}`
-                    : formData.visitType === "treatment"
+                  {formData.visitType === "treatment"
                     ? formData.treatmentName.trim() || "Treatment fee"
                     : "OPD / Consultation fee"}
                 </Typography>
@@ -1490,12 +1430,21 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </Box>
               </Box>
               {!formData.isFree && (
-                <Box className="flex items-center mt-2">
+                <Box className="flex flex-col gap-1 mt-2">
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={feeCollected}
-                        onChange={(e) => setFeeCollected(e.target.checked)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFeeCollected(checked);
+                          if (checked && formData.visitType === "treatment") {
+                            setFormData((prev) => ({
+                              ...prev,
+                              treatmentPaymentAmount: Number(formData.fee) || 0,
+                            }));
+                          }
+                        }}
                         size="small"
                         sx={{ py: 0.5, color: "#059669", "&.Mui-checked": { color: "#059669" } }}
                       />
@@ -1507,10 +1456,25 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                     }
                     sx={{ m: 0 }}
                   />
+                  {formData.visitType === "treatment" && feeCollected && (
+                    <TextField
+                      label="Amount collected (₹)"
+                      type="number"
+                      value={formData.treatmentPaymentAmount ?? ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, treatmentPaymentAmount: Number(e.target.value) }))
+                      }
+                      size="small"
+                      inputProps={{ min: 0, max: formData.fee || 999999 }}
+                      helperText={`Treatment total: ₹${(Number(formData.fee) || 0).toLocaleString("en-IN")}. Enter full or partial advance.`}
+                      sx={{ maxWidth: 220, "& .MuiFormHelperText-root": { visibility: "visible !important" } }}
+                    />
+                  )}
                 </Box>
               )}
             </Paper>
           </Grid>
+          )}
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               className="notes-field"
