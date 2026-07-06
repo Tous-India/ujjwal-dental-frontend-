@@ -68,6 +68,7 @@ import {
 } from "../../../api/admin/patients.api";
 import { getLabOrders } from "../../../api/admin/labOrders.api";
 import { getBillingStats, getInvoices } from "../../../api/admin/billing.api";
+import { getPayments } from "../../../api/admin/payments.api";
 import EditAppointmentModal from "./EditAppointmentModal";
 import AssignMembershipModal from "./AssignMembershipModal";
 import ResetPasswordDialog from "./ResetPasswordDialog";
@@ -586,23 +587,23 @@ const TestsTab = ({ patientId }) => {
 
 /**
  * Payment History Tab Content
- * Derives payment history from invoices where amountPaid > 0.
+ * Shows one row per Payment transaction (not per invoice).
  * Read-only — actions (Record Payment, Refund) are on the Billing page.
  */
 const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
-  const [data, setData] = useState({ invoices: [], invoiceStats: null });
+  const [data, setData] = useState({ payments: [], invoiceStats: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [invRes, statsRes] = await Promise.all([
-        getInvoices({ patient: patientId, limit: 50 }),
+      const [payRes, statsRes] = await Promise.all([
+        getPayments({ patient: patientId, limit: 50 }),
         getBillingStats({ patient: patientId }),
       ]);
       setData({
-        invoices: invRes.data || [],
+        payments: payRes.data || [],
         invoiceStats: statsRes.data?.stats || null,
       });
     } catch (err) {
@@ -619,9 +620,7 @@ const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
   if (loading) return <Box className="text-center py-8"><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
 
-  const { invoices, invoiceStats } = data;
-  const paid = invoices.filter((inv) => (inv.amountPaid || 0) > 0);
-  const totalPaidFromList = paid.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0);
+  const { payments, invoiceStats } = data;
 
   const paymentMethodLabel = (method) => {
     const map = {
@@ -630,6 +629,30 @@ const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
     };
     return map[method] || (method ? method.replace(/-/g, " ") : "-");
   };
+
+  const paymentTypeLabel = (type) => {
+    const map = {
+      opd_fee: "OPD Fee", treatment: "Treatment", invoice_payment: "Invoice Payment",
+      consultation: "Consultation", membership: "Membership",
+      advance: "Advance", refund: "Refund", other: "Other",
+    };
+    return map[type] || (type ? type.replace(/_/g, " ") : "-");
+  };
+
+  const paymentStatusColors = {
+    paid: "success", refunded: "error", reversed: "default",
+    pending: "warning", failed: "error", cancelled: "default", refund_pending: "warning",
+  };
+
+  const formatDateTime = (date) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    });
+  };
+
+  const sorted = [...payments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <>
@@ -672,64 +695,49 @@ const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
         </Box>
       )}
 
-      {!paid.length ? (
+      {!sorted.length ? (
         <Typography className="text-gray-400 text-center py-8">
           No payments recorded for this patient yet.
         </Typography>
       ) : (
-        <>
-          <Typography variant="caption" className="text-gray-500 block mb-2">
-            Total Paid:{" "}
-            <strong className="text-gray-700">{formatCurrency(totalPaidFromList)}</strong>
-            {" "}across{" "}
-            <strong className="text-gray-700">{paid.length}</strong>
-            {" "}invoice{paid.length !== 1 ? "s" : ""}
-          </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead className="bg-gray-50">
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Invoice No.</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Total</TableCell>
-                  <TableCell>Paid</TableCell>
-                  <TableCell>Payment Mode</TableCell>
-                  <TableCell>Status</TableCell>
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead className="bg-gray-50">
+              <TableRow>
+                <TableCell>Date & Time</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Method</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Invoice</TableCell>
+                <TableCell>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sorted.map((pay) => (
+                <TableRow key={pay._id} hover>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDateTime(pay.createdAt)}</TableCell>
+                  <TableCell className="font-numbers font-semibold text-green-700">
+                    {formatCurrency(pay.amount)}
+                  </TableCell>
+                  <TableCell>
+                    <Chip size="small" label={paymentMethodLabel(pay.paymentMode)} variant="outlined" />
+                  </TableCell>
+                  <TableCell>{paymentTypeLabel(pay.type)}</TableCell>
+                  <TableCell className="font-numbers text-gray-500">
+                    {pay.invoice?.invoiceNumber || pay.settledInvoices?.[0]?.invoiceNumber || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={pay.status || "-"}
+                      color={paymentStatusColors[pay.status] || "default"}
+                    />
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {paid.map((inv) => (
-                  <TableRow key={inv._id} hover>
-                    <TableCell>{formatDate(inv.invoiceDate || inv.createdAt)}</TableCell>
-                    <TableCell className="font-numbers">{inv.invoiceNumber || "-"}</TableCell>
-                    <TableCell>
-                      {inv.items?.[0]?.description ||
-                        inv.items?.[0]?.itemType?.replace(/_/g, " ") || "-"}
-                      {inv.items?.length > 1 && (
-                        <Typography component="span" variant="caption" className="text-gray-400">
-                          {` +${inv.items.length - 1} more`}
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>{formatCurrency(inv.grandTotal)}</TableCell>
-                    <TableCell className="font-medium text-green-600">
-                      {formatCurrency(inv.amountPaid)}
-                    </TableCell>
-                    <TableCell>{paymentMethodLabel(inv.paymentMethod)}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={inv.paymentStatus || "-"}
-                        color={statusColors[inv.paymentStatus] || "default"}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
     </>
   );
