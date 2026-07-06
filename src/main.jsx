@@ -72,6 +72,47 @@ const muiTheme = createTheme({
   },
 });
 
+// Handle stale chunks after a new deploy — Vite emits vite:preloadError
+// when a dynamic import fails to load its JS chunk (usually because Vercel
+// replaced the chunk file with a new hash during deployment).
+if (typeof window !== "undefined") {
+  let hasReloaded = false;
+  window.addEventListener("vite:preloadError", () => {
+    if (hasReloaded) return;
+    hasReloaded = true;
+    console.warn("[vite] preload error — new version detected, reloading");
+    setTimeout(() => { window.location.reload(); }, 200);
+  });
+
+  window.addEventListener("error", (event) => {
+    if (hasReloaded) return;
+    const msg = event.message || event.error?.message || "";
+    if (
+      msg.includes("Failed to fetch dynamically imported module") ||
+      msg.includes("Loading chunk") ||
+      msg.includes("ChunkLoadError")
+    ) {
+      hasReloaded = true;
+      console.warn("[fallback] chunk load error — reloading");
+      setTimeout(() => { window.location.reload(); }, 200);
+    }
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    if (hasReloaded) return;
+    const msg = event.reason?.message || String(event.reason || "");
+    if (
+      msg.includes("Failed to fetch dynamically imported module") ||
+      msg.includes("Loading chunk") ||
+      msg.includes("ChunkLoadError")
+    ) {
+      hasReloaded = true;
+      console.warn("[promise] chunk load error — reloading");
+      setTimeout(() => { window.location.reload(); }, 200);
+    }
+  });
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
