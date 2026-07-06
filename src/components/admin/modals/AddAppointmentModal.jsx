@@ -424,7 +424,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
     if (!formData.timeSlot) {
       newErrors.timeSlot = "Time slot is required";
     }
-    if (!formData.reason.trim()) {
+    if (formData.visitType === "opd" && !formData.reason.trim()) {
       newErrors.reason = "Reason is required";
     }
     if (!formData.clinic) {
@@ -470,7 +470,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       timeSlot: formData.timeSlot,
       type: formData.type,
       appointmentType: formData.appointmentType,
-      reason: formData.reason,
+      reason: formData.visitType === "treatment"
+        ? (formData.treatmentName.trim() || formData.reason)
+        : formData.reason,
       source: formData.source,
       notes: formData.notes || undefined,
       visitType: formData.visitType,
@@ -871,6 +873,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               ))}
             </TextField>
           </Grid>
+          {formData.visitType === "opd" && (
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
@@ -885,6 +888,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               placeholder="e.g., Tooth pain, Cleaning"
             />
           </Grid>
+          )}
 
           {/* ─── ADD NEW PATIENT (conditional, full width) ─── */}
           {showAddPatient && (
@@ -1134,8 +1138,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </FormControl>
               )}
 
-              {/* Urgency — hidden in session mode */}
-              {!isSessionMode && <FormControl>
+              {/* Urgency — OPD only (treatment has no urgency concept) */}
+              {!isSessionMode && formData.visitType === "opd" && <FormControl>
                 <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
                   Urgency
                 </FormLabel>
@@ -1249,33 +1253,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 </>
               )}
 
-              {/* Free toggle — hidden in session mode */}
-              {!isSessionMode && <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.isFree}
-                    onChange={(e) => {
-                      const isFree = e.target.checked;
-                      const defaultFee = formData.appointmentType === "emergency"
-                        ? feeSettings.opdFeeEmergency
-                        : feeSettings.opdFeeRegular;
-                      setFormData((prev) => ({
-                        ...prev,
-                        isFree,
-                        opdFee: isFree ? 0 : defaultFee,
-                      }));
-                      if (isFree) setPaymentMethod("cash");
-                    }}
-                    color="success"
-                    size="small"
-                  />
-                }
-                label={
-                  <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                    Free
-                  </Typography>
-                }
-              />}
             </Box>
             {formData.appointmentType === "emergency" && formData.visitType === "opd" && (
               <Typography variant="caption" className="text-red-600 font-medium" sx={{ fontSize: "0.7rem", display: "block", mt: 0.5 }}>
@@ -1429,6 +1406,32 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                   )}
                 </Box>
               </Box>
+              {/* Free toggle (below method, above payment collected) */}
+              <Box sx={{ mt: 1 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.isFree}
+                      onChange={(e) => {
+                        const isFree = e.target.checked;
+                        const defaultFee = formData.appointmentType === "emergency"
+                          ? feeSettings.opdFeeEmergency
+                          : feeSettings.opdFeeRegular;
+                        setFormData((prev) => ({
+                          ...prev,
+                          isFree,
+                          opdFee: isFree ? 0 : defaultFee,
+                        }));
+                        if (isFree) { setPaymentMethod("cash"); setFeeCollected(false); }
+                      }}
+                      color="success"
+                      size="small"
+                    />
+                  }
+                  label={<Typography variant="body2" sx={{ fontSize: "0.8rem" }}>Free</Typography>}
+                />
+              </Box>
+
               {!formData.isFree && (
                 <Box className="flex flex-col gap-1 mt-2">
                   <FormControlLabel
