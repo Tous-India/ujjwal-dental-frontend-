@@ -870,7 +870,7 @@ const InvoicesTab = ({ patientId, paymentStatusFilter, onClearFilter }) => {
                       </Typography>
                     )}
                   </TableCell>
-                  <TableCell>{formatCurrency(inv.totalAmount)}</TableCell>
+                  <TableCell>{formatCurrency(inv.grandTotal)}</TableCell>
                   <TableCell className="text-green-600">{formatCurrency(inv.amountPaid)}</TableCell>
                   <TableCell className="text-red-600">{formatCurrency(inv.balanceDue)}</TableCell>
                   <TableCell>
