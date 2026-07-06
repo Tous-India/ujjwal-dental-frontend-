@@ -116,6 +116,7 @@ const getInitialFormState = () => ({
   fee: "",
   parentAppointment: null,
   sessionNumber: null,
+  sessionsPlanned: null,
   // Session payment (Fix 5)
   collectSessionPayment: false,
   sessionPaymentAmount: 0,
@@ -352,7 +353,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       opdFee: 0,
       reason: `Session ${treatment.nextSessionNumber} — ${treatment.treatmentName}`,
       collectSessionPayment: false,
-      sessionPaymentAmount: 0,
+      sessionPaymentAmount: treatment.suggestedPaymentPerSession || 0,
       sessionPaymentMode: "cash",
       selectedTreatmentInvoiceId: treatment.invoice?._id || null,
       selectedTreatmentInvoiceBalance: treatment.invoice?.balanceDue || 0,
@@ -370,6 +371,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
       visitType: "opd",
       parentAppointment: null,
       sessionNumber: null,
+      sessionsPlanned: null,
       treatmentName: "",
       fee: "",
       isFree: false,
@@ -479,6 +481,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             treatmentId: "other",
             treatmentName: formData.treatmentName.trim(),
             fee: formData.isFree ? 0 : Number(formData.fee),
+            ...(formData.sessionsPlanned ? { sessionsPlanned: formData.sessionsPlanned } : {}),
           }
         : formData.visitType === "treatment_session"
         ? {
@@ -818,9 +821,15 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                       <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#1a1a1a" }}>
                         {t.treatmentName}
                       </Typography>
-                      <Typography sx={{ fontSize: "11px", color: "#6b7280" }}>
-                        Sessions booked: {t.sessionsBooked} · Next: #{t.nextSessionNumber}
-                      </Typography>
+                      {t.sessionsPlanned ? (
+                        <Typography sx={{ fontSize: "11px", color: "#6b7280" }}>
+                          Session {t.sessionsBooked} of {t.sessionsPlanned} · {t.sessionsRemaining} remaining
+                        </Typography>
+                      ) : (
+                        <Typography sx={{ fontSize: "11px", color: "#6b7280" }}>
+                          {t.sessionsBooked} session{t.sessionsBooked === 1 ? "" : "s"} booked · Next: #{t.nextSessionNumber}
+                        </Typography>
+                      )}
                       {t.invoice && (
                         t.isPaidInFull ? (
                           <Typography sx={{ fontSize: "11px", color: "#059669", fontWeight: 600 }}>
@@ -1277,6 +1286,23 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                       error={!!errors.fee}
                       helperText={errors.fee}
                       inputProps={{ min: 0, step: 50 }}
+                    />
+                  </Box>
+                  <Box sx={{ flex: "0 0 auto", minWidth: 120 }}>
+                    <TextField
+                      fullWidth
+                      label="Sessions planned"
+                      type="number"
+                      value={formData.sessionsPlanned || ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          sessionsPlanned: e.target.value ? Number(e.target.value) : null,
+                        }))
+                      }
+                      size="small"
+                      inputProps={{ min: 1, max: 50 }}
+                      placeholder="e.g. 4"
                     />
                   </Box>
                 </>
