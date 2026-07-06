@@ -246,6 +246,7 @@ const rowPaymentStatus = (row) => {
   if (row?.isFree) return "free";
   if (row?.paymentStatus === "paid" || row?.paymentStatus === "free") return row.paymentStatus;
   if (row?.invoice?.paymentStatus === "paid") return "paid";
+  if (row?.invoice?.paymentStatus === "partial") return "partial";
   return "unpaid";
 };
 
@@ -296,32 +297,55 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
   {
     field: "paymentStatus",
     headerName: "Payment",
-    minWidth: 120,
+    minWidth: 145,
     render: (_, row) => {
       const current = rowPaymentStatus(row);
+      const inv = row?.invoice;
+      const amtPaid = inv?.amountPaid || 0;
+      const grandTotal = inv?.grandTotal || 0;
+
       if (current === "free") {
         return <Chip size="small" label="Free" color="info" variant="outlined" />;
       }
+
+      if (current === "partial") {
+        return (
+          <Box>
+            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#d97706" }}>
+              ₹{amtPaid.toLocaleString("en-IN")} / ₹{grandTotal.toLocaleString("en-IN")}
+            </Typography>
+            <Chip size="small" label="Partial" color="warning" variant="outlined" sx={{ fontSize: "10px", height: 18 }} />
+          </Box>
+        );
+      }
+
       return (
-        <Select
-          value={current}
-          size="small"
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => {
-            e.stopPropagation();
-            onPaymentStatusChange(row, e.target.value);
-          }}
-          disabled={updatingPaymentId === row._id}
-          sx={{
-            height: 28,
-            fontSize: "12px",
-            "& .MuiSelect-select": { py: 0.5, px: 1 },
-            "& fieldset": { borderColor: "#e5e7eb" },
-          }}
-        >
-          <MenuItem value="paid" dense>Paid</MenuItem>
-          <MenuItem value="unpaid" dense>Unpaid</MenuItem>
-        </Select>
+        <Box>
+          {amtPaid > 0 && grandTotal > 0 && (
+            <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "#059669", mb: 0.25 }}>
+              ₹{Math.min(amtPaid, grandTotal).toLocaleString("en-IN")}
+            </Typography>
+          )}
+          <Select
+            value={current}
+            size="small"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              e.stopPropagation();
+              onPaymentStatusChange(row, e.target.value);
+            }}
+            disabled={updatingPaymentId === row._id}
+            sx={{
+              height: 24,
+              fontSize: "11px",
+              "& .MuiSelect-select": { py: 0.25, px: 0.75 },
+              "& fieldset": { borderColor: "#e5e7eb" },
+            }}
+          >
+            <MenuItem value="paid" dense>Paid</MenuItem>
+            <MenuItem value="unpaid" dense>Unpaid</MenuItem>
+          </Select>
+        </Box>
       );
     },
   },
@@ -859,9 +883,10 @@ const Appointments = () => {
         getRowSx={(row) => {
           const today = isToday(row?.date);
           const unpaid = rowPaymentStatus(row) === "unpaid";
-          const isTreatmentClosed =
-            row?.visitType === "treatment" &&
-            ["completed", "closed_early", "abandoned"].includes(row?.treatmentStatus);
+          const isMuted =
+            row?.status === "completed" ||
+            (row?.visitType === "treatment" &&
+              ["completed", "closed_early", "abandoned"].includes(row?.treatmentStatus));
           if (today) {
             return {
               backgroundColor: "#eff6ff",
@@ -869,7 +894,7 @@ const Appointments = () => {
               "&:hover": { backgroundColor: "#dbeafe" },
             };
           }
-          if (isTreatmentClosed) {
+          if (isMuted) {
             return {
               opacity: 0.55,
               "&:hover": { opacity: 0.8, backgroundColor: "#f9fafb" },
