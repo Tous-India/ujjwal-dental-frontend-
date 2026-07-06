@@ -131,21 +131,49 @@ const columns = [
   {
     field: "visitType",
     headerName: "Visit Type",
-    minWidth: 120,
-    render: (value, row) => (
-      <Box className="flex items-center gap-1 flex-wrap">
-        <Chip
-          size="small"
-          label={value === "treatment" ? "Treatment" : "OPD"}
-          color={value === "treatment" ? "warning" : "info"}
-          title={row?.treatmentId?.name || row?.treatmentName || ""}
-          sx={{ fontSize: '11px' }}
-        />
-        {row?.appointmentType === "emergency" && (
-          <Chip size="small" label="Emergency" sx={{ bgcolor: "#dc2626", color: "#fff", fontWeight: 700, fontSize: '11px' }} />
-        )}
-      </Box>
-    ),
+    minWidth: 130,
+    render: (value, row) => {
+      const closedStatuses = ["completed", "closed_early", "abandoned"];
+      const isTreatmentClosed = value === "treatment" && closedStatuses.includes(row?.treatmentStatus);
+      const treatmentStatusIcon = {
+        completed: { icon: "✓", color: "#059669" },
+        closed_early: { icon: "—", color: "#d97706" },
+        abandoned: { icon: "✗", color: "#9ca3af" },
+      }[row?.treatmentStatus] || null;
+
+      return (
+        <Box className="flex items-center gap-1 flex-wrap">
+          {value === "treatment_session" ? (
+            <Chip
+              size="small"
+              label="Session"
+              title={`Session #${row?.sessionNumber || "?"} — ${row?.treatmentName || row?.reason || "Treatment"}`}
+              sx={{ fontSize: "11px", bgcolor: "#7c3aed", color: "#fff", fontWeight: 600 }}
+            />
+          ) : (
+            <Chip
+              size="small"
+              label={value === "treatment" ? "Treatment" : "OPD"}
+              color={value === "treatment" ? "warning" : "info"}
+              title={row?.treatmentId?.name || row?.treatmentName || ""}
+              sx={{ fontSize: "11px" }}
+            />
+          )}
+          {isTreatmentClosed && treatmentStatusIcon && (
+            <Typography
+              component="span"
+              title={`Treatment ${row.treatmentStatus.replace("_", " ")}`}
+              sx={{ fontSize: "12px", fontWeight: 700, color: treatmentStatusIcon.color, lineHeight: 1 }}
+            >
+              {treatmentStatusIcon.icon}
+            </Typography>
+          )}
+          {row?.appointmentType === "emergency" && (
+            <Chip size="small" label="Emergency" sx={{ bgcolor: "#dc2626", color: "#fff", fontWeight: 700, fontSize: "11px" }} />
+          )}
+        </Box>
+      );
+    },
   },
   {
     field: "fee",
@@ -831,11 +859,20 @@ const Appointments = () => {
         getRowSx={(row) => {
           const today = isToday(row?.date);
           const unpaid = rowPaymentStatus(row) === "unpaid";
+          const isTreatmentClosed =
+            row?.visitType === "treatment" &&
+            ["completed", "closed_early", "abandoned"].includes(row?.treatmentStatus);
           if (today) {
             return {
               backgroundColor: "#eff6ff",
               borderLeft: "3px solid #3b82f6",
               "&:hover": { backgroundColor: "#dbeafe" },
+            };
+          }
+          if (isTreatmentClosed) {
+            return {
+              opacity: 0.55,
+              "&:hover": { opacity: 0.8, backgroundColor: "#f9fafb" },
             };
           }
           if (unpaid) {
