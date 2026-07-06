@@ -797,7 +797,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 }}
               >
                 <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#92400e", mb: 1 }}>
-                  Active Treatments — Outstanding Balance
+                  Active Treatments
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                   {activeTreatments.map((t) => (
@@ -822,9 +822,15 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                         Sessions booked: {t.sessionsBooked} · Next: #{t.nextSessionNumber}
                       </Typography>
                       {t.invoice && (
-                        <Typography sx={{ fontSize: "11px", color: "#dc2626" }}>
-                          Balance: ₹{(t.invoice.balanceDue || 0).toLocaleString("en-IN")} ({t.invoice.invoiceNumber})
-                        </Typography>
+                        t.isPaidInFull ? (
+                          <Typography sx={{ fontSize: "11px", color: "#059669", fontWeight: 600 }}>
+                            ✓ Fully paid · ₹{(t.invoice.grandTotal || 0).toLocaleString("en-IN")}
+                          </Typography>
+                        ) : (
+                          <Typography sx={{ fontSize: "11px", color: "#dc2626" }}>
+                            {t.invoice.invoiceNumber} · ₹{(t.invoice.balanceDue || 0).toLocaleString("en-IN")} outstanding of ₹{(t.invoice.grandTotal || 0).toLocaleString("en-IN")}
+                          </Typography>
+                        )
                       )}
                       <Button
                         size="small"
@@ -1316,8 +1322,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             )}
           </Grid>
 
-          {/* ─── SESSION PAYMENT (optional, treatment_session only) ─── */}
-          {isSessionMode && (
+          {/* ─── SESSION PAYMENT (optional, treatment_session only, hidden when nothing to collect) ─── */}
+          {isSessionMode && formData.selectedTreatmentInvoiceBalance > 0 && (
             <Grid size={{ xs: 12 }}>
               <Box
                 sx={{
