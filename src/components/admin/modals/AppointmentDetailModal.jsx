@@ -17,6 +17,12 @@ import {
   Chip,
   Divider,
   IconButton,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import CloseIcon from "@mui/icons-material/Close";
@@ -30,7 +36,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PaymentIcon from "@mui/icons-material/Payment";
-import ReceiptIcon from "@mui/icons-material/Receipt";
+import LockIcon from "@mui/icons-material/Lock";
+import api from "../../../api/axios";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import CollectPaymentModal from "./CollectPaymentModal";
 
@@ -111,17 +118,66 @@ const typeLabels = {
   follow_up: "Follow-up",
 };
 
+const treatmentStatusColors = {
+  active: "primary",
+  completed: "success",
+  closed_early: "warning",
+  abandoned: "error",
+};
+
+const treatmentStatusLabels = {
+  active: "Active",
+  completed: "Completed",
+  closed_early: "Closed Early",
+  abandoned: "Abandoned",
+};
+
 const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew }) => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [collectPaymentOpen, setCollectPaymentOpen] = useState(false);
+  const [closeTreatmentOpen, setCloseTreatmentOpen] = useState(false);
+  const [closeResolution, setCloseResolution] = useState("completed");
+  const [closeReason, setCloseReason] = useState("");
+  const [closeLoading, setCloseLoading] = useState(false);
+  const [closeError, setCloseError] = useState("");
 
   if (!appointment) return null;
 
   const isSession = appointment.visitType === "treatment_session";
+  const isParentTreatment = appointment.visitType === "treatment";
+  const alreadyClosed = ["completed", "closed_early", "abandoned"].includes(appointment.treatmentStatus);
+  const canCloseTreatment =
+    isParentTreatment &&
+    !alreadyClosed &&
+    appointment.status !== "cancelled";
+
   const canCollectSessionPayment =
     isSession &&
     appointment.invoice &&
     (appointment.invoice.paymentStatus === "unpaid" || appointment.invoice.paymentStatus === "partial");
+
+  const handleCloseTreatmentSubmit = async () => {
+    if (!closeReason.trim()) {
+      setCloseError("Reason is required.");
+      return;
+    }
+    setCloseLoading(true);
+    setCloseError("");
+    try {
+      await api.post(`/appointments/${appointment._id}/close-treatment`, {
+        resolution: closeResolution,
+        reason: closeReason.trim(),
+      });
+      setCloseTreatmentOpen(false);
+      setCloseReason("");
+      setCloseResolution("completed");
+      onClose();
+    } catch (err) {
+      setCloseError(err?.response?.data?.message || "Failed to close treatment plan.");
+    } finally {
+      setCloseLoading(false);
+    }
+  };
 
   const {
     appointmentNumber,
@@ -182,6 +238,14 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
                   variant="outlined"
                   className="text-white border-white"
                 />
+                {isParentTreatment && appointment.treatmentStatus && (
+                  <Chip
+                    label={treatmentStatusLabels[appointment.treatmentStatus] || appointment.treatmentStatus}
+                    size="small"
+                    color={treatmentStatusColors[appointment.treatmentStatus] || "default"}
+                    icon={alreadyClosed ? <LockIcon sx={{ fontSize: "12px !important" }} /> : undefined}
+                  />
+                )}
               </Box>
             </Box>
           </Box>
@@ -397,6 +461,16 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
           )}
         </Box>
         <Box className="flex gap-2">
+          {canCloseTreatment && (
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<LockIcon />}
+              onClick={() => setCloseTreatmentOpen(true)}
+            >
+              Close Treatment Plan
+            </Button>
+          )}
           {canCollectSessionPayment && (
             <Button
               variant="contained"
@@ -450,6 +524,73 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
         }}
       />
     )}
+
+    {/* Close Treatment Plan dialog */}
+    <Dialog
+      open={closeTreatmentOpen}
+      onClose={() => { if (!closeLoading) { setCloseTreatmentOpen(false); setCloseError(""); } }}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <LockIcon color="warning" fontSize="small" />
+        Close Treatment Plan
+      </DialogTitle>
+      <DialogContent sx={{ pt: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          This will cancel all remaining scheduled sessions and formally close the treatment plan.
+          This action cannot be undone.
+        </Typography>
+        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <InputLabel>Resolution</InputLabel>
+          <Select
+            value={closeResolution}
+            label="Resolution"
+            onChange={(e) => setCloseResolution(e.target.value)}
+            disabled={closeLoading}
+          >
+            <MenuItem value="completed">Completed — all planned sessions done</MenuItem>
+            <MenuItem value="write_off">Write Off — close and waive outstanding balance</MenuItem>
+            <MenuItem value="refund">Refund — patient requests refund (admin handles separately)</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField
+          label="Reason *"
+          multiline
+          rows={3}
+          fullWidth
+          size="small"
+          value={closeReason}
+          onChange={(e) => { setCloseReason(e.target.value); if (closeError) setCloseError(""); }}
+          disabled={closeLoading}
+          placeholder="Briefly explain why this treatment plan is being closed…"
+          error={!!closeError && !closeReason.trim()}
+        />
+        {closeError && (
+          <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+            {closeError}
+          </Typography>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button
+          onClick={() => { setCloseTreatmentOpen(false); setCloseError(""); }}
+          color="inherit"
+          disabled={closeLoading}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          color="warning"
+          startIcon={closeLoading ? <CircularProgress size={14} color="inherit" /> : <LockIcon />}
+          onClick={handleCloseTreatmentSubmit}
+          disabled={closeLoading || !closeReason.trim()}
+        >
+          {closeLoading ? "Closing…" : "Confirm Close"}
+        </Button>
+      </DialogActions>
+    </Dialog>
     </>
   );
 };
