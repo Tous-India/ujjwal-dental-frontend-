@@ -39,6 +39,7 @@ const BookAppointment = lazy(() => import("./pages/patient/BookAppointment"));
 // Public pages
 const PublicLayout = lazy(() => import("./components/public/PublicLayout"));
 const HomePage = lazy(() => import("./pages/public/HomePage"));
+const SonipatPage = lazy(() => import("./pages/public/SonipatPage"));
 const ContactPage = lazy(() => import("./pages/public/ContactPage"));
 const TreatmentsPage = lazy(() => import("./pages/public/TreatmentsPage"));
 const TreatmentPage = lazy(() => import("./pages/public/TreatmentPage"));
@@ -131,6 +132,7 @@ const App = () => {
         {/* ======================== */}
         <Route element={<PublicLayout />}>
           <Route path="/" index element={<HomePage />} />
+          <Route path="/dentist-in-sonipat" element={<SonipatPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/treatments" element={<TreatmentsPage />} />
           <Route path="/treatments/:slug" element={<TreatmentPage />} />
