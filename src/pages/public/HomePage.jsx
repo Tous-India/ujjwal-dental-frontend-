@@ -259,20 +259,76 @@ const HomePage = () => {
 
   return (
     <div>
-      <title>
-        Ujjwal Dental Clinic | Advanced Dental Care in Sonipat, Haryana
-      </title>
+      <title>Best Dental Clinic in Sonipat | Ujjwal Dental Planet</title>
       <meta
         name="description"
-        content="Ujjwal Dental offers dental implants, braces, root canal, teeth whitening & laser dentistry in Sonipat. Book online. 15+ years experience."
+        content="Looking for the best dentist in Sonipat? Ujjwal Dental Planet offers dental implants, root canal treatment, braces, cosmetic dentistry, and complete family dental care. Book your appointment today."
       />
+      <link rel="canonical" href="https://ujjwaldentalplanet.com/" />
       <meta
         property="og:title"
-        content="Ujjwal Dental Clinic | Advanced Dental Care in Sonipat, Haryana"
+        content="Best Dental Clinic in Sonipat | Ujjwal Dental Planet"
       />
       <meta
         property="og:description"
-        content="Ujjwal Dental offers dental implants, braces, root canal, teeth whitening & laser dentistry in Sonipat. Book online. 15+ years experience."
+        content="Looking for the best dentist in Sonipat? Ujjwal Dental Planet offers dental implants, root canal treatment, braces, cosmetic dentistry, and complete family dental care. Book your appointment today."
+      />
+      {/* Organization + Dentist + WebSite structured data (JSON-LD) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "Organization",
+                "@id": "https://ujjwaldentalplanet.com/#organization",
+                name: "Ujjwal Dental Planet",
+                legalName: "Healing Fairy Health Care Pvt. Ltd.",
+                url: "https://ujjwaldentalplanet.com/",
+                logo: "https://ujjwaldentalplanet.com/ujjwal-dental-logo.png",
+                sameAs: [
+                  "https://www.instagram.com/ujjwaldentalplanet/",
+                  "https://www.youtube.com/@ujjwaldentalplanet",
+                  "https://www.facebook.com/ujjwaldentalimplant",
+                ],
+              },
+              {
+                "@type": "Dentist",
+                "@id": "https://ujjwaldentalplanet.com/#sonipat",
+                name: "Ujjwal Dental Planet — Sonipat",
+                url: "https://ujjwaldentalplanet.com/",
+                telephone: "+91 8708362763",
+                priceRange: "Rs Rs",
+                address: {
+                  "@type": "PostalAddress",
+                  streetAddress:
+                    "Plot 35/13, Delhi Rd, Sikka Colony, Lakshmi Nagar",
+                  addressLocality: "Sonipat",
+                  addressRegion: "Haryana",
+                  postalCode: "131001",
+                  addressCountry: "IN",
+                },
+                parentOrganization: {
+                  "@id": "https://ujjwaldentalplanet.com/#organization",
+                },
+              },
+            ],
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "@id": "https://ujjwaldentalplanet.com/#website",
+            url: "https://ujjwaldentalplanet.com/",
+            name: "Ujjwal Dental Planet",
+            publisher: { "@id": "https://ujjwaldentalplanet.com/#organization" },
+          }),
+        }}
       />
       {/* Hero Banner Slider */}
       <section className="relative w-full overflow-hidden">
@@ -294,6 +350,7 @@ const HomePage = () => {
                 <img
                   src={banner.mobile}
                   alt={banner.alt}
+                  loading={i === 0 ? "eager" : "lazy"}
                   className="block w-full h-auto md:max-h-[400px] lg:max-h-[500px] md:object-cover"
                 />
               </picture>
@@ -331,21 +388,28 @@ const HomePage = () => {
       {/* Services Section */}
       <section className="py-[48px] md:py-[64px] bg-white overflow-x-hidden">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
-          <h2 className="text-[#0D1B4A] text-center mb-3 text-3xl md:text-4xl font-bold">
+          <h1 className="text-[#0D1B4A] text-center mb-3 text-3xl md:text-4xl font-bold">
             Comprehensive Dental Care for All Your Needs
-          </h2>
+          </h1>
           <p className="text-center text-gray-500 mb-12 max-w-3xl mx-auto w-[100%] md:w-[55%] text-base md:text-lg leading-relaxed">
             We take pride in providing a comprehensive range of dental services.
             Our state-of-the-art facilities and experienced professionals
             demonstrate our dedication to excellence.
           </p>
 
-          <div className="text-center mb-6">
+          <div className="text-center mb-6 flex items-center justify-center gap-4">
             <Link
               to="/treatments"
               className="text-accent text-[14px] font-medium no-underline hover:text-accent-dark transition-colors duration-200"
             >
               Explore now
+            </Link>
+            <span className="text-gray-300">|</span>
+            <Link
+              to="/dentist-in-sonipat"
+              className="text-accent text-[14px] font-medium no-underline hover:text-accent-dark transition-colors duration-200"
+            >
+              Best Dentist in Sonipat
             </Link>
           </div>
 
@@ -360,6 +424,7 @@ const HomePage = () => {
                   <img
                     src={t.img}
                     alt={t.title}
+                    loading="lazy"
                     className="w-9 h-9 object-contain"
                   />
                 </div>
@@ -466,13 +531,13 @@ const HomePage = () => {
                 className="h-full whychoouse-swiper-wrapper"
               >
                 <SwiperSlide>
-                  <img src={Patient1} alt="Patient Review 1" />
+                  <img src={Patient1} alt="Patient Review 1" loading="lazy" />
                 </SwiperSlide>
                 <SwiperSlide>
-                  <img src={Patient2} alt="Patient Review 2" />
+                  <img src={Patient2} alt="Patient Review 2" loading="lazy" />
                 </SwiperSlide>
                 <SwiperSlide>
-                  <img src={Patient3} alt="Patient Review 3" />
+                  <img src={Patient3} alt="Patient Review 3" loading="lazy" />
                 </SwiperSlide>
               </Swiper>
             </div>
@@ -736,6 +801,7 @@ const HomePage = () => {
                         <img
                           src={doc.img}
                           alt={doc.name}
+                          loading="lazy"
                           className="absolute inset-0 w-full h-full object-cover object-top"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
