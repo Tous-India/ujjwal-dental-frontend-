@@ -171,7 +171,7 @@ const InvoicePDF = ({ invoice }) => {
                 marginTop: "1px",
               }}
             >
-              Delhi Road, Meerut
+              Delhi Road, Sonipat
             </div>
           </div>
         </div>
