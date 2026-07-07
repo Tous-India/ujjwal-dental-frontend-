@@ -43,20 +43,10 @@ import {
   isPastDate,
   isPastSlotForDate,
 } from "../../utils/dateInput";
+import { generateTimeSlots } from "../../utils/timeSlots";
 
-/**
- * Generate time slots (9 AM to 6 PM, 30 min intervals)
- */
-const generateTimeSlots = () => {
-  const slots = [];
-  for (let hour = 9; hour < 18; hour++) {
-    slots.push(`${hour.toString().padStart(2, "0")}:00`);
-    slots.push(`${hour.toString().padStart(2, "0")}:30`);
-  }
-  return slots;
-};
-
-const timeSlots = generateTimeSlots();
+// Patient booking (public form / patient portal) is restricted to 7:30 PM max
+const timeSlots = generateTimeSlots("09:00", "19:30");
 
 /**
  * Appointment reasons
