@@ -52,6 +52,7 @@ import {
   isPastDate,
   isPastSlotForDate,
 } from "../../../utils/dateInput";
+import { generateTimeSlots } from "../../../utils/timeSlots";
 /**
  * Appointment type options
  */
@@ -71,28 +72,9 @@ const sourceOptions = [
 ];
 
 /**
- * Time slots
+ * Time slots — admin can book up to 10 PM (doctor works late evenings)
  */
-const timeSlots = [
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "12:00",
-  "12:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-  "17:30",
-  "18:00",
-  "18:30",
-];
+const timeSlots = generateTimeSlots("09:00", "22:00");
 
 const formatCurrency = (val) => `₹${(Number(val) || 0).toLocaleString("en-IN")}`;
 
