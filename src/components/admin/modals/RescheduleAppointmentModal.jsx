@@ -24,15 +24,12 @@ import CloseIcon from "@mui/icons-material/Close";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import { useAppointmentMutations } from "../../../hooks/admin/useAppointments";
 import { getAvailableSlots } from "../../../api/admin/appointments.api";
+import { generateTimeSlots } from "../../../utils/timeSlots";
 
 const todayStr = () => new Date().toISOString().split("T")[0];
 
-const ALL_SLOTS = [
-  "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-  "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-  "18:00", "18:30",
-];
+// Admin can book up to 10 PM (doctor works late evenings)
+const ALL_SLOTS = generateTimeSlots("09:00", "22:00");
 
 const RescheduleAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
   const [newDate, setNewDate] = useState(todayStr());
