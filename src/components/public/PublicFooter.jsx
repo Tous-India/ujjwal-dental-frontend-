@@ -10,6 +10,7 @@ import YouTubeIcon from "@mui/icons-material/YouTube";
 
 const quickLinks = [
   { label: "Home", to: "/" },
+  { label: "Dentist in Sonipat", to: "/dentist-in-sonipat" },
   { label: "Treatments", to: "/treatments" },
   { label: "Book Appointment", to: "/book-appointment" },
   { label: "Membership Plans", to: "/membership-plans" },
