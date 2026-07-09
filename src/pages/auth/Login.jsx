@@ -149,12 +149,29 @@ const Login = () => {
       <title>Patient Login | Ujjwal Dental Clinic</title>
       <meta
         name="description"
-        content="Login to your Ujjwal Dental patient portal. View appointments, treatment history, and manage your dental health."
+        content="Login to your Ujjwal Dental Planet patient portal to view appointments, treatment history, invoices, and manage your dental health records securely online."
       />
+      <link rel="canonical" href="https://ujjwaldentalplanet.com/login" />
+      <meta name="robots" content="noindex, follow" />
       <meta property="og:title" content="Patient Login | Ujjwal Dental Clinic" />
       <meta
         property="og:description"
-        content="Login to your Ujjwal Dental patient portal. View appointments, treatment history, and manage your dental health."
+        content="Login to your Ujjwal Dental Planet patient portal to view appointments, treatment history, and manage your dental health."
+      />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/login" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="twitter:card" content="summary" />
+      <meta name="twitter:title" content="Patient Login | Ujjwal Dental Clinic" />
+      <meta
+        name="twitter:description"
+        content="Login to your Ujjwal Dental Planet patient portal to view appointments and manage your dental health."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
 
       {/* Left branding panel (desktop only) */}
