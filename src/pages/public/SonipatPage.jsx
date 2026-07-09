@@ -159,9 +159,41 @@ const SonipatPage = () => {
       <title>Best Dentist in Sonipat | Ujjwal Dental Planet</title>
       <meta
         name="description"
-        content="Looking for the best dentist in Sonipat? Ujjwal Dental Planet offers dental implants, root canal treatment, braces, cosmetic dentistry, and complete family dental care. Book your appointment today."
+        content="Ujjwal Dental Planet is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry with an experienced team. Book today."
+      />
+      <meta
+        name="keywords"
+        content="dentist in Sonipat, dental clinic Sonipat, best dentist Sonipat, Ujjwal Dental Planet Sonipat"
       />
       <link rel="canonical" href="https://ujjwaldentalplanet.com/dentist-in-sonipat" />
+      <meta name="robots" content="index, follow" />
+      <meta
+        property="og:title"
+        content="Best Dentist in Sonipat | Ujjwal Dental Planet"
+      />
+      <meta
+        property="og:description"
+        content="Ujjwal Dental Planet is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry with an experienced team."
+      />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/dentist-in-sonipat" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Best Dentist in Sonipat | Ujjwal Dental Planet" />
+      <meta
+        name="twitter:description"
+        content="Ujjwal Dental Planet is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="geo.region" content="IN-HR" />
+      <meta name="geo.placename" content="Sonipat" />
+      <meta name="geo.position" content="28.9931;77.0151" />
+      <meta name="ICBM" content="28.9931, 77.0151" />
 
       {/* Dentist structured data (JSON-LD) */}
       <script
