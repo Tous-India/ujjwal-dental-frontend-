@@ -69,9 +69,18 @@ const TreatmentPage = () => {
     slug?.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   const metaTitle = `${title} in Sonipat | Ujjwal Dental Clinic`;
-  const metaDescription = page?.content
-    ? page.content.slice(0, 160)
-    : `Learn about ${title} at Ujjwal Dental Clinic, Sonipat. Call ${PHONE_DISPLAY} to book your consultation.`;
+  // Trim to the last full word within ~155 chars so the snippet doesn't end
+  // mid-word, then add an ellipsis (targets the 150-160 char SEO range).
+  const buildDescription = (content) => {
+    if (!content) return null;
+    if (content.length <= 160) return content;
+    const truncated = content.slice(0, 155);
+    return `${truncated.slice(0, truncated.lastIndexOf(" "))}…`;
+  };
+  const metaDescription =
+    buildDescription(page?.content) ||
+    `Learn about ${title} at Ujjwal Dental Clinic, Sonipat. Call ${PHONE_DISPLAY} to book your consultation with our expert dental team today.`;
+  const canonicalUrl = `https://ujjwaldentalplanet.com/treatments/${slug}`;
 
   // Fallback for slugs without data.
   if (!page) {
@@ -79,8 +88,11 @@ const TreatmentPage = () => {
       <>
         <title>{metaTitle}</title>
         <meta name="description" content={metaDescription} />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href={canonicalUrl} />
         <meta property="og:title" content={metaTitle} />
         <meta property="og:description" content={metaDescription} />
+        <meta property="og:url" content={canonicalUrl} />
         <BreadcrumbBanner
           title={title}
           breadcrumbs={[
@@ -88,6 +100,7 @@ const TreatmentPage = () => {
             { label: "Treatments", path: "/treatments" },
             { label: title },
           ]}
+          showTitle={false}
         />
         <div className="max-w-4xl mx-auto px-4 py-[64px] text-center">
           <h1 className="text-[#003366] text-3xl font-bold mb-3">{title}</h1>
@@ -106,8 +119,35 @@ const TreatmentPage = () => {
     <>
       <title>{metaTitle}</title>
       <meta name="description" content={metaDescription} />
+      <meta name="keywords" content={`${title} Sonipat, ${title} cost Sonipat, Ujjwal Dental treatments`} />
+      <link rel="canonical" href={canonicalUrl} />
+      <meta name="robots" content="index, follow" />
       <meta property="og:title" content={metaTitle} />
       <meta property="og:description" content={metaDescription} />
+      <meta property="og:url" content={canonicalUrl} />
+      {page.img && <meta property="og:image" content={`https://ujjwaldentalplanet.com${page.img}`} />}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={metaTitle} />
+      <meta name="twitter:description" content={metaDescription} />
+      {page.img && <meta name="twitter:image" content={`https://ujjwaldentalplanet.com${page.img}`} />}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "MedicalProcedure",
+            name: title,
+            description: metaDescription,
+            url: canonicalUrl,
+            ...(page.img ? { image: `https://ujjwaldentalplanet.com${page.img}` } : {}),
+            provider: {
+              "@type": "Dentist",
+              name: "Ujjwal Dental Planet",
+              url: "https://ujjwaldentalplanet.com/",
+            },
+          }),
+        }}
+      />
       <BreadcrumbBanner
         title={title}
         breadcrumbs={[
@@ -115,6 +155,7 @@ const TreatmentPage = () => {
           { label: "Treatments", path: "/treatments" },
           { label: title },
         ]}
+        showTitle={false}
       />
 
       {/* SECTION 1 — Hero */}
