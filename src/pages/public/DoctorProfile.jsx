@@ -63,19 +63,86 @@ const DoctorProfile = () => {
   return (
     <>
       <title>
-        Dr. Ujjwal Prem — Oral &amp; Maxillofacial Surgeon | Ujjwal Dental Clinic Sonipat
+        Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Planet
       </title>
       <meta
         name="description"
-        content="Dr. Ujjwal Prem, MDS Oral & Maxillofacial Surgeon and Implantologist with 15+ years' experience and 11,000+ implants placed. Ex-Indian Air Force dental surgeon specializing in All-on-4/6, Pterygoid Implants and Sinus Lift at Ujjwal Dental Clinic, Sonipat."
+        content="Dr. Ujjwal Prem, MDS Oral & Maxillofacial Surgeon in Sonipat, has 15+ years experience and 11,000+ implants placed. Ex-Air Force surgeon. Book a consultation."
       />
       <meta
+        name="keywords"
+        content="Dr Ujjwal Prem, oral surgeon Sonipat, implantologist Sonipat, dental implants Sonipat, best dentist Sonipat"
+      />
+      <link rel="canonical" href="https://ujjwaldentalplanet.com/doctors/ujjwal-prem" />
+      <meta name="robots" content="index, follow" />
+      <meta
         property="og:title"
-        content="Dr. Ujjwal Prem — Oral & Maxillofacial Surgeon | Ujjwal Dental Clinic Sonipat"
+        content="Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Planet"
       />
       <meta
         property="og:description"
         content="MDS Oral & Maxillofacial Surgeon and Implantologist with 15+ years' experience and 11,000+ implants placed. Ex-IAF. Full-mouth rehabilitation specialist in Sonipat."
+      />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/doctors/ujjwal-prem" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/doctors/ujjwal.jpg"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Planet" />
+      <meta
+        name="twitter:description"
+        content="MDS Oral & Maxillofacial Surgeon and Implantologist with 15+ years' experience and 11,000+ implants placed in Sonipat."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/doctors/ujjwal.jpg"
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Dentist",
+            "@id": "https://ujjwaldentalplanet.com/doctors/ujjwal-prem#person",
+            name: "Dr. Ujjwal Prem",
+            jobTitle: "Oral & Maxillofacial Surgeon, Implantologist",
+            description:
+              "Dr. Ujjwal Prem is a renowned Oral & Maxillofacial Surgeon and Implantologist with over 15 years of experience and 11,000+ implants placed at Ujjwal Dental Planet, Sonipat.",
+            image: "https://ujjwaldentalplanet.com/doctors/ujjwal.jpg",
+            url: "https://ujjwaldentalplanet.com/doctors/ujjwal-prem",
+            telephone: "+91-8708362763",
+            memberOf: [
+              {
+                "@type": "Organization",
+                name: "Association of Oral & Maxillofacial Surgeons of India",
+              },
+              { "@type": "Organization", name: "Indian Dental Association, Sonipat Branch" },
+            ],
+            worksFor: {
+              "@type": "Dentist",
+              "@id": "https://ujjwaldentalplanet.com/#sonipat",
+              name: "Ujjwal Dental Planet",
+            },
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: "Sonipat",
+              addressRegion: "Haryana",
+              addressCountry: "IN",
+            },
+            medicalSpecialty: "Oral and Maxillofacial Surgery",
+            knowsAbout: [
+              "Dental Implants",
+              "All-on-4",
+              "All-on-6",
+              "Pterygoid Implants",
+              "Sinus Lift",
+              "Full-Mouth Rehabilitation",
+              "Wisdom Teeth Surgery",
+              "Oral Cancer Surgery",
+            ],
+          }),
+        }}
       />
 
       {/* SECTION 1 — HERO */}
