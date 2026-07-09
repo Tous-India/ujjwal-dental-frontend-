@@ -15,14 +15,38 @@ const Section = ({ title, children }) => (
 const PrivacyPolicyPage = () => {
   return (
     <>
-      <title>Privacy Policy | Ujjwal Dental Clinic</title>
+      <title>Privacy Policy | Ujjwal Dental Planet</title>
       <meta
         name="description"
-        content="Privacy Policy for Ujjwal Dental Clinic — how we collect, use, store, and protect your personal and medical information."
+        content="Privacy Policy for Ujjwal Dental Planet, Sonipat — how we collect, use, store, and protect your personal and medical information, and your data rights."
+      />
+      <meta name="keywords" content="Ujjwal Dental privacy policy, patient data protection Sonipat" />
+      <link rel="canonical" href="https://ujjwaldentalplanet.com/privacy-policy" />
+      <meta name="robots" content="index, follow" />
+      <meta property="og:title" content="Privacy Policy | Ujjwal Dental Planet" />
+      <meta
+        property="og:description"
+        content="Privacy Policy for Ujjwal Dental Planet, Sonipat — how we collect, use, store, and protect your personal and medical information."
+      />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/privacy-policy" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="twitter:card" content="summary" />
+      <meta name="twitter:title" content="Privacy Policy | Ujjwal Dental Planet" />
+      <meta
+        name="twitter:description"
+        content="Privacy Policy for Ujjwal Dental Planet, Sonipat — how we collect, use, store, and protect your personal and medical information."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <BreadcrumbBanner
         title="Privacy Policy"
         breadcrumbs={[{ label: "Home", path: "/" }, { label: "Privacy Policy" }]}
+        showTitle={false}
       />
 
       <section className="py-[48px] md:py-[64px] bg-white">
