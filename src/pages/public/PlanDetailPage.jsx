@@ -195,9 +195,11 @@ const PlanDetailPage = () => {
   if (!plan) {
     return (
       <>
+        <title>Plan Not Found | Ujjwal Dental Planet</title>
+        <meta name="robots" content="noindex, follow" />
         <BreadcrumbBanner title="Plan Not Found" breadcrumbs={[{ label: "Home", path: "/" }, { label: "Plans", path: "/membership-plans" }]} />
         <Container maxWidth="md" sx={{ py: 10, textAlign: "center" }}>
-          <Typography variant="h5" color="text.secondary">Plan not found</Typography>
+          <Typography variant="h5" component="p" color="text.secondary">Plan not found</Typography>
           <Button component={Link} to="/membership-plans" startIcon={<ArrowBackIcon />} sx={{ mt: 2 }}>
             Back to Plans
           </Button>
@@ -206,8 +208,50 @@ const PlanDetailPage = () => {
     );
   }
 
+  const planSlug = plan.name?.toLowerCase().replace(/\s+/g, "-");
+  const canonicalUrl = `https://ujjwaldentalplanet.com/membership-plans/${planSlug}`;
+  const metaTitle = `${plan.name} Membership Plan | Ujjwal Dental Planet, Sonipat`;
+  const metaDescription = (
+    plan.description ||
+    `${plan.name} dental membership plan at Ujjwal Dental Planet, Sonipat — ₹${plan.price?.toLocaleString("en-IN")}, ${plan.discountPercentage || plan.discountPercent || 0}% treatment discount, ${plan.validityMonths || 12} months validity.`
+  ).slice(0, 160);
+
   return (
     <>
+      <title>{metaTitle}</title>
+      <meta name="description" content={metaDescription} />
+      <meta name="keywords" content={`${plan.name} plan Sonipat, dental membership Sonipat, Ujjwal Dental plans`} />
+      <link rel="canonical" href={canonicalUrl} />
+      <meta name="robots" content="index, follow" />
+      <meta property="og:title" content={metaTitle} />
+      <meta property="og:description" content={metaDescription} />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:image" content={`https://ujjwaldentalplanet.com${image}`} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={metaTitle} />
+      <meta name="twitter:description" content={metaDescription} />
+      <meta name="twitter:image" content={`https://ujjwaldentalplanet.com${image}`} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: `${plan.name} Membership Plan`,
+            description: metaDescription,
+            image: `https://ujjwaldentalplanet.com${image}`,
+            url: canonicalUrl,
+            brand: { "@type": "Organization", name: "Ujjwal Dental Planet" },
+            offers: {
+              "@type": "Offer",
+              price: plan.price,
+              priceCurrency: "INR",
+              availability: "https://schema.org/InStock",
+              url: canonicalUrl,
+            },
+          }),
+        }}
+      />
       <BreadcrumbBanner
         title={plan.name}
         breadcrumbs={[{ label: "Home", path: "/" }, { label: "Plans", path: "/membership-plans" }, { label: plan.name }]}
@@ -224,7 +268,7 @@ const PlanDetailPage = () => {
                   <CardMembershipIcon />
                   <Chip label={plan.tier?.toUpperCase()} size="small" sx={{ bgcolor: "rgba(255,255,255,0.25)", color: "#fff", fontWeight: 700 }} />
                 </Box>
-                <Typography variant="h5" fontWeight={800} sx={{ textTransform: "uppercase" }}>
+                <Typography variant="h5" component="p" fontWeight={800} sx={{ textTransform: "uppercase" }}>
                   {plan.name}
                 </Typography>
               </CardContent>
@@ -277,6 +321,7 @@ const PlanDetailPage = () => {
                   component="img"
                   src={image}
                   alt={plan.name}
+                  loading="lazy"
                   sx={{
                     width: 220,
                     height: 170,
@@ -288,11 +333,11 @@ const PlanDetailPage = () => {
                 />
 
                 {/* Plan Title & Price */}
-                <Typography variant="h4" fontWeight={800} color="#003366" sx={{ textTransform: "uppercase", mb: 1 }}>
+                <Typography variant="h4" component="h2" fontWeight={800} color="#003366" sx={{ textTransform: "uppercase", mb: 1 }}>
                   {plan.name}
                 </Typography>
 
-                <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
+                <Typography variant="h5" component="p" fontWeight={700} sx={{ mb: 3 }}>
                   <span style={{ fontWeight: 400 }}>Fees→</span>{" "}
                   <span className="font-numbers">₹{plan.price?.toLocaleString("en-IN")}</span>
                 </Typography>
@@ -309,7 +354,7 @@ const PlanDetailPage = () => {
                 {/* Features */}
                 {plan.features?.length > 0 && (
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" fontWeight={700} color="#003366" gutterBottom>
+                    <Typography variant="h6" component="h3" fontWeight={700} color="#003366" gutterBottom>
                       Our {plan.name} includes:
                     </Typography>
                     <List disablePadding>
@@ -331,7 +376,7 @@ const PlanDetailPage = () => {
                 {/* Benefits */}
                 {plan.benefits?.length > 0 && (
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" fontWeight={700} color="#003366" gutterBottom>
+                    <Typography variant="h6" component="h3" fontWeight={700} color="#003366" gutterBottom>
                       Benefits
                     </Typography>
                     <List disablePadding>
