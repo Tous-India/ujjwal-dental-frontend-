@@ -15,14 +15,38 @@ const Section = ({ title, children }) => (
 const TermsPage = () => {
   return (
     <>
-      <title>Terms &amp; Conditions | Ujjwal Dental Clinic</title>
+      <title>Terms &amp; Conditions | Ujjwal Dental Planet</title>
       <meta
         name="description"
-        content="Terms & Conditions for Ujjwal Dental Clinic — appointments, payments, membership plans, and patient policies."
+        content="Terms & Conditions for Ujjwal Dental Planet, Sonipat — appointment policies, payments, membership plans, cancellations, and patient data handling explained."
+      />
+      <meta name="keywords" content="Ujjwal Dental terms and conditions, dental clinic policy Sonipat" />
+      <link rel="canonical" href="https://ujjwaldentalplanet.com/terms" />
+      <meta name="robots" content="index, follow" />
+      <meta property="og:title" content="Terms & Conditions | Ujjwal Dental Planet" />
+      <meta
+        property="og:description"
+        content="Terms & Conditions for Ujjwal Dental Planet, Sonipat — appointment policies, payments, membership plans, cancellations, and patient data handling."
+      />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/terms" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="twitter:card" content="summary" />
+      <meta name="twitter:title" content="Terms & Conditions | Ujjwal Dental Planet" />
+      <meta
+        name="twitter:description"
+        content="Terms & Conditions for Ujjwal Dental Planet, Sonipat — appointment policies, payments, membership plans, and patient policies."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <BreadcrumbBanner
         title="Terms & Conditions"
         breadcrumbs={[{ label: "Home", path: "/" }, { label: "Terms & Conditions" }]}
+        showTitle={false}
       />
 
       <section className="py-[48px] md:py-[64px] bg-white">
