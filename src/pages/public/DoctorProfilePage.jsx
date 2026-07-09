@@ -8,28 +8,12 @@ import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import { toast } from "react-toastify";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
 
+// Note: Dr. Ujjwal Prem and Dr. Ajay Kaushik intentionally have NO entry here
+// — they each have a dedicated static SEO page (DoctorProfile.jsx and
+// DoctorProfileAjayKaushik.jsx) at /doctors/ujjwal-prem and
+// /doctors/ajay-kaushik. Adding them here would create a second, differently
+// worded, competing URL for the same person (duplicate-content risk).
 const doctors = [
-  {
-    name: "Dr. Ujjwal Prem",
-    slug: "dr-ujjwal-prem",
-    experience: "15",
-    specialization: "Implants, Cosmetic & General Dentistry",
-    role: "Implants, Cosmetic & General Dentistry",
-    img: "/doctors/ujjwal.jpg",
-    qualifications: "",
-    location: "Sonipat, Haryana",
-    bio: "Dr. Ujjwal Prem is the lead dentist at Ujjwal Dental, with 15+ years of clinical experience across dental implants, cosmetic and restorative dentistry. He is known for patient-first, evidence-based care.",
-    stats: [],
-    expertise: [
-      "Dental implants",
-      "Root canal treatment",
-      "Crowns & bridges",
-      "Cosmetic dentistry",
-      "Full mouth rehabilitation",
-      "Smile design",
-    ],
-    achievements: [],
-  },
   {
     name: "Dr. Alisha Dogra",
     slug: "dr-alisha",
@@ -51,27 +35,6 @@ const doctors = [
     ],
     achievements: [],
   },
-  {
-    name: "Dr. Ajay Kaushik",
-    slug: "dr-ajay-kaushik",
-    experience: "7",
-    specialization: "Orthodontics & Dentofacial Orthopaedics",
-    role: "Orthodontics & Dentofacial Orthopaedics",
-    img: "/doctors/ajay.webp",
-    qualifications: "MDS — Orthodontics & Dentofacial Orthopaedics",
-    location: "Sonipat, Haryana",
-    bio: "Dr. Ajay Kaushik is an orthodontist (MDS — Orthodontics & Dentofacial Orthopaedics) with 7 years of experience in braces, clear aligners and dentofacial orthopaedics.",
-    stats: [],
-    expertise: [
-      "Braces",
-      "Clear aligners",
-      "Smile correction",
-      "Interceptive orthodontics",
-      "Retainers",
-      "Bite correction",
-    ],
-    achievements: [],
-  },
 ];
 
 const DoctorProfilePage = () => {
@@ -85,6 +48,8 @@ const DoctorProfilePage = () => {
   if (!doctor) {
     return (
       <>
+        <title>Doctor Not Found | Ujjwal Dental Planet</title>
+        <meta name="robots" content="noindex, follow" />
         <BreadcrumbBanner
           title="Doctor Not Found"
           breadcrumbs={[
@@ -109,8 +74,58 @@ const DoctorProfilePage = () => {
     );
   }
 
+  const canonicalUrl = `https://ujjwaldentalplanet.com/doctors/${doctor.slug}`;
+  const imageUrl = `https://ujjwaldentalplanet.com${doctor.img}`;
+  const metaTitle = `${doctor.name} — ${doctor.specialization} in Sonipat | Ujjwal Dental Planet`;
+  const metaDescription = `${doctor.name}, ${doctor.specialization} with ${doctor.experience}+ years of experience at Ujjwal Dental Planet, Sonipat. Book an appointment today.`;
+
   return (
     <>
+      <title>{metaTitle}</title>
+      <meta name="description" content={metaDescription} />
+      <meta
+        name="keywords"
+        content={`${doctor.name}, ${doctor.specialization} Sonipat, dentist Sonipat, Ujjwal Dental`}
+      />
+      <link rel="canonical" href={canonicalUrl} />
+      <meta name="robots" content="index, follow" />
+      <meta property="og:title" content={metaTitle} />
+      <meta property="og:description" content={metaDescription} />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:image" content={imageUrl} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={metaTitle} />
+      <meta name="twitter:description" content={metaDescription} />
+      <meta name="twitter:image" content={imageUrl} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Dentist",
+            "@id": `${canonicalUrl}#person`,
+            name: doctor.name,
+            jobTitle: doctor.specialization,
+            description: metaDescription,
+            image: imageUrl,
+            url: canonicalUrl,
+            telephone: "+91-8708362763",
+            worksFor: {
+              "@type": "Dentist",
+              "@id": "https://ujjwaldentalplanet.com/#sonipat",
+              name: "Ujjwal Dental Planet",
+            },
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: "Sonipat",
+              addressRegion: "Haryana",
+              addressCountry: "IN",
+            },
+            medicalSpecialty: doctor.specialization,
+            knowsAbout: doctor.expertise,
+          }),
+        }}
+      />
       <BreadcrumbBanner
         title={doctor.name}
         breadcrumbs={[
@@ -129,6 +144,7 @@ const DoctorProfilePage = () => {
               <img
                 src={doctor.img}
                 alt={doctor.name}
+                loading="lazy"
                 className="w-full aspect-[3/4] object-cover"
               />
             </div>
