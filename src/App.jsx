@@ -51,6 +51,7 @@ const BookAppointmentPage = lazy(() => import("./pages/public/BookAppointmentPag
 const DoctorProfilePage = lazy(() => import("./pages/public/DoctorProfilePage"));
 const DoctorProfile = lazy(() => import("./pages/public/DoctorProfile"));
 const DoctorProfileAjayKaushik = lazy(() => import("./pages/public/DoctorProfileAjayKaushik"));
+const DoctorProfileAashishSonik = lazy(() => import("./pages/public/DoctorProfileAashishSonik"));
 
 // Admin pages
 const AdminLogin = lazy(() => import("./pages/admin/Login"));
@@ -142,8 +143,10 @@ const App = () => {
           <Route path="/membership-plans/:id" element={<PlanDetailPage />} />
           <Route path="/doctors/ujjwal-prem" element={<DoctorProfile />} />
           <Route path="/doctors/ajay-kaushik" element={<DoctorProfileAjayKaushik />} />
+          <Route path="/doctors/aashish-sonik" element={<DoctorProfileAashishSonik />} />
           <Route path="/doctors/dr-ujjwal-prem" element={<Navigate to="/doctors/ujjwal-prem" replace />} />
           <Route path="/doctors/dr-ajay-kaushik" element={<Navigate to="/doctors/ajay-kaushik" replace />} />
+          <Route path="/doctors/dr-aashish-sonik" element={<Navigate to="/doctors/aashish-sonik" replace />} />
           <Route path="/doctors/:slug" element={<DoctorProfilePage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
