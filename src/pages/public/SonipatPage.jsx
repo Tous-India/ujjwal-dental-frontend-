@@ -35,7 +35,7 @@ const treatments = [
 const doctors = [
   { name: "Dr. Ujjwal Prem", subtitle: "MDS (Oral and Maxillofacial Surgeon)", experience: "15+ Yrs Experience", lead: true, img: "/doctors/ujjwal.jpg", to: "/doctors/ujjwal-prem" },
   { name: "Dr. Alisha Dogra", subtitle: "BDS — Bachelor of Dental Surgery", experience: "5+ Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
-  { name: "Dr. Ajay Kaushik", experience: "15+ Yrs Experience", subtitle: "MDS — Orthodontics & Dentofacial Orthopaedics", lead: false, img: "/doctors/ajay.webp" },
+  { name: "Dr. Ajay Kaushik", experience: "8+ Yrs Experience", subtitle: "MDS — Orthodontics & Dentofacial Orthopaedics | Asst. Professor", lead: false, img: "/doctors/ajay.webp", to: "/doctors/ajay-kaushik" },
   { name: "Dr. Shivani Sharma", experience: "15+ Yrs Experience", subtitle: "MDS — Periodontist", lead: false, img: "/doctors/shivani.webp" },
 ];
 
