@@ -263,17 +263,41 @@ const HomePage = () => {
       <title>Best Dental Clinic in Sonipat | Ujjwal Dental Planet</title>
       <meta
         name="description"
-        content="Looking for the best dentist in Sonipat? Ujjwal Dental Planet offers dental implants, root canal treatment, braces, cosmetic dentistry, and complete family dental care. Book your appointment today."
+        content="Ujjwal Dental Planet, Sonipat offers dental implants, root canal treatment, braces, and family dental care. 15+ years expertise. Book your visit today."
+      />
+      <meta
+        name="keywords"
+        content="best dentist Sonipat, dental clinic Sonipat, dental implants Sonipat, Ujjwal Dental Planet"
       />
       <link rel="canonical" href="https://ujjwaldentalplanet.com/" />
+      <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
         content="Best Dental Clinic in Sonipat | Ujjwal Dental Planet"
       />
       <meta
         property="og:description"
-        content="Looking for the best dentist in Sonipat? Ujjwal Dental Planet offers dental implants, root canal treatment, braces, cosmetic dentistry, and complete family dental care. Book your appointment today."
+        content="Ujjwal Dental Planet, Sonipat offers dental implants, root canal treatment, braces, and complete family dental care. 15+ years of trusted expertise."
       />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Best Dental Clinic in Sonipat | Ujjwal Dental Planet" />
+      <meta
+        name="twitter:description"
+        content="Ujjwal Dental Planet, Sonipat offers dental implants, root canal treatment, braces, and complete family dental care."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="geo.region" content="IN-HR" />
+      <meta name="geo.placename" content="Sonipat" />
+      <meta name="geo.position" content="28.9931;77.0151" />
+      <meta name="ICBM" content="28.9931, 77.0151" />
       {/* Organization + Dentist + WebSite structured data (JSON-LD) */}
       <script
         type="application/ld+json"
