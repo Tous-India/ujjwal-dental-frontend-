@@ -66,6 +66,14 @@ const doctors = [
     lead: false,
     img: "/doctors/shivani.webp",
   },
+  {
+    name: "Dr. Aashish Sonik",
+    experience: "500+ Implants Placed",
+    subtitle: "BDS, MBA, Fellowship in Implantology",
+    lead: false,
+    img: "/doctors/dr-sonik.jpg",
+    to: "/doctors/aashish-sonik",
+  },
 ];
 
 const dentalPlans = [
