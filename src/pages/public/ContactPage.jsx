@@ -71,19 +71,78 @@ const ContactPage = () => {
       <title>Contact Ujjwal Dental Clinic Sonipat | Book Appointment</title>
       <meta
         name="description"
-        content="Visit Ujjwal Dental at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763. Open Mon-Sat 9AM-8PM."
+        content="Visit Ujjwal Dental Planet at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or message us online. Mon–Sat, 9 AM–8 PM."
       />
+      <meta
+        name="keywords"
+        content="contact Ujjwal Dental, dentist Sonipat contact, dental clinic Sonipat address, book dental appointment Sonipat"
+      />
+      <link rel="canonical" href="https://ujjwaldentalplanet.com/contact" />
+      <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
         content="Contact Ujjwal Dental Clinic Sonipat | Book Appointment"
       />
       <meta
         property="og:description"
-        content="Visit Ujjwal Dental at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763. Open Mon-Sat 9AM-8PM."
+        content="Visit Ujjwal Dental Planet at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or send a message online."
+      />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/contact" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Contact Ujjwal Dental Clinic Sonipat | Book Appointment" />
+      <meta
+        name="twitter:description"
+        content="Visit Ujjwal Dental Planet at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or send a message online."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="geo.region" content="IN-HR" />
+      <meta name="geo.placename" content="Sonipat" />
+      <meta name="geo.position" content="28.9931;77.0151" />
+      <meta name="ICBM" content="28.9931, 77.0151" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ContactPage",
+            name: "Contact Ujjwal Dental Clinic Sonipat",
+            url: "https://ujjwaldentalplanet.com/contact",
+            mainEntity: {
+              "@type": "Dentist",
+              name: "Ujjwal Dental Planet",
+              telephone: "+91-8708362763",
+              contactPoint: [
+                {
+                  "@type": "ContactPoint",
+                  telephone: "+91-8708362763",
+                  contactType: "customer service",
+                  areaServed: "IN",
+                  availableLanguage: ["en", "hi"],
+                },
+              ],
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Plot 35/13, Delhi Rd, Sikka Colony, Lakshmi Nagar",
+                addressLocality: "Sonipat",
+                addressRegion: "Haryana",
+                postalCode: "131001",
+                addressCountry: "IN",
+              },
+            },
+          }),
+        }}
       />
       <BreadcrumbBanner
         title="Contact Us"
         breadcrumbs={[{ label: "Home", path: "/" }, { label: "Contact Us" }]}
+        showTitle={false}
       />
 
       <section className="py-[48px] md:py-[64px] bg-gray-50">
