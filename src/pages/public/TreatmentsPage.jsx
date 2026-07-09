@@ -18,12 +18,48 @@ const TreatmentsPage = () => {
         content="15+ dental treatments including implants, RCT, braces, aligners, whitening, laser dentistry, kids dentistry. Painless procedures with modern equipment."
       />
       <meta
+        name="keywords"
+        content="dental treatments Sonipat, dental implants Sonipat, root canal Sonipat, braces Sonipat, Ujjwal Dental treatments"
+      />
+      <link rel="canonical" href="https://ujjwaldentalplanet.com/treatments" />
+      <meta name="robots" content="index, follow" />
+      <meta
         property="og:title"
         content="Dental Treatments in Sonipat | Ujjwal Dental Clinic"
       />
       <meta
         property="og:description"
         content="15+ dental treatments including implants, RCT, braces, aligners, whitening, laser dentistry, kids dentistry. Painless procedures with modern equipment."
+      />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/treatments" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Dental Treatments in Sonipat | Ujjwal Dental Clinic" />
+      <meta
+        name="twitter:description"
+        content="15+ dental treatments including implants, RCT, braces, aligners, whitening, laser dentistry, kids dentistry."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            itemListElement: treatments.map((t, i) => ({
+              "@type": "MedicalProcedure",
+              position: i + 1,
+              name: t.title,
+              url: `https://ujjwaldentalplanet.com/treatments/${t.slug}`,
+            })),
+          }),
+        }}
       />
       <BreadcrumbBanner
         title="Our Treatments"
@@ -59,6 +95,7 @@ const TreatmentsPage = () => {
                   <img
                     src={t.img}
                     alt={t.title}
+                    loading="lazy"
                     className="w-12 h-12 object-contain rounded-[30px]"
                   />
                 </div>
