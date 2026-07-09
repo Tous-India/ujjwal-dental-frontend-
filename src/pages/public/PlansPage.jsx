@@ -160,19 +160,69 @@ const PlansPage = () => {
       <title>Dental Membership Plans | Ujjwal Dental Clinic Sonipat</title>
       <meta
         name="description"
-        content="Save with annual dental plans from ₹2,000. Free consultations, X-rays & treatment discounts. Individual & family plans available."
+        content="Save with annual dental membership plans at Ujjwal Dental Planet, Sonipat, from ₹2,000. Free consultations, X-rays, and treatment discounts included."
       />
+      <meta
+        name="keywords"
+        content="dental membership plans Sonipat, dental health plan, Ujjwal Dental plans, affordable dental care Sonipat"
+      />
+      <link rel="canonical" href="https://ujjwaldentalplanet.com/membership-plans" />
+      <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
         content="Dental Membership Plans | Ujjwal Dental Clinic Sonipat"
       />
       <meta
         property="og:description"
-        content="Save with annual dental plans from ₹2,000. Free consultations, X-rays & treatment discounts. Individual & family plans available."
+        content="Save with annual dental membership plans at Ujjwal Dental Planet, Sonipat. Free consultations, X-rays, and treatment discounts."
       />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/membership-plans" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Dental Membership Plans | Ujjwal Dental Clinic Sonipat" />
+      <meta
+        name="twitter:description"
+        content="Save with annual dental membership plans at Ujjwal Dental Planet, Sonipat. Free consultations, X-rays, and treatment discounts."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
+      />
+      {plans.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              itemListElement: plans.map((plan, i) => ({
+                "@type": "Offer",
+                position: i + 1,
+                name: plan.name,
+                description: plan.description || undefined,
+                price: plan.price,
+                priceCurrency: "INR",
+                url: "https://ujjwaldentalplanet.com/membership-plans",
+                itemOffered: {
+                  "@type": "Service",
+                  name: `${plan.name} Membership`,
+                  provider: {
+                    "@type": "Dentist",
+                    name: "Ujjwal Dental Planet",
+                  },
+                },
+              })),
+            }),
+          }}
+        />
+      )}
       <BreadcrumbBanner
         title="Our Plans"
         breadcrumbs={[{ label: "Home", path: "/" }, { label: "Plans" }]}
+        showTitle={false}
       />
 
       <section className="py-[48px] md:py-[64px] bg-gray-50">
@@ -223,6 +273,12 @@ const PlansPage = () => {
               ))}
             </div>
           </div>
+
+          {plans.length > 0 && (
+            <h2 className="text-[#003366] text-center text-[22px] font-bold mb-6">
+              Choose Your Membership Plan
+            </h2>
+          )}
 
           {isLoading ? (
             <div className="text-center py-16">
