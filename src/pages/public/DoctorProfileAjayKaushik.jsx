@@ -101,13 +101,14 @@ const DoctorProfileAjayKaushik = () => {
       </title>
       <meta
         name="description"
-        content="Dr. Ajay Kaushik, BDS MDS, is an experienced dentist at Ujjwal Dental Planet, Sonipat. With 8+ years in clinical dentistry, dental research, and patient care. Book an appointment today."
+        content="Dr. Ajay Kaushik, BDS MDS, is an experienced dentist at Ujjwal Dental Planet, Sonipat with 8+ years in clinical dentistry. Book an appointment today."
       />
       <meta
         name="keywords"
         content="Dr Ajay Kaushik, dentist Sonipat, BDS MDS Sonipat, Ujjwal Dental, dental clinic Sonipat, best dentist Sonipat"
       />
       <link rel="canonical" href="https://ujjwaldentalplanet.com/doctors/ajay-kaushik" />
+      <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
         content="Dr. Ajay Kaushik — Dentist in Sonipat | Ujjwal Dental Planet"
@@ -115,6 +116,21 @@ const DoctorProfileAjayKaushik = () => {
       <meta
         property="og:description"
         content="BDS MDS dentist with 8+ years in clinical dentistry, dental research and patient care at Ujjwal Dental Planet, Sonipat."
+      />
+      <meta property="og:url" content="https://ujjwaldentalplanet.com/doctors/ajay-kaushik" />
+      <meta
+        property="og:image"
+        content="https://ujjwaldentalplanet.com/doctors/ajay.webp"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Dr. Ajay Kaushik — Dentist in Sonipat | Ujjwal Dental Planet" />
+      <meta
+        name="twitter:description"
+        content="BDS MDS dentist with 8+ years in clinical dentistry, dental research and patient care at Ujjwal Dental Planet, Sonipat."
+      />
+      <meta
+        name="twitter:image"
+        content="https://ujjwaldentalplanet.com/doctors/ajay.webp"
       />
       <script
         type="application/ld+json"
