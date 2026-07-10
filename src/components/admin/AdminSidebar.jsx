@@ -44,6 +44,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import GroupIcon from "@mui/icons-material/Group";
 import ContactPhoneIcon from "@mui/icons-material/ContactPhone";
+import ArticleIcon from "@mui/icons-material/Article";
 
 import logo from "../../../public/ujjwal-dental-logo.png";
 
@@ -64,6 +65,7 @@ const navItems = [
   { label: "Billing", path: "/admin/billing", icon: ReceiptLongIcon },
   { label: "Reports", path: "/admin/reports", icon: AssessmentIcon },
   { label: "Memberships", path: "/admin/memberships", icon: CardMembershipIcon, badgeKey: "memberships", badgeColor: "#8b5cf6" },
+  { label: "Blogs", path: "/admin/blogs", icon: ArticleIcon },
   { label: "Notifications", path: "/admin/notifications", icon: NotificationsIcon, badgeKey: "notifications", badgeColor: "#ec4899" },
   { label: "Clinics", path: "/admin/clinics", icon: BusinessIcon },
   { label: "Staff", path: "/admin/users", icon: GroupIcon },
