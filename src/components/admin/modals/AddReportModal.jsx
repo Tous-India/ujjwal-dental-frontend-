@@ -28,6 +28,7 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DescriptionIcon from "@mui/icons-material/Description";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import { useReportMutations } from "../../../hooks/admin/useReports";
 import { usePatients } from "../../../hooks/admin/usePatients";
 
@@ -47,6 +48,7 @@ const reportCategories = [
 
 const AddReportModal = ({ open, onClose, onSuccess }) => {
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     patient: null,
@@ -126,6 +128,9 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = () => {
@@ -182,6 +187,9 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
     setPatientSearch("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
     }
   };
 
@@ -376,21 +384,46 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
               onChange={handleFileSelect}
               className="hidden"
             />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              capture="environment"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
 
             {!selectedFile ? (
               <Paper
                 variant="outlined"
-                className="p-8 border-2 border-dashed border-gray-300 hover:border-teal-500 cursor-pointer transition-colors"
-                onClick={() => fileInputRef.current?.click()}
+                className="p-8 border-2 border-dashed border-gray-300 transition-colors"
               >
                 <Box className="flex flex-col items-center gap-2 text-gray-500">
                   <CloudUploadIcon sx={{ fontSize: 48 }} className="text-gray-400" />
                   <Typography variant="body1" className="font-medium">
-                    Click to upload or drag and drop
+                    Choose a file or take a photo
                   </Typography>
-                  <Typography variant="body2" className="text-gray-400">
+                  <Typography variant="body2" className="text-gray-400 mb-3">
                     PDF, JPEG, PNG (max 10MB)
                   </Typography>
+                  <Box className="flex items-center gap-3">
+                    <Button
+                      variant="outlined"
+                      startIcon={<UploadFileIcon />}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-teal-600 text-teal-700 hover:border-teal-700"
+                    >
+                      Choose File
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<PhotoCameraIcon />}
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="border-teal-600 text-teal-700 hover:border-teal-700"
+                    >
+                      Take Photo
+                    </Button>
+                  </Box>
                 </Box>
               </Paper>
             ) : (
