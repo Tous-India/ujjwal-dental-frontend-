@@ -30,6 +30,7 @@ import { useUserMutations } from "../../../hooks/admin/useUsers";
 const roleOptions = [
   { value: "admin", label: "Admin" },
   { value: "user", label: "Staff" },
+  { value: "blog_editor", label: "SEO Executive" },
 ];
 
 const AddUserModal = ({ open, onClose, onSuccess }) => {
