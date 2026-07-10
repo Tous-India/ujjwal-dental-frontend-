@@ -71,6 +71,8 @@ const AdminBilling = lazy(() => import("./pages/admin/Billing"));
 const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
 const AdminUsers = lazy(() => import("./pages/admin/User"));
 const AdminEnquiries = lazy(() => import("./pages/admin/Enquiries"));
+const AdminBlogs = lazy(() => import("./pages/admin/Blogs"));
+const AdminBlogEditor = lazy(() => import("./pages/admin/BlogEditor"));
 
 /**
  * App Routes
@@ -209,6 +211,9 @@ const App = () => {
             <Route path="notifications" element={<AdminNotifications />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="memberships" element={<AdminMemberships />} />
+            <Route path="blogs" element={<AdminBlogs />} />
+            <Route path="blogs/new" element={<AdminBlogEditor />} />
+            <Route path="blogs/:id/edit" element={<AdminBlogEditor />} />
             <Route path="clinics" element={<AdminClinics />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="settings" element={<AdminSettings />} />
