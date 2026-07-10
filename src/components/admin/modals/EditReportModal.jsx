@@ -29,6 +29,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ImageIcon from "@mui/icons-material/Image";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import { toast } from "react-toastify";
 import { useReportMutations } from "../../../hooks/admin/useReports";
 
@@ -52,6 +54,7 @@ const formatFileSize = (bytes) => {
 
 const EditReportModal = ({ open, onClose, report, onSuccess }) => {
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: "",
     category: "xray",
@@ -115,6 +118,7 @@ const EditReportModal = ({ open, onClose, report, onSuccess }) => {
   const handleRemoveNewFile = () => {
     setNewFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
   const handleSubmit = () => {
@@ -316,6 +320,14 @@ const EditReportModal = ({ open, onClose, report, onSuccess }) => {
               onChange={handleFileSelect}
               className="hidden"
             />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              capture="environment"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
 
             {/* Show current file if no new file selected */}
             {!newFile && currentFile?.url && (
@@ -351,14 +363,24 @@ const EditReportModal = ({ open, onClose, report, onSuccess }) => {
                       </Typography>
                     </Box>
                   </Box>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<SwapHorizIcon />}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Replace File
-                  </Button>
+                  <Box className="flex items-center gap-2">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<SwapHorizIcon />}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Choose File
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<PhotoCameraIcon />}
+                      onClick={() => cameraInputRef.current?.click()}
+                    >
+                      Take Photo
+                    </Button>
+                  </Box>
                 </Box>
               </Paper>
             )}
@@ -405,8 +427,7 @@ const EditReportModal = ({ open, onClose, report, onSuccess }) => {
             {!newFile && !currentFile?.url && (
               <Paper
                 variant="outlined"
-                className="p-8 border-2 border-dashed border-gray-300 hover:border-teal-500 cursor-pointer transition-colors"
-                onClick={() => fileInputRef.current?.click()}
+                className="p-8 border-2 border-dashed border-gray-300 transition-colors"
               >
                 <Box className="flex flex-col items-center gap-2 text-gray-500">
                   <CloudUploadIcon
@@ -414,11 +435,29 @@ const EditReportModal = ({ open, onClose, report, onSuccess }) => {
                     className="text-gray-400"
                   />
                   <Typography variant="body1" className="font-medium">
-                    Click to upload a file
+                    Choose a file or take a photo
                   </Typography>
-                  <Typography variant="body2" className="text-gray-400">
+                  <Typography variant="body2" className="text-gray-400 mb-3">
                     PDF, JPEG, PNG (max 10MB)
                   </Typography>
+                  <Box className="flex items-center gap-3">
+                    <Button
+                      variant="outlined"
+                      startIcon={<UploadFileIcon />}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-teal-600 text-teal-700 hover:border-teal-700"
+                    >
+                      Choose File
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<PhotoCameraIcon />}
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="border-teal-600 text-teal-700 hover:border-teal-700"
+                    >
+                      Take Photo
+                    </Button>
+                  </Box>
                 </Box>
               </Paper>
             )}
