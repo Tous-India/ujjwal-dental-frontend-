@@ -62,14 +62,11 @@ const columns = [
     field: "role",
     headerName: "Role",
     minWidth: 100,
-    render: (value) => (
-      <Chip
-        label={value === "admin" ? "Admin" : "Staff"}
-        size="small"
-        color={value === "admin" ? "primary" : "default"}
-        variant="outlined"
-      />
-    ),
+    render: (value) => {
+      const label = value === "admin" ? "Admin" : value === "blog_editor" ? "SEO Executive" : "Staff";
+      const color = value === "admin" ? "primary" : value === "blog_editor" ? "secondary" : "default";
+      return <Chip label={label} size="small" color={color} variant="outlined" />;
+    },
   },
   {
     field: "isActive",
@@ -107,6 +104,7 @@ const filterOptions = [
     options: [
       { value: "admin", label: "Admin" },
       { value: "user", label: "Staff" },
+      { value: "blog_editor", label: "SEO Executive" },
     ],
   },
   {
