@@ -426,7 +426,9 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
         {/* Footer Info */}
         <Divider className="my-2" />
         <Box className="flex justify-between">
-          <Typography variant="caption" className="text-gray-600">Created: {formatDate(createdAt)}</Typography>
+          <Typography variant="caption" className="text-gray-600">
+            Created: {formatDate(createdAt)}{createdAt ? `, ${formatTime(createdAt)}` : ""}
+          </Typography>
         </Box>
       </DialogContent>
 
