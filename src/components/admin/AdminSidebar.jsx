@@ -45,6 +45,7 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import GroupIcon from "@mui/icons-material/Group";
 import ContactPhoneIcon from "@mui/icons-material/ContactPhone";
 import ArticleIcon from "@mui/icons-material/Article";
+import { useAdminStore } from "../../store/admin.store";
 
 import logo from "../../../public/ujjwal-dental-logo.png";
 
@@ -55,7 +56,7 @@ const DRAWER_WIDTH = 260;
  * Navigation items configuration
  * Easy to add/remove menu items here
  */
-const navItems = [
+const ADMIN_NAV = [
   { label: "Dashboard", path: "/admin/dashboard", icon: DashboardIcon },
   { label: "Patients", path: "/admin/patients", icon: PeopleIcon, badgeKey: "patients" },
   { label: "Enquiries", path: "/admin/enquiries", icon: ContactPhoneIcon, badgeKey: "enquiries", badgeColor: "#ef4444" },
@@ -73,8 +74,13 @@ const navItems = [
   { label: "Main Website", path: "https://ujjwaldentalplanet.com", icon: LanguageIcon, external: true },
 ];
 
+// SEO Executive (blog_editor role) — access restricted to Blogs only.
+const BLOG_EDITOR_NAV = ADMIN_NAV.filter((item) => item.path === "/admin/blogs");
+
 const AdminSidebar = ({ open, onClose }) => {
   const location = useLocation();
+  const { admin } = useAdminStore();
+  const navItems = admin?.role === "blog_editor" ? BLOG_EDITOR_NAV : ADMIN_NAV;
 
   // Fetch badge counts
   const { data: badgeCounts } = useQuery({
@@ -108,7 +114,7 @@ const AdminSidebar = ({ open, onClose }) => {
         localStorage.setItem(getSeenKey(item.badgeKey), String(rawBadges[item.badgeKey]));
       }
     });
-  }, [location.pathname, rawBadges]);
+  }, [location.pathname, rawBadges, navItems]);
 
   // Calculate unseen badges
   const badges = {};
