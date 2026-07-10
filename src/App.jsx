@@ -43,6 +43,8 @@ const SonipatPage = lazy(() => import("./pages/public/SonipatPage"));
 const ContactPage = lazy(() => import("./pages/public/ContactPage"));
 const TreatmentsPage = lazy(() => import("./pages/public/TreatmentsPage"));
 const TreatmentPage = lazy(() => import("./pages/public/TreatmentPage"));
+const BlogListPage = lazy(() => import("./pages/public/BlogListPage"));
+const BlogDetailPage = lazy(() => import("./pages/public/BlogDetailPage"));
 const PlansPage = lazy(() => import("./pages/public/PlansPage"));
 const PlanDetailPage = lazy(() => import("./pages/public/PlanDetailPage"));
 const TermsPage = lazy(() => import("./pages/public/TermsPage"));
@@ -140,6 +142,8 @@ const App = () => {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/treatments" element={<TreatmentsPage />} />
           <Route path="/treatments/:slug" element={<TreatmentPage />} />
+          <Route path="/blog" element={<BlogListPage />} />
+          <Route path="/blog/:slug" element={<BlogDetailPage />} />
           <Route path="/book-appointment" element={<BookAppointmentPage />} />
           <Route path="/membership-plans" element={<PlansPage />} />
           <Route path="/membership-plans/:id" element={<PlanDetailPage />} />
