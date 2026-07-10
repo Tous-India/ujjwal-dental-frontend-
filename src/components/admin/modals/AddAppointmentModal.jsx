@@ -676,11 +676,26 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 handlePatientSearch(value);
               }}
               loading={searchLoading}
+              renderOption={(props, option) => {
+                const { key, ...optionProps } = props;
+                return (
+                  <li key={key} {...optionProps}>
+                    <Box sx={{ display: "flex", flexDirection: "column", py: 0.25 }}>
+                      <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#1a1a1a" }}>
+                        {option.name}
+                      </Typography>
+                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0d1b4a" }}>
+                        📞 {option.phone}
+                      </Typography>
+                    </Box>
+                  </li>
+                );
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="Search Patient"
-                  placeholder="Type patient name or phone..."
+                  placeholder="Search by name or phone number"
                   error={!!errors.patient}
                   helperText={errors.patient}
                   required
@@ -713,6 +728,13 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               }
             />
           </Grid>
+          {formData.patient && (
+            <Grid size={{ xs: 12 }} sx={{ mt: -1 }}>
+              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#0d1b4a" }}>
+                Selected: {formData.patient.name} — {formData.patient.phone}
+              </Typography>
+            </Grid>
+          )}
           {/* ─── ACTIVE TREATMENT BANNER ─── */}
           {!isSessionMode && activeTreatments.length > 0 && (
             <Grid size={{ xs: 12 }}>
