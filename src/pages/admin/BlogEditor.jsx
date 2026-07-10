@@ -184,17 +184,15 @@ const BlogEditor = () => {
           >
             Back
           </Button>
-          <Box>
-            <Typography variant="h4" className="font-bold text-gray-800">
+          <Box className="flex items-center gap-3">
+            <Typography variant="h5" className="font-bold text-gray-800">
               {isEditMode ? "Edit Blog Post" : "New Blog Post"}
             </Typography>
-            <Box className="flex items-center gap-2 mt-1">
-              <Chip
-                size="small"
-                label={status === "published" ? "Published" : "Draft"}
-                color={status === "published" ? "success" : "default"}
-              />
-            </Box>
+            <Chip
+              size="small"
+              label={status === "published" ? "Published" : "Draft"}
+              color={status === "published" ? "success" : "default"}
+            />
           </Box>
         </Box>
       </Box>
@@ -219,8 +217,14 @@ const BlogEditor = () => {
               value={formData.slug}
               onChange={handleSlugChange}
               size="small"
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                  sx: { fontSize: "12px !important", color: "#9ca3af" },
+                },
+              }}
               helperText={`URL: /blog/${formData.slug || "your-slug-here"}`}
-              className="mt-4"
+              className="mt-5"
             />
             <TextField
               fullWidth
