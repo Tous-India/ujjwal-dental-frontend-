@@ -12,6 +12,13 @@ import SendIcon from "@mui/icons-material/Send";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireGetDirectionsConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.GET_DIRECTIONS });
+  }
+};
 
 const fieldCls =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[15px] text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200";
@@ -189,6 +196,7 @@ const ContactPage = () => {
                   href="https://maps.google.com/maps?ftid=0x390db015196a31eb:0xbd564d96abb10882"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={fireGetDirectionsConversion}
                   className="block text-gray-700 text-[14px] leading-relaxed no-underline hover:text-accent transition-colors"
                 >
                   <span className="text-[#003366] font-semibold">
@@ -201,6 +209,7 @@ const ContactPage = () => {
                   href="https://maps.google.com/maps?ftid=0x390db11d9832411b:0x1b0ad40bb6f1c49"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={fireGetDirectionsConversion}
                   className="block text-gray-700 text-[14px] leading-relaxed mt-3 no-underline hover:text-accent transition-colors"
                 >
                   <span className="text-[#003366] font-semibold">
