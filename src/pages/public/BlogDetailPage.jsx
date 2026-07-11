@@ -6,6 +6,13 @@ import PersonIcon from "@mui/icons-material/Person";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import { getPublicBlogBySlug, getPublicBlogs } from "../../api/blogs.api";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireBookAppointmentConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.BOOK_APPOINTMENT });
+  }
+};
 
 const formatDate = (date) =>
   date
@@ -216,6 +223,7 @@ const BlogDetailPage = () => {
           <p className="text-gray-300 mb-6">Visit Ujjwal Dental Planet in Sonipat for expert dental care.</p>
           <Link
             to="/book-appointment"
+            onClick={fireBookAppointmentConversion}
             className="inline-flex items-center gap-2 no-underline bg-accent hover:bg-accent-dark text-white rounded-xl px-7 py-3 text-[15px] font-semibold transition-colors duration-200"
           >
             <EventAvailableIcon sx={{ fontSize: 20 }} />
