@@ -10,6 +10,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import LoginIcon from "@mui/icons-material/Login";
 import logo from "../../../public/ujjwal-dental-logo.png";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireBookAppointmentConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.BOOK_APPOINTMENT });
+  }
+};
 
 const PublicHeader = () => {
   const location = useLocation();
@@ -274,7 +281,7 @@ const PublicHeader = () => {
                       <div className="dropdown-nav">
                         <ul onClick={closeMobileMenu}>
                           <li>
-                            <NavLink to="/book-appointment">
+                            <NavLink to="/book-appointment" onClick={fireBookAppointmentConversion}>
                               Book Appointment
                             </NavLink>
                           </li>
@@ -366,6 +373,7 @@ const PublicHeader = () => {
             {/* Book Appointment CTA */}
             <NavLink
               to="/book-appointment"
+              onClick={fireBookAppointmentConversion}
               className="hidden lg:inline-flex items-center bg-[#F57C00] text-white rounded-full font-semibold text-[15px] tracking-wide px-6 py-2.5 no-underline cursor-pointer shrink-0 shadow-sm hover:bg-[#E06C00] hover:shadow-md transition-all duration-200"
             >
               Book Appointment
