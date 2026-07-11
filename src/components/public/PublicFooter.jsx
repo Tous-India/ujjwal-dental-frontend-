@@ -7,6 +7,19 @@ import { Link } from "react-router-dom";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import YouTubeIcon from "@mui/icons-material/YouTube";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireGetDirectionsConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.GET_DIRECTIONS });
+  }
+};
+
+const fireBookAppointmentConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.BOOK_APPOINTMENT });
+  }
+};
 
 const quickLinks = [
   { label: "Home", to: "/" },
@@ -92,6 +105,7 @@ const PublicFooter = () => {
                 <li key={link.label}>
                   <Link
                     to={link.to}
+                    onClick={link.to === "/book-appointment" ? fireBookAppointmentConversion : undefined}
                     className="text-gray-300 text-sm no-underline hover:text-white transition-colors duration-200"
                   >
                     {link.label}
@@ -111,6 +125,7 @@ const PublicFooter = () => {
                 <li key={link.label}>
                   <Link
                     to={link.to}
+                    onClick={link.to === "/book-appointment" ? fireBookAppointmentConversion : undefined}
                     className="text-gray-300 text-sm no-underline hover:text-white transition-colors duration-200"
                   >
                     {link.label}
@@ -129,6 +144,7 @@ const PublicFooter = () => {
               href="https://maps.google.com/maps?ftid=0x390db015196a31eb:0xbd564d96abb10882"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={fireGetDirectionsConversion}
               className="block text-gray-300 text-[13px] leading-relaxed mb-3 no-underline hover:text-white transition-colors"
             >
               <span className="text-white">Ujjwal Dental – Delhi Road</span>
@@ -139,6 +155,7 @@ const PublicFooter = () => {
               href="https://maps.google.com/maps?ftid=0x390db11d9832411b:0x1b0ad40bb6f1c49"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={fireGetDirectionsConversion}
               className="block text-gray-300 text-[13px] leading-relaxed mb-3 no-underline hover:text-white transition-colors"
             >
               <span className="text-white">Ujjwal Dental – Parsvnath</span>
