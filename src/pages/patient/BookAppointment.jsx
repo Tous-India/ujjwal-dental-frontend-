@@ -103,6 +103,14 @@ const BookAppointment = () => {
   const [captchaToken, setCaptchaToken] = useState(null);
   const captchaRef = useRef(null);
 
+  // Fire the Google Ads booking-success conversion once the confirmation
+  // screen is shown.
+  useEffect(() => {
+    if (success && typeof window.gtag === "function") {
+      window.gtag("event", "ads_conversion_Success_Page_1", {});
+    }
+  }, [success]);
+
   // Fee settings
   const [feeSettings, setFeeSettings] = useState({
     opdFeeRegular: 300,
