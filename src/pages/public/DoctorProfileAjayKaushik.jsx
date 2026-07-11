@@ -9,6 +9,13 @@ import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireBookAppointmentConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.BOOK_APPOINTMENT });
+  }
+};
 
 const stats = [
   { value: "8+", label: "Years Experience" },
@@ -181,6 +188,7 @@ const DoctorProfileAjayKaushik = () => {
 
               <Link
                 to="/book-appointment"
+                onClick={fireBookAppointmentConversion}
                 className="inline-flex items-center gap-2 mt-8 no-underline bg-accent hover:bg-accent-dark text-white font-semibold rounded-xl px-7 py-3 text-[15px] transition-colors duration-200"
               >
                 <EventAvailableIcon className="text-[20px]!" />
@@ -313,6 +321,7 @@ const DoctorProfileAjayKaushik = () => {
 
           <Link
             to="/book-appointment"
+            onClick={fireBookAppointmentConversion}
             className="inline-flex items-center gap-2 mt-9 no-underline bg-accent hover:bg-accent-dark text-white font-semibold rounded-xl px-7 py-3 text-[15px] transition-colors duration-200"
           >
             <EventAvailableIcon className="text-[20px]!" />
@@ -334,6 +343,7 @@ const DoctorProfileAjayKaushik = () => {
           </div>
           <Link
             to="/book-appointment"
+            onClick={fireBookAppointmentConversion}
             className="shrink-0 no-underline bg-white text-accent hover:bg-white/90 font-bold rounded-xl px-8 py-3 text-[15px] transition-colors duration-200"
           >
             Book Now
