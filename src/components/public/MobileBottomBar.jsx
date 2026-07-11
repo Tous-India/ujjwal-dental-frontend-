@@ -12,6 +12,13 @@ import CallRoundedIcon from "@mui/icons-material/CallRounded";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import EventAvailableRoundedIcon from "@mui/icons-material/EventAvailableRounded";
 import { PRIMARY_PHONE_TEL, WHATSAPP_URL } from "../../config/contact";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireBookAppointmentConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.BOOK_APPOINTMENT });
+  }
+};
 
 const NAVY = "#0C2B4E"; // default icon
 const SLATE = "#3E4C5A"; // default label
@@ -60,6 +67,7 @@ const MobileBottomBar = () => {
 
         <NavLink
           to="/book-appointment"
+          onClick={fireBookAppointmentConversion}
           className={itemClass}
           style={{ color: isBook ? GOLD : SLATE }}
         >
