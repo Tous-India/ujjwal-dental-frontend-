@@ -10,6 +10,13 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BoltIcon from "@mui/icons-material/Bolt";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import StarIcon from "@mui/icons-material/Star";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireBookAppointmentConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.BOOK_APPOINTMENT });
+  }
+};
 
 const PHONE = "+918708362763";
 const PHONE_DISPLAY = "+91 8708362763";
@@ -174,6 +181,7 @@ const TreatmentPage = () => {
               <div className="flex flex-wrap gap-3 mt-6">
                 <Link
                   to="/book-appointment"
+                  onClick={fireBookAppointmentConversion}
                   className="inline-block no-underline bg-accent hover:bg-accent-dark text-white rounded-xl px-6 py-3 text-[15px] font-semibold transition-colors duration-200"
                 >
                   Book Appointment
@@ -418,6 +426,7 @@ const TreatmentPage = () => {
           <div className="flex flex-wrap justify-center gap-3">
             <Link
               to="/book-appointment"
+              onClick={fireBookAppointmentConversion}
               className="inline-block no-underline bg-accent hover:bg-accent-dark text-white rounded-xl px-7 py-3 text-[15px] font-semibold transition-colors duration-200"
             >
               Book Appointment
