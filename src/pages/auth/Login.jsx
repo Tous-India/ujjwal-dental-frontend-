@@ -16,6 +16,13 @@ import { toast } from "react-toastify";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireBookAppointmentConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.BOOK_APPOINTMENT });
+  }
+};
 
 // Set to true when SMS OTP is integrated to reveal the OTP tab
 const SHOW_OTP_TAB = false;
@@ -427,6 +434,7 @@ const Login = () => {
             </p>
             <Link
               to="/book-appointment"
+              onClick={fireBookAppointmentConversion}
               className="w-full inline-flex items-center justify-center gap-2 border-2 border-accent text-accent hover:bg-accent hover:text-white rounded-xl py-3 text-[15px] font-semibold no-underline transition-colors duration-200"
             >
               <CalendarMonthIcon className="text-[20px]!" />
