@@ -8,6 +8,13 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
+
+const fireBookAppointmentConversion = () => {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", { send_to: GTAG_CONVERSIONS.BOOK_APPOINTMENT });
+  }
+};
 import GroupsIcon from "@mui/icons-material/Groups";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import VerifiedIcon from "@mui/icons-material/Verified";
@@ -234,6 +241,7 @@ const SonipatPage = () => {
           </p>
           <Link
             to="/book-appointment"
+            onClick={fireBookAppointmentConversion}
             className="inline-flex items-center gap-2 mt-8 no-underline bg-[#F57C00] hover:bg-[#e88a1a] text-white rounded-xl px-8 py-3 text-[15px] font-semibold transition-colors duration-200"
           >
             Book an Appointment <ArrowForwardIcon sx={{ fontSize: 18 }} />
@@ -476,6 +484,7 @@ const SonipatPage = () => {
           </p>
           <Link
             to="/book-appointment"
+            onClick={fireBookAppointmentConversion}
             className="inline-flex items-center gap-2 no-underline bg-[#F57C00] hover:bg-[#e88a1a] text-white rounded-xl px-8 py-3 text-[15px] font-semibold transition-colors duration-200"
           >
             Book Now <ArrowForwardIcon sx={{ fontSize: 18 }} />
