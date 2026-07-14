@@ -165,7 +165,7 @@ const DoctorProfileAashishSonik = () => {
               <img
                 src="/doctors/dr-sonik.jpg"
                 alt="Dr. Aashish Sonik"
-                className="w-full max-w-sm aspect-[4/5] object-cover object-top rounded-2xl border-4 border-white/20 shadow-2xl"
+                className="w-full max-w-sm md:max-w-md lg:max-w-lg aspect-[4/5] object-cover object-top rounded-2xl border-4 border-white/20 shadow-2xl"
               />
             </div>
 

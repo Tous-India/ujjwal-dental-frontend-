@@ -161,7 +161,7 @@ const DoctorProfile = () => {
               <img
                 src="/doctors/ujjwal.jpg"
                 alt="Dr. Ujjwal Prem"
-                className="w-full max-w-sm aspect-[4/5] object-cover object-top rounded-2xl border-4 border-white/20 shadow-2xl"
+                className="w-full max-w-sm md:max-w-md lg:max-w-lg aspect-[4/5] object-cover object-top rounded-2xl border-4 border-white/20 shadow-2xl"
               />
             </div>
 
