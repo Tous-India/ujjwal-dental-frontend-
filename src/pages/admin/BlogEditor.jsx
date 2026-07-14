@@ -233,7 +233,8 @@ const BlogEditor = () => {
               rows={2}
               value={formData.excerpt}
               onChange={handleChange("excerpt")}
-              helperText="Short summary shown in the blog listing"
+              inputProps={{ maxLength: 1000 }}
+              helperText={`Short summary shown in the blog listing — ${formData.excerpt.length}/1000`}
               className="mt-4"
             />
           </Paper>
