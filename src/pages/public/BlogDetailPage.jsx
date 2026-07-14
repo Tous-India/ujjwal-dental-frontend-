@@ -116,11 +116,11 @@ const BlogDetailPage = () => {
 
       {/* Cover image hero */}
       {blog.coverImage && (
-        <div className="w-full max-h-[420px] overflow-hidden bg-gray-100">
+        <div className="w-full max-h-[280px] md:max-h-[400px] lg:max-h-[480px] max-w-5xl mx-auto overflow-hidden bg-gray-100">
           <img
             src={blog.coverImage}
             alt={blog.title}
-            className="w-full max-h-[420px] object-cover"
+            className="w-full max-h-[280px] md:max-h-[400px] lg:max-h-[480px] object-cover"
           />
         </div>
       )}
