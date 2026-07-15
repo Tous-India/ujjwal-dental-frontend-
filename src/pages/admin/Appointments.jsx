@@ -26,6 +26,8 @@ import {
   Alert,
   Select,
   MenuItem,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
@@ -447,15 +449,6 @@ const filterOptions = [
       { value: "emergency", label: "Emergency" },
     ],
   },
-  {
-    key: "visitType",
-    label: "Visit Type",
-    options: [
-      { value: "opd", label: "Appointment" },
-      { value: "treatment", label: "Treatment" },
-      { value: "treatment_session", label: "Treatment Session" },
-    ],
-  },
 ];
 
 const Appointments = () => {
@@ -464,6 +457,14 @@ const Appointments = () => {
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({});
+  // 0 = Appointments (OPD), 1 = Treatments (treatment + treatment_session)
+  const [activeTab, setActiveTab] = useState(0);
+  const activeVisitType = activeTab === 0 ? "opd" : "treatment,treatment_session";
+
+  const handleTabChange = (_, newTab) => {
+    setActiveTab(newTab);
+    setPage(1);
+  };
 
   // Modal state
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -581,6 +582,7 @@ const Appointments = () => {
     page,
     limit,
     search,
+    visitType: activeVisitType,
     ...filters,
   });
 
@@ -867,6 +869,30 @@ const Appointments = () => {
         </Box>
       </Box>
 
+      {/* ── APPOINTMENTS / TREATMENTS TABS ───────────────────────────────── */}
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          mb: 2,
+          minHeight: 36,
+          "& .MuiTab-root": {
+            minHeight: 36,
+            py: 0.5,
+            px: 1.5,
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            textTransform: "none",
+            minWidth: 0,
+          },
+        }}
+      >
+        <Tab label="Appointments" />
+        <Tab label="Treatments" />
+      </Tabs>
+
       {/* Table */}
       <DataTable
         columns={getColumns(
@@ -927,7 +953,7 @@ const Appointments = () => {
         }}
         onRowClick={handleRowClick}
         onRefresh={handleReset}
-        emptyMessage="No appointments found"
+        emptyMessage={activeTab === 0 ? "No appointments found" : "No treatments booked yet"}
       />
 
       {/* Appointment Detail Modal */}
