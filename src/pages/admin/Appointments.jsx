@@ -449,6 +449,14 @@ const filterOptions = [
       { value: "emergency", label: "Emergency" },
     ],
   },
+  {
+    key: "archived",
+    label: "View",
+    options: [
+      { value: "false", label: "Active" },
+      { value: "true", label: "Archived" },
+    ],
+  },
 ];
 
 const Appointments = () => {
@@ -456,7 +464,9 @@ const Appointments = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({});
+  // "archived" defaults to "false" (Active view) — completed appointments and
+  // closed treatments stay hidden until the admin explicitly picks "Archived".
+  const [filters, setFilters] = useState({ archived: "false" });
   // 0 = Appointments (OPD), 1 = Treatments (treatment + treatment_session)
   const [activeTab, setActiveTab] = useState(0);
   const activeVisitType = activeTab === 0 ? "opd" : "treatment,treatment_session";
@@ -627,7 +637,7 @@ const Appointments = () => {
 
   const handleReset = () => {
     setSearch("");
-    setFilters({});
+    setFilters({ archived: "false" });
     setDateFilter("");
     setPage(1);
   };
