@@ -440,6 +440,7 @@ const filterOptions = [
       { value: "in_progress", label: "In Progress" },
       { value: "completed", label: "Completed" },
       { value: "cancelled", label: "Cancelled" },
+      { value: "no_show", label: "No Show" },
     ],
   },
   {
@@ -697,6 +698,11 @@ const Appointments = () => {
     setDetailModalOpen(false);
     setSelectedAppointment(appointment);
     setCancelModalOpen(true);
+  };
+
+  const handleMarkNoShow = (appointment) => {
+    setDetailModalOpen(false);
+    handleStatusChange(appointment, "no_show");
   };
 
   /**
@@ -1012,6 +1018,7 @@ const Appointments = () => {
         appointment={selectedAppointment}
         onEdit={handleEditAppointment}
         onCancel={handleCancelAppointment}
+        onMarkNoShow={handleMarkNoShow}
         onDelete={handleDeleteAppointment}
         onCloneTreatment={handleCloneTreatment}
         onBookNextSession={handleBookNextSession}

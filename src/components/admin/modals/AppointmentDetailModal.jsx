@@ -39,6 +39,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
 import LockIcon from "@mui/icons-material/Lock";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
+import PersonOffIcon from "@mui/icons-material/PersonOff";
 import api from "../../../api/axios";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import CollectPaymentModal from "./CollectPaymentModal";
@@ -135,7 +136,7 @@ const treatmentStatusLabels = {
   abandoned: "Abandoned",
 };
 
-const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew, onCloneTreatment, onBookNextSession }) => {
+const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew, onCloneTreatment, onBookNextSession, onMarkNoShow }) => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [collectPaymentOpen, setCollectPaymentOpen] = useState(false);
   const [closeTreatmentOpen, setCloseTreatmentOpen] = useState(false);
@@ -461,6 +462,17 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
               onClick={() => onCancel(appointment)}
             >
               Cancel
+            </Button>
+          )}
+          {/* Mark No Show — only reachable from "confirmed" (patient never arrived) */}
+          {onMarkNoShow && status === "confirmed" && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<PersonOffIcon />}
+              onClick={() => onMarkNoShow(appointment)}
+            >
+              Mark No Show
             </Button>
           )}
           {/* Delete Permanently — always available for admin */}
