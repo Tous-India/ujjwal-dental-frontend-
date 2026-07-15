@@ -502,6 +502,28 @@ const Appointments = () => {
     setAddModalOpen(true);
   };
 
+  // Book Next Session — prefill a fresh Add Appointment modal, already in
+  // session mode, pointed at THIS ongoing treatment. Reuses the same prefillData
+  // mechanism as Clone Treatment, but adds a session instead of starting a new plan.
+  const handleBookNextSession = (appointment, activeContext) => {
+    setDetailModalOpen(false);
+    const sessionNumber = activeContext?.nextSessionNumber || null;
+    setCloneTreatmentData({
+      patient: appointment.patient,
+      clinic: appointment.clinic,
+      visitType: "treatment_session",
+      parentAppointment: appointment._id,
+      sessionNumber,
+      treatmentName: appointment.treatmentName,
+      // The Reason field is hidden entirely in session mode (no UI to fix a
+      // blank one), and the backend requires it unconditionally — must prefill.
+      reason: `Session ${sessionNumber || "?"} — ${appointment.treatmentName || "Treatment"}`,
+      selectedTreatmentInvoiceId: appointment.invoice?._id,
+      selectedTreatmentInvoiceBalance: appointment.invoice?.balanceDue,
+    });
+    setAddModalOpen(true);
+  };
+
   // Delete + update mutations
   const { deleteAppointment, isDeleting: isDeletingAppointment, updateAppointment: updateApptMutation } = useAppointmentMutations();
 
@@ -990,6 +1012,7 @@ const Appointments = () => {
         onCancel={handleCancelAppointment}
         onDelete={handleDeleteAppointment}
         onCloneTreatment={handleCloneTreatment}
+        onBookNextSession={handleBookNextSession}
       />
 
       {/* Add Appointment Modal */}
