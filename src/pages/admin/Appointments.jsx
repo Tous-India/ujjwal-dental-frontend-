@@ -1030,6 +1030,10 @@ const Appointments = () => {
         onClose={() => { setAddModalOpen(false); setCloneTreatmentData(null); }}
         onSuccess={handleAppointmentCreated}
         prefillData={cloneTreatmentData}
+        // Only applies when opened via the plain "+ New Appointment" button
+        // (no prefillData set) — Clone Treatment / Book Next Session always
+        // set prefillData.visitType explicitly, which takes priority.
+        initialVisitType={!cloneTreatmentData ? (activeTab === 1 ? "treatment" : "opd") : null}
       />
 
       {/* Edit Appointment Modal */}

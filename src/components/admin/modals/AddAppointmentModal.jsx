@@ -122,7 +122,7 @@ const getInitialFormState = () => ({
   selectedTreatmentInvoiceBalance: 0,
 });
 
-const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null }) => {
+const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, initialVisitType = null }) => {
   const [formData, setFormData] = useState(getInitialFormState());
   const [patientSearch, setPatientSearch] = useState("");
   const [patientOptions, setPatientOptions] = useState([]);
@@ -220,16 +220,22 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null }) =
     !formData.isFree &&
     Number(formData.opdFee) !== Number(derivedOpdDefault);
 
-  // Reset (or prefill from a Clone Treatment action) whenever the modal opens.
-  // Cloning only copies the WHAT/WHO (treatment name/items/sessions/patient) —
-  // date, time, and payment are always left blank for the admin to set fresh.
+  // Reset (or prefill from a Clone Treatment / Book Next Session action)
+  // whenever the modal opens. Cloning only copies the WHAT/WHO (treatment
+  // name/items/sessions/patient) — date, time, and payment are always left
+  // blank for the admin to set fresh. `initialVisitType` is a lighter-weight
+  // default (e.g. from the active Appointments/Treatments tab) that only sets
+  // the starting Visit Type — it does NOT show the "Cloned from…" banner and
+  // is ignored whenever prefillData is also provided.
   useEffect(() => {
     if (open && prefillData) {
       setFormData({ ...getInitialFormState(), ...prefillData });
+    } else if (open && initialVisitType) {
+      setFormData({ ...getInitialFormState(), visitType: initialVisitType });
     } else if (open) {
       setFormData(getInitialFormState());
     }
-  }, [open, prefillData]);
+  }, [open, prefillData, initialVisitType]);
 
   // Fetch slot availability whenever clinic + date are both chosen, so full and
   // past slots can be disabled in the dropdown.
