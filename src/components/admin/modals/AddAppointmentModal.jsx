@@ -95,6 +95,8 @@ const getInitialFormState = () => ({
   visitType: "opd", // "opd" | "treatment" | "treatment_session"
   treatmentName: "",
   fee: "",
+  treatmentItems: [{ description: "", unitPrice: "" }], // multi-line-item fee breakdown (treatment path only)
+  treatmentDiscountPercent: 0, // single % discount on the treatmentItems total
   parentAppointment: null,
   sessionNumber: null,
   sessionsPlanned: null,
@@ -151,12 +153,47 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
     (!membership.expiryDate || new Date(membership.expiryDate) > new Date());
   const discountPercent = isActiveMember ? membership.discountPercent || 0 : 0;
 
+  // Treatment line items — sum, manual discount %, and post-discount total.
+  const treatmentSubtotal = formData.treatmentItems.reduce(
+    (sum, item) => sum + (Number(item.unitPrice) || 0),
+    0,
+  );
+  const treatmentDiscountAmount = Math.round(
+    (treatmentSubtotal * (Number(formData.treatmentDiscountPercent) || 0)) / 100,
+  );
+  const treatmentTotal = Math.max(0, treatmentSubtotal - treatmentDiscountAmount);
+
+  const addTreatmentItem = () =>
+    setFormData((prev) => ({
+      ...prev,
+      treatmentItems: [...prev.treatmentItems, { description: "", unitPrice: "" }],
+    }));
+
+  const removeTreatmentItem = (index) => {
+    if (formData.treatmentItems.length <= 1) {
+      toast.error("At least one item is required");
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      treatmentItems: prev.treatmentItems.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateTreatmentItem = (index, field, value) =>
+    setFormData((prev) => ({
+      ...prev,
+      treatmentItems: prev.treatmentItems.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item,
+      ),
+    }));
+
   // Effective base fee for this visit (before membership discount).
   const isSessionMode = formData.visitType === "treatment_session";
   const baseFee = formData.isFree || isSessionMode
     ? 0
     : formData.visitType === "treatment"
-    ? Number(formData.fee) || 0
+    ? treatmentTotal
     : Number(formData.opdFee) || 0;
   const discountedFee =
     discountPercent > 0 ? Math.max(0, Math.round(baseFee * (1 - discountPercent / 100))) : baseFee;
@@ -428,9 +465,15 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         setErrors((prev) => ({ ...prev, treatmentName: "Enter the treatment name" }));
         return;
       }
-      if (!formData.isFree && (!Number(formData.fee) || Number(formData.fee) <= 0)) {
-        setErrors((prev) => ({ ...prev, fee: "Enter a valid fee" }));
-        return;
+      if (!formData.isFree) {
+        const hasInvalidItem = formData.treatmentItems.some(
+          (item) => !item.description.trim() || !Number(item.unitPrice) || Number(item.unitPrice) <= 0,
+        );
+        if (hasInvalidItem) {
+          setErrors((prev) => ({ ...prev, treatmentItems: "Each item needs a description and a fee greater than ₹0" }));
+          return;
+        }
+        setErrors((prev) => ({ ...prev, treatmentItems: "" }));
       }
     }
 
@@ -465,7 +508,18 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         ? {
             treatmentId: "other",
             treatmentName: formData.treatmentName.trim(),
-            fee: formData.isFree ? 0 : Number(formData.fee),
+            fee: formData.isFree ? 0 : treatmentTotal,
+            ...(!formData.isFree
+              ? {
+                  items: formData.treatmentItems.map((item) => ({
+                    description: item.description.trim(),
+                    unitPrice: Number(item.unitPrice),
+                  })),
+                  ...(Number(formData.treatmentDiscountPercent) > 0
+                    ? { discountPercent: Number(formData.treatmentDiscountPercent) }
+                    : {}),
+                }
+              : {}),
             ...(formData.sessionsPlanned ? { sessionsPlanned: formData.sessionsPlanned } : {}),
             ...(feeCollected && !formData.isFree && formData.treatmentPaymentAmount != null
               ? { amountPaid: Number(formData.treatmentPaymentAmount) }
@@ -1048,7 +1102,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               >
                 <CheckCircleIcon sx={{ fontSize: 14, color: "#059669" }} />
                 <Typography variant="caption" sx={{ color: "#059669", fontWeight: 600 }}>
-                  Patient has {membership?.planName || "an active membership"} — OPD is free
+                  Patient has {membership?.planName || "an active membership"} — Appointment is free
                 </Typography>
               </Box>
             </Grid>
@@ -1130,13 +1184,13 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                         ...prev,
                         visitType: newVisitType,
                         ...(newVisitType === "opd"
-                          ? { treatmentName: "", fee: "" }
+                          ? { treatmentName: "", fee: "", treatmentItems: [{ description: "", unitPrice: "" }], treatmentDiscountPercent: 0 }
                           : {}),
                       }));
                     }}
                     sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.8rem" }, "& .MuiFormControlLabel-root": { mr: 1 } }}
                   >
-                    <FormControlLabel value="opd" control={<Radio size="small" />} label="OPD" />
+                    <FormControlLabel value="opd" control={<Radio size="small" />} label="Appointment" />
                     <FormControlLabel value="treatment" control={<Radio size="small" />} label="Treatment" />
                   </RadioGroup>
                 </FormControl>
@@ -1170,8 +1224,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                   <TextField
                     label={
                       formData.isFree
-                        ? "OPD Fee — Free (Membership)"
-                        : `OPD Fee (₹) — ${formData.appointmentType === "emergency" ? "Emergency" : "Regular"}`
+                        ? "Appointment Fee — Free (Membership)"
+                        : `Appointment Fee (₹) — ${formData.appointmentType === "emergency" ? "Emergency" : "Regular"}`
                     }
                     name="opdFee"
                     type="number"
@@ -1222,21 +1276,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                       placeholder="e.g., Root Canal (Session 1 of 4)"
                     />
                   </Box>
-                  <Box sx={{ flex: "0 0 auto", minWidth: 130 }}>
-                    <TextField
-                      fullWidth
-                      label="Fee (₹)"
-                      name="fee"
-                      type="number"
-                      value={formData.fee}
-                      onChange={handleChange}
-                      required
-                      size="small"
-                      error={!!errors.fee}
-                      helperText={errors.fee}
-                      inputProps={{ min: 0, step: 50 }}
-                    />
-                  </Box>
                   <Box sx={{ flex: "0 0 auto", minWidth: 120 }}>
                     <TextField
                       fullWidth
@@ -1260,7 +1299,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
             </Box>
             {formData.appointmentType === "emergency" && formData.visitType === "opd" && (
               <Typography variant="caption" className="text-red-600 font-medium" sx={{ fontSize: "0.7rem", display: "block", mt: 0.5 }}>
-                Emergency OPD fee applied (₹{feeSettings.opdFeeEmergency}).
+                Emergency Appointment fee applied (₹{feeSettings.opdFeeEmergency}).
               </Typography>
             )}
             {formData.appointmentType === "emergency" && formData.visitType === "treatment" && (
@@ -1269,6 +1308,103 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
               </Typography>
             )}
           </Grid>
+
+          {/* ─── TREATMENT LINE ITEMS + DISCOUNT (parent treatment path only) ─── */}
+          {!isSessionMode && formData.visitType === "treatment" && (
+            <Grid size={{ xs: 12 }}>
+              <Box className="flex items-center justify-between mb-1.5">
+                <Typography variant="caption" className="font-semibold text-gray-700">
+                  Fee Items
+                </Typography>
+                <Button
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={addTreatmentItem}
+                  variant="outlined"
+                  sx={{ textTransform: "none", fontSize: "12px", height: 28 }}
+                >
+                  Add Item
+                </Button>
+              </Box>
+
+              {formData.treatmentItems.map((item, index) => (
+                <Box
+                  key={index}
+                  sx={{ border: "1px solid #e5e7eb", borderRadius: "6px", p: 1.25, mb: 1 }}
+                >
+                  <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+                    <TextField
+                      label="Description"
+                      value={item.description}
+                      onChange={(e) => updateTreatmentItem(index, "description", e.target.value)}
+                      size="small"
+                      placeholder="e.g., Root Canal"
+                      sx={{ flex: "1 1 200px", minWidth: 160 }}
+                    />
+                    <TextField
+                      label="Amount (₹)"
+                      type="number"
+                      value={item.unitPrice}
+                      onChange={(e) => updateTreatmentItem(index, "unitPrice", e.target.value)}
+                      size="small"
+                      inputProps={{ min: 0, step: 50 }}
+                      sx={{ flex: "0 0 auto", minWidth: 130 }}
+                    />
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => removeTreatmentItem(index)}
+                      disabled={formData.treatmentItems.length <= 1}
+                      sx={{ p: 0.5 }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+              {errors.treatmentItems && (
+                <Typography variant="caption" className="text-red-600" sx={{ display: "block", mb: 1 }}>
+                  {errors.treatmentItems}
+                </Typography>
+              )}
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 1 }}>
+                <TextField
+                  label="Discount %"
+                  type="number"
+                  value={formData.treatmentDiscountPercent}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, treatmentDiscountPercent: e.target.value }))
+                  }
+                  size="small"
+                  inputProps={{ min: 0, max: 100 }}
+                  sx={{ maxWidth: 140 }}
+                />
+              </Box>
+
+              <Box sx={{ mt: 1.5, p: 1.5, borderRadius: "6px", bgcolor: "#f9fafb" }}>
+                <Box className="flex justify-between items-center">
+                  <Typography variant="caption" className="text-gray-600">Subtotal</Typography>
+                  <span className="font-numbers text-[13px]">{formatCurrency(treatmentSubtotal)}</span>
+                </Box>
+                {Number(formData.treatmentDiscountPercent) > 0 && (
+                  <Box className="flex justify-between items-center mt-0.5">
+                    <Typography variant="caption" className="text-gray-600">
+                      Discount ({Number(formData.treatmentDiscountPercent)}%)
+                    </Typography>
+                    <span className="font-numbers text-[13px] text-red-600">
+                      -{formatCurrency(treatmentDiscountAmount)}
+                    </span>
+                  </Box>
+                )}
+                <Divider className="my-1" />
+                <Box className="flex justify-between items-center">
+                  <Typography variant="caption" className="font-semibold text-gray-800">Total</Typography>
+                  <span className="font-numbers font-semibold text-[13px]">{formatCurrency(treatmentTotal)}</span>
+                </Box>
+              </Box>
+            </Grid>
+          )}
 
           {/* ─── SESSION PAYMENT (optional, treatment_session only, hidden when nothing to collect) ─── */}
           {isSessionMode && formData.selectedTreatmentInvoiceBalance > 0 && (
@@ -1347,7 +1483,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                 <Typography variant="caption" className="text-gray-600">
                   {formData.visitType === "treatment"
                     ? formData.treatmentName.trim() || "Treatment fee"
-                    : "OPD / Consultation fee"}
+                    : "Appointment / Consultation fee"}
                 </Typography>
                 {discountPercent > 0 && !formData.isFree ? (
                   <Box className="flex items-center gap-2">
@@ -1448,7 +1584,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                           if (checked && formData.visitType === "treatment") {
                             setFormData((prev) => ({
                               ...prev,
-                              treatmentPaymentAmount: Number(formData.fee) || 0,
+                              treatmentPaymentAmount: treatmentTotal,
                             }));
                           }
                         }}
@@ -1472,8 +1608,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
                         setFormData((prev) => ({ ...prev, treatmentPaymentAmount: Number(e.target.value) }))
                       }
                       size="small"
-                      inputProps={{ min: 0, max: formData.fee || 999999 }}
-                      helperText={`Treatment total: ₹${(Number(formData.fee) || 0).toLocaleString("en-IN")}. Enter full or partial advance.`}
+                      inputProps={{ min: 0, max: treatmentTotal || 999999 }}
+                      helperText={`Treatment total: ₹${treatmentTotal.toLocaleString("en-IN")}. Enter full or partial advance.`}
                       sx={{ maxWidth: 220, "& .MuiFormHelperText-root": { visibility: "visible !important" } }}
                     />
                   )}
