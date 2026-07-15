@@ -109,7 +109,7 @@ const getInitialFormState = () => ({
   selectedTreatmentInvoiceBalance: 0,
 });
 
-const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
+const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null }) => {
   const [formData, setFormData] = useState(getInitialFormState());
   const [patientSearch, setPatientSearch] = useState("");
   const [patientOptions, setPatientOptions] = useState([]);
@@ -206,6 +206,17 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
     formData.visitType === "opd" &&
     !formData.isFree &&
     Number(formData.opdFee) !== Number(derivedOpdDefault);
+
+  // Reset (or prefill from a Clone Treatment action) whenever the modal opens.
+  // Cloning only copies the WHAT/WHO (treatment name/items/sessions/patient) —
+  // date, time, and payment are always left blank for the admin to set fresh.
+  useEffect(() => {
+    if (open && prefillData) {
+      setFormData({ ...getInitialFormState(), ...prefillData });
+    } else if (open) {
+      setFormData(getInitialFormState());
+    }
+  }, [open, prefillData]);
 
   // Fetch slot availability whenever clinic + date are both chosen, so full and
   // past slots can be disabled in the dropdown.
@@ -666,6 +677,24 @@ const AddAppointmentModal = ({ open, onClose, onSuccess }) => {
         }}
         className="mt-5"
       >
+        {/* Cloned-treatment banner — shown while the prefilled form is still open */}
+        {prefillData && !bookedAppointment && (
+          <Box
+            sx={{
+              border: "1px solid #bfdbfe",
+              borderRadius: "8px",
+              backgroundColor: "#eff6ff",
+              px: 1.5,
+              py: 1,
+              mb: 1.5,
+            }}
+          >
+            <Typography variant="caption" sx={{ color: "#1e40af", fontWeight: 600 }}>
+              Cloned from a previous treatment — review and adjust before booking
+            </Typography>
+          </Box>
+        )}
+
         {/* Success banner — shown after booking, replaces the form */}
         {bookedAppointment && (
           <Box
