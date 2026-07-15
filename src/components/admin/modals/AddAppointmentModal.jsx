@@ -62,6 +62,19 @@ const typeOptions = [
 ];
 
 /**
+ * Treatment line-item category options — same underlying itemType enum as
+ * CreateInvoiceModal, minus OPD Fee/Membership (not relevant to a treatment
+ * booking's line items) and with Treatment included (the default here).
+ */
+const treatmentItemTypeOptions = [
+  { value: "treatment", label: "Treatment" },
+  { value: "surgery", label: "Surgery" },
+  { value: "test", label: "Test" },
+  { value: "medicine", label: "Medicine" },
+  { value: "other", label: "Other" },
+];
+
+/**
  * Source options
  */
 const sourceOptions = [
@@ -95,7 +108,7 @@ const getInitialFormState = () => ({
   visitType: "opd", // "opd" | "treatment" | "treatment_session"
   treatmentName: "",
   fee: "",
-  treatmentItems: [{ description: "", unitPrice: "" }], // multi-line-item fee breakdown (treatment path only)
+  treatmentItems: [{ description: "", unitPrice: "", itemType: "treatment" }], // multi-line-item fee breakdown (treatment path only)
   treatmentDiscountPercent: 0, // single % discount on the treatmentItems total
   parentAppointment: null,
   sessionNumber: null,
@@ -166,7 +179,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null }) =
   const addTreatmentItem = () =>
     setFormData((prev) => ({
       ...prev,
-      treatmentItems: [...prev.treatmentItems, { description: "", unitPrice: "" }],
+      treatmentItems: [...prev.treatmentItems, { description: "", unitPrice: "", itemType: "treatment" }],
     }));
 
   const removeTreatmentItem = (index) => {
@@ -525,6 +538,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null }) =
                   items: formData.treatmentItems.map((item) => ({
                     description: item.description.trim(),
                     unitPrice: Number(item.unitPrice),
+                    itemType: item.itemType || "treatment",
                   })),
                   ...(Number(formData.treatmentDiscountPercent) > 0
                     ? { discountPercent: Number(formData.treatmentDiscountPercent) }
@@ -1213,7 +1227,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null }) =
                         ...prev,
                         visitType: newVisitType,
                         ...(newVisitType === "opd"
-                          ? { treatmentName: "", fee: "", treatmentItems: [{ description: "", unitPrice: "" }], treatmentDiscountPercent: 0 }
+                          ? { treatmentName: "", fee: "", treatmentItems: [{ description: "", unitPrice: "", itemType: "treatment" }], treatmentDiscountPercent: 0 }
                           : {}),
                       }));
                     }}
@@ -1362,6 +1376,20 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null }) =
                   sx={{ border: "1px solid #e5e7eb", borderRadius: "6px", p: 1.25, mb: 1 }}
                 >
                   <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+                    <TextField
+                      select
+                      label="Category"
+                      value={item.itemType || "treatment"}
+                      onChange={(e) => updateTreatmentItem(index, "itemType", e.target.value)}
+                      size="small"
+                      sx={{ flex: "0 0 auto", minWidth: 120 }}
+                    >
+                      {treatmentItemTypeOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                     <TextField
                       label="Description"
                       value={item.description}
