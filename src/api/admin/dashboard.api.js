@@ -63,3 +63,12 @@ export const getTodayAppointments = () =>
   api.get("/appointments/today").then((res) => ({
     data: res.data?.data || [],
   }));
+
+/**
+ * Get stalled treatments (not yet closed, behind on sessions, no activity in 90+ days)
+ * @returns {Promise} - { staleTreatments: [...], count }
+ */
+export const getStaleTreatments = () =>
+  api.get("/appointments/stale-treatments").then((res) => ({
+    data: res.data?.data || { staleTreatments: [], count: 0 },
+  }));

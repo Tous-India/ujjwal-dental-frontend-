@@ -129,6 +129,7 @@ const Dashboard = () => {
     recentPatients,
     todayAppointments,
     recentEnquiries,
+    staleTreatments,
     isLoadingStats,
     isLoadingRecentAppointments,
     isLoadingRecentPatients,
@@ -488,6 +489,48 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Stalled Treatments — not yet closed, behind on sessions, no activity in 90+ days */}
+        {staleTreatments?.length > 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Card elevation={0} className="rounded-xl! border border-amber-200 bg-amber-50/40">
+              <CardContent className="p-5!">
+                <Box className="flex justify-between items-center mb-4">
+                  <Typography variant="h6" className="font-semibold text-[#92400e] text-[16px]">
+                    Stalled Treatments ({staleTreatments.length})
+                  </Typography>
+                  <Button
+                    size="small"
+                    className="text-accent!"
+                    endIcon={<ArrowForwardIcon />}
+                    onClick={() => navigate("/admin/appointments?tab=treatments")}
+                  >
+                    View Treatments
+                  </Button>
+                </Box>
+                <Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {staleTreatments.map((t) => (
+                    <Box
+                      key={t.appointmentId}
+                      className="p-3 border border-amber-200 rounded-lg bg-white hover:shadow-sm transition-all cursor-pointer"
+                      onClick={() => navigate("/admin/appointments?tab=treatments")}
+                    >
+                      <Typography variant="body2" className="font-medium text-gray-800 truncate">
+                        {t.patient?.name || "Unknown"}
+                      </Typography>
+                      <Typography variant="caption" className="text-gray-500 block truncate">
+                        {t.treatmentName || "Treatment"} • Session {t.sessionsBooked} of {t.sessionsPlanned}
+                      </Typography>
+                      <Typography variant="caption" className="text-amber-700 font-medium">
+                        No activity for {t.daysSinceActivity} days
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
       {/* Patient Detail Modal */}

@@ -19,6 +19,7 @@ import {
   getRecentAppointments,
   getRecentPatients,
   getTodayAppointments,
+  getStaleTreatments,
 } from "../../api/admin/dashboard.api";
 import { getEnquiries } from "../../api/admin/enquiries.api";
 
@@ -77,6 +78,16 @@ export const useDashboard = () => {
     staleTime: 2 * 60 * 1000,
   });
 
+  /**
+   * Stale Treatments Query — treatments not yet closed, behind on sessions,
+   * no booking activity in 90+ days. Computed server-side on every request.
+   */
+  const staleTreatmentsQuery = useQuery({
+    queryKey: ["admin", "dashboard", "staleTreatments"],
+    queryFn: getStaleTreatments,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Combined loading state
   const isLoading =
     statsQuery.isLoading ||
@@ -112,6 +123,10 @@ export const useDashboard = () => {
     // Recent Enquiries
     recentEnquiries: recentEnquiriesQuery.data?.data?.enquiries || [],
     isLoadingRecentEnquiries: recentEnquiriesQuery.isLoading,
+
+    // Stale Treatments
+    staleTreatments: staleTreatmentsQuery.data?.data?.staleTreatments || [],
+    isLoadingStaleTreatments: staleTreatmentsQuery.isLoading,
 
     // Combined states
     isLoading,
