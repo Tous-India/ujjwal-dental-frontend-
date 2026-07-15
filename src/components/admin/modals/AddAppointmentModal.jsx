@@ -765,8 +765,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
         {!bookedAppointment && (
         <Grid container spacing={1.5} sx={{ mt: 1 }}>
 
-          {/* ─── ROW 1: Patient ─── */}
-          <Grid size={{ xs: 12 }}>
+          {/* ─── ROW 1: Patient + Clinic ─── */}
+          <Grid size={{ xs: 12, sm: 7 }}>
             <Autocomplete
               options={patientOptions}
               getOptionLabel={(option) => `${option.name} (${option.phone})`}
@@ -829,6 +829,32 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                   </Box>
                 )
               }
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 5 }}>
+            <Autocomplete
+              options={clinics}
+              getOptionLabel={(option) =>
+                `${option.name}${option.address?.city ? ` - ${option.address.city}` : ""}`
+              }
+              value={formData.clinic}
+              onChange={(_, value) =>
+                setFormData((prev) => ({ ...prev, clinic: value }))
+              }
+              loading={clinicLoading}
+              isOptionEqualToValue={(opt, val) => opt._id === val?._id}
+              getOptionDisabled={(option) => !option.isActive}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Clinic"
+                  placeholder="Choose clinic"
+                  required
+                  size="small"
+                  error={!!errors.clinic}
+                  helperText={errors.clinic || "Inactive clinics are disabled"}
+                />
+              )}
             />
           </Grid>
           {formData.patient && (
@@ -913,7 +939,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
             </Grid>
           )}
 
-          {/* ─── ROW 2: Date → Time → Appointment Type → Reason ─── */}
+          {/* ─── ROW 2: Date → Time → Appointment Type → Booking Source ─── */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
@@ -980,8 +1006,27 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               ))}
             </TextField>
           </Grid>
-          {formData.visitType === "opd" && (
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              label="Booking Source"
+              name="source"
+              value={formData.source}
+              onChange={handleChange}
+              select
+              size="small"
+            >
+              {sourceOptions.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          {/* ─── Reason for Visit (own row, OPD/Appointment mode only) ─── */}
+          {formData.visitType === "opd" && (
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Reason for Visit"
@@ -1078,56 +1123,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               </Box>
             </Grid>
           )}
-
-          {/* ─── SECTION DIVIDER ─── */}
-          <Grid size={{ xs: 12 }}>
-            <Divider />
-          </Grid>
-
-          {/* ─── ROW 3: Clinic + Source ─── */}
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Autocomplete
-              options={clinics}
-              getOptionLabel={(option) =>
-                `${option.name}${option.address?.city ? ` - ${option.address.city}` : ""}`
-              }
-              value={formData.clinic}
-              onChange={(_, value) =>
-                setFormData((prev) => ({ ...prev, clinic: value }))
-              }
-              loading={clinicLoading}
-              isOptionEqualToValue={(opt, val) => opt._id === val?._id}
-              getOptionDisabled={(option) => !option.isActive}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select Clinic"
-                  placeholder="Choose clinic"
-                  required
-                  size="small"
-                  error={!!errors.clinic}
-                  helperText={errors.clinic || "Inactive clinics are disabled"}
-                />
-              )}
-            />
-          </Grid>
-          <Grid size={{ xs: 6, sm: 3, md: 4 }}>
-            <TextField
-              fullWidth
-              label="Booking Source"
-              name="source"
-              value={formData.source}
-              onChange={handleChange}
-              select
-              size="small"
-            >
-              {sourceOptions.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
 
           {/* ─── SECTION DIVIDER ─── */}
           <Grid size={{ xs: 12 }}>
@@ -1308,10 +1303,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                 </Box>
               )}
 
-              {/* Treatment name + fee TextFields (only when treatment selected, not in session mode) */}
+              {/* Treatment name + Sessions planned (only when treatment selected, not in session mode) */}
               {!isSessionMode && formData.visitType === "treatment" && (
-                <>
-                  <Box sx={{ flex: "1 1 200px", minWidth: 200 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: "1 1 100%" }}>
+                  <Box sx={{ flex: "1 1 70%", maxWidth: { md: "70%" } }}>
                     <TextField
                       fullWidth
                       label="Treatment Name"
@@ -1323,9 +1318,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                       error={!!errors.treatmentName}
                       helperText={errors.treatmentName}
                       placeholder="e.g., Root Canal (Session 1 of 4)"
+                      sx={{ "& .MuiInputBase-input": { display: "flex", alignItems: "center" } }}
                     />
                   </Box>
-                  <Box sx={{ flex: "0 0 auto", minWidth: 120 }}>
+                  <Box sx={{ flex: "0 0 auto", minWidth: 190 }}>
                     <TextField
                       fullWidth
                       label="Sessions planned"
@@ -1342,7 +1338,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                       placeholder="e.g. 4"
                     />
                   </Box>
-                </>
+                </Box>
               )}
 
             </Box>
@@ -1430,20 +1426,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                   {errors.treatmentItems}
                 </Typography>
               )}
-
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 1 }}>
-                <TextField
-                  label="Discount %"
-                  type="number"
-                  value={formData.treatmentDiscountPercent}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, treatmentDiscountPercent: e.target.value }))
-                  }
-                  size="small"
-                  inputProps={{ min: 0, max: 100 }}
-                  sx={{ maxWidth: 140 }}
-                />
-              </Box>
 
               <Box sx={{ mt: 1.5, p: 1.5, borderRadius: "6px", bgcolor: "#f9fafb" }}>
                 <Box className="flex justify-between items-center">
@@ -1573,6 +1555,21 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               )}
               <Divider className="my-2.5" />
               <Box className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-0.5 mt-2">
+                {formData.visitType === "treatment" && !formData.isFree && (
+                  <Box className="flex items-center gap-1">
+                    <TextField
+                      label="Discount %"
+                      type="number"
+                      value={formData.treatmentDiscountPercent}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, treatmentDiscountPercent: e.target.value }))
+                      }
+                      size="small"
+                      inputProps={{ min: 0, max: 100 }}
+                      sx={{ width: 110, "& .MuiInputBase-root": { height: 30 } }}
+                    />
+                  </Box>
+                )}
                 <Box className="flex items-center gap-1">
                   <Typography variant="caption" className="text-gray-500">Method:</Typography>
                   {formData.isFree ? (
