@@ -103,11 +103,14 @@ const paymentTypeLabels = {
   other: "Other",
 };
 
+const REFUND_WINDOW_DAYS = 365;
+
 const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
   const [showRefundForm, setShowRefundForm] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
   const [refundAmountError, setRefundAmountError] = useState("");
+  const [refundAmountWarning, setRefundAmountWarning] = useState("");
   const [showReverseForm, setShowReverseForm] = useState(false);
   const [reverseReason, setReverseReason] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -122,17 +125,29 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
     setRefundAmount(val);
     if (val === "") {
       setRefundAmountError("");
+      setRefundAmountWarning("");
       return;
     }
     const n = Number(val);
     if (isNaN(n) || n <= 0) {
       setRefundAmountError("Refund amount must be greater than ₹0");
-    } else if (n > payment.amount) {
+      setRefundAmountWarning("");
+    } else if (n > payment.amount && !isClosedTreatmentPayment) {
+      // Non-treatment payments keep the original hard cap — only completed
+      // treatments (within the refund window) get the goodwill-refund allowance.
       setRefundAmountError(
         `Cannot exceed the paid amount of ${formatCurrency(payment.amount)}`
       );
+      setRefundAmountWarning("");
+    } else if (n > payment.amount) {
+      // Sunny's explicit choice: allow, don't block — just flag it.
+      setRefundAmountError("");
+      setRefundAmountWarning(
+        `Note: this exceeds the amount actually collected (${formatCurrency(payment.amount)}). Confirm this is an intentional goodwill/compensation refund.`
+      );
     } else {
       setRefundAmountError("");
+      setRefundAmountWarning("");
     }
   };
 
@@ -246,10 +261,27 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
 
   if (!payment) return null;
 
+  // Completed treatment (Close Treatment Plan) → 1-year refund window instead
+  // of the usual amount cap. Backend enforces this authoritatively; this is
+  // UX-only (hide/disable + tooltip) and degrades gracefully when payment.appointment
+  // isn't populated (e.g. multi-invoice settlements) — treated as "no restriction".
+  const appt = payment.appointment;
+  const isClosedTreatmentPayment = !!(
+    appt &&
+    appt.visitType === "treatment" &&
+    appt.treatmentStatus &&
+    appt.treatmentClosedAt
+  );
+  const daysSinceClosed = isClosedTreatmentPayment
+    ? (Date.now() - new Date(appt.treatmentClosedAt).getTime()) / 86400000
+    : null;
+  const refundWindowExpired = isClosedTreatmentPayment && daysSinceClosed > REFUND_WINDOW_DAYS;
+
   // Only show refund for payments linked to a single invoice (payment.invoice).
   // Payments recorded via collectPayment/recordAdminPayment use settledInvoices[]
   // instead — those are handled by the Reverse flow below.
-  const canRefund = payment.status === "paid" && !payment.settledInvoices?.length;
+  const refundEligible = payment.status === "paid" && !payment.settledInvoices?.length;
+  const canRefund = refundEligible && !refundWindowExpired;
   const canReverse = !!(payment.settledInvoices?.length) && !payment.reversed && payment.status !== "reversed";
 
   return (
@@ -391,9 +423,16 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
                         `Leave blank to refund the full ${formatCurrency(payment.amount)}`
                       }
                       slotProps={{
-                        htmlInput: { min: 1, max: payment.amount, step: 1 },
+                        htmlInput: isClosedTreatmentPayment
+                          ? { min: 1, step: 1 }
+                          : { min: 1, max: payment.amount, step: 1 },
                       }}
                     />
+                    {refundAmountWarning && (
+                      <Typography variant="caption" sx={{ color: "#b45309", display: "block", mt: 0.5 }}>
+                        {refundAmountWarning}
+                      </Typography>
+                    )}
                   </Grid>
                   <Grid size={{ xs: 12 }}>
                     <TextField
@@ -542,17 +581,27 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
 
       {/* Actions */}
       <DialogActions className="p-2 bg-gray-50">
-        {canRefund && !showRefundForm && (
-          <Tooltip title="Return money to the patient (cash/UPI/Razorpay)" placement="top">
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<RefreshIcon />}
-              onClick={() => setShowRefundForm(true)}
-              sx={{ textTransform: "none", fontSize: "12px" }}
-            >
-              Refund Payment
-            </Button>
+        {refundEligible && !showRefundForm && (
+          <Tooltip
+            title={
+              refundWindowExpired
+                ? "Refund window (1 year) has expired for this completed treatment"
+                : "Return money to the patient (cash/UPI/Razorpay)"
+            }
+            placement="top"
+          >
+            <span>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<RefreshIcon />}
+                onClick={() => setShowRefundForm(true)}
+                disabled={refundWindowExpired}
+                sx={{ textTransform: "none", fontSize: "12px" }}
+              >
+                Refund Payment
+              </Button>
+            </span>
           </Tooltip>
         )}
         {canReverse && !showReverseForm && (
