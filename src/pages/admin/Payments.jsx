@@ -63,7 +63,7 @@ const formatDate = (d) =>
 const CATEGORY_COLORS = {
   Treatment: { bg: "#ede9fe", color: "#5b21b6" },
   Membership: { bg: "#fef3c7", color: "#92400e" },
-  "OPD Fee": { bg: "#dbeafe", color: "#1e40af" },
+  "Appointment Fee": { bg: "#dbeafe", color: "#1e40af" },
   Test: { bg: "#dcfce7", color: "#166534" },
   Medicine: { bg: "#fce7f3", color: "#9d174d" },
   Other: { bg: "#f3f4f6", color: "#374151" },
@@ -80,7 +80,7 @@ const MODE_LABELS = {
 };
 
 const TYPE_LABELS = {
-  opd_fee: "OPD Fee",
+  opd_fee: "Appointment Fee",
   consultation: "Consultation",
   treatment: "Treatment",
   test: "Test",
@@ -92,7 +92,7 @@ const TYPE_LABELS = {
 };
 
 const TYPE_CHIP_COLORS = {
-  "OPD Fee":         { bg: "#dbeafe", color: "#1e40af" },
+  "Appointment Fee": { bg: "#dbeafe", color: "#1e40af" },
   "Consultation":    { bg: "#ede9fe", color: "#5b21b6" },
   "Treatment":       { bg: "#dcfce7", color: "#166534" },
   "Test":            { bg: "#fce7f3", color: "#9d174d" },
@@ -128,7 +128,7 @@ const filterOptions = [
     key: "type",
     label: "Type",
     options: [
-      { value: "opd_fee",         label: "OPD Fee" },
+      { value: "opd_fee",         label: "Appointment Fee" },
       { value: "consultation",    label: "Consultation" },
       { value: "treatment",       label: "Treatment" },
       { value: "test",            label: "Test" },

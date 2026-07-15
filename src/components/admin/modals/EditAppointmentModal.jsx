@@ -469,7 +469,7 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
                   "& .MuiFormControlLabel-root": { mr: 1.5 },
                 }}
               >
-                <FormControlLabel value="opd" control={<Radio size="small" />} label="OPD" />
+                <FormControlLabel value="opd" control={<Radio size="small" />} label="Appointment" />
                 <FormControlLabel value="treatment" control={<Radio size="small" />} label="Treatment" />
               </RadioGroup>
             </FormControl>
@@ -625,7 +625,7 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
             <Grid size={{ xs: 6, sm: 6, md: 4 }}>
               <TextField
                 fullWidth
-                label={`OPD Fee (₹) — ${formData.appointmentType === "emergency" ? "Emergency" : "Regular"}`}
+                label={`Appointment Fee (₹) — ${formData.appointmentType === "emergency" ? "Emergency" : "Regular"}`}
                 name="opdFee"
                 type="number"
                 value={formData.opdFee}
@@ -644,7 +644,7 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
               <Paper variant="outlined" className="p-3 bg-gray-50">
                 <Box className="flex justify-between items-center py-1">
                   <Typography variant="caption" className="text-gray-600">
-                    OPD / Consultation fee
+                    Appointment / Consultation fee
                   </Typography>
                   <span className="font-numbers font-semibold">
                     {formData.isFree ? "Free" : formatCurrency(baseFee)}

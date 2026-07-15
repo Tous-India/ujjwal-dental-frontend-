@@ -632,7 +632,7 @@ const Billing = () => {
         <Grid size={{ xs: 6, md: 2.4 }}>
           <StatCard
             icon={LocalHospitalIcon}
-            label="OPD Collected"
+            label="Appointment Collected"
             value={formatCurrency(stats.opdCollection)}
             color="bg-teal-500"
             dateLabel={statDateLabel}

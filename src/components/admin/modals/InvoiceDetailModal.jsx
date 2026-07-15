@@ -62,7 +62,7 @@ const itemTypeLabels = {
   treatment: "Treatment",
   surgery: "Surgery",
   test: "Test",
-  opd_fee: "OPD Fee",
+  opd_fee: "Appointment Fee",
   membership: "Membership",
   medicine: "Medicine",
   other: "Other",

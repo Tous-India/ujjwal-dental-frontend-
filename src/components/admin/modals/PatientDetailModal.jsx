@@ -632,7 +632,7 @@ const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
 
   const paymentTypeLabel = (type) => {
     const map = {
-      opd_fee: "OPD Fee", treatment: "Treatment", invoice_payment: "Invoice Payment",
+      opd_fee: "Appointment Fee", treatment: "Treatment", invoice_payment: "Invoice Payment",
       consultation: "Consultation", membership: "Membership",
       advance: "Advance", refund: "Refund", other: "Other",
     };

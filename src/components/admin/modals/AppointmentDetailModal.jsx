@@ -292,7 +292,7 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
             <Box className="bg-gray-50/60 rounded px-3 py-2 mb-2">
               <Box className="flex justify-between items-center py-1">
                 <Typography variant="caption" className="text-gray-600">
-                  {(isParentTreatment || isSession) ? "Treatment Fee" : "OPD Fee"}
+                  {(isParentTreatment || isSession) ? "Treatment Fee" : "Appointment Fee"}
                 </Typography>
                 {isFree ? (
                   <Chip label="Free" size="small" color="info" />

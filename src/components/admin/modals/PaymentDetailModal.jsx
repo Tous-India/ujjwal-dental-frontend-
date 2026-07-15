@@ -92,7 +92,7 @@ const paymentModeLabels = {
  * Payment type labels
  */
 const paymentTypeLabels = {
-  opd_fee: "OPD Fee",
+  opd_fee: "Appointment Fee",
   consultation: "Consultation",
   treatment: "Treatment",
   test: "Test/Investigation",

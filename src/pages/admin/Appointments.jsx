@@ -153,7 +153,7 @@ const columns = [
           ) : (
             <Chip
               size="small"
-              label={value === "treatment" ? "Treatment" : "OPD"}
+              label={value === "treatment" ? "Treatment" : "Appointment"}
               color={value === "treatment" ? "warning" : "info"}
               title={row?.treatmentId?.name || row?.treatmentName || ""}
               sx={{ fontSize: "11px" }}
@@ -451,7 +451,7 @@ const filterOptions = [
     key: "visitType",
     label: "Visit Type",
     options: [
-      { value: "opd", label: "OPD" },
+      { value: "opd", label: "Appointment" },
       { value: "treatment", label: "Treatment" },
       { value: "treatment_session", label: "Treatment Session" },
     ],
@@ -988,7 +988,7 @@ const Appointments = () => {
         <DialogTitle className="bg-indigo-600 text-white">
           <Box className="flex items-center gap-2">
             <CurrencyRupeeIcon />
-            <Typography variant="h6">Update OPD Fees</Typography>
+            <Typography variant="h6">Update Appointment Fees</Typography>
           </Box>
         </DialogTitle>
         <DialogContent className="mt-4">
@@ -999,7 +999,7 @@ const Appointments = () => {
           )}
           <Box className="flex flex-col gap-4 mt-2">
             <TextField
-              label="Regular OPD Fee (₹)"
+              label="Regular Appointment Fee (₹)"
               type="number"
               value={feeForm.opdFeeRegular}
               onChange={(e) =>
@@ -1013,7 +1013,7 @@ const Appointments = () => {
               inputProps={{ min: 0 }}
             />
             <TextField
-              label="Emergency OPD Fee (₹)"
+              label="Emergency Appointment Fee (₹)"
               type="number"
               value={feeForm.opdFeeEmergency}
               onChange={(e) =>

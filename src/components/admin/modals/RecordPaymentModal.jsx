@@ -39,7 +39,7 @@ const paymentModes = [
  * Payment types
  */
 const paymentTypes = [
-  { value: "opd_fee", label: "OPD Fee" },
+  { value: "opd_fee", label: "Appointment Fee" },
   { value: "consultation", label: "Consultation" },
   { value: "treatment", label: "Treatment" },
   { value: "test", label: "Test/Investigation" },
