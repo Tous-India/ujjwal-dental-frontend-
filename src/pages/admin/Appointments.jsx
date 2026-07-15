@@ -498,7 +498,7 @@ const Appointments = () => {
     setCloneTreatmentData({
       patient: appointment.patient,
       treatmentName: appointment.treatmentName,
-      treatmentItems: [{ description: appointment.treatmentName || "", unitPrice: appointment.fee || "" }],
+      treatmentItems: [{ description: appointment.treatmentName || "", unitPrice: appointment.fee || "", itemType: "treatment" }],
       sessionsPlanned: appointment.sessionsPlanned,
       visitType: "treatment",
     });
