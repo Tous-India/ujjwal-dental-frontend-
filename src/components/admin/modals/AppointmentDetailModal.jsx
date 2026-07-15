@@ -38,9 +38,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PaymentIcon from "@mui/icons-material/Payment";
 import LockIcon from "@mui/icons-material/Lock";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import api from "../../../api/axios";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import CollectPaymentModal from "./CollectPaymentModal";
+import { usePatientActiveContext } from "../../../hooks/admin/usePatients";
 
 /**
  * Info row — single-line inline: [icon] [label] [value]
@@ -133,7 +135,7 @@ const treatmentStatusLabels = {
   abandoned: "Abandoned",
 };
 
-const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew, onCloneTreatment }) => {
+const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew, onCloneTreatment, onBookNextSession }) => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [collectPaymentOpen, setCollectPaymentOpen] = useState(false);
   const [closeTreatmentOpen, setCloseTreatmentOpen] = useState(false);
@@ -141,6 +143,11 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
   const [closeReason, setCloseReason] = useState("");
   const [closeLoading, setCloseLoading] = useState(false);
   const [closeError, setCloseError] = useState("");
+
+  // Fetch this treatment's session count/plan the same way the Add Appointment
+  // banner does — needed to know whether there's room for another session.
+  const { data: activeContextData } = usePatientActiveContext(appointment?.patient?._id);
+  const activeTreatments = activeContextData?.data?.activeTreatments || [];
 
   if (!appointment) return null;
 
@@ -151,6 +158,15 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
     isParentTreatment &&
     !alreadyClosed &&
     appointment.status !== "cancelled";
+
+  const activeContext = activeTreatments.find(
+    (t) => t.parentAppointmentId === appointment._id
+  );
+  const canBookNextSession =
+    isParentTreatment &&
+    !alreadyClosed &&
+    !!activeContext &&
+    (activeContext.sessionsPlanned == null || activeContext.sessionsBooked < activeContext.sessionsPlanned);
 
   const canCollectSessionPayment =
     isSession &&
@@ -470,6 +486,15 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
           )}
         </Box>
         <Box className="flex gap-2">
+          {onBookNextSession && canBookNextSession && (
+            <Button
+              variant="outlined"
+              startIcon={<EventRepeatIcon />}
+              onClick={() => onBookNextSession(appointment, activeContext)}
+            >
+              Book Next Session
+            </Button>
+          )}
           {onCloneTreatment && isParentTreatment && alreadyClosed && (
             <Button
               variant="outlined"
