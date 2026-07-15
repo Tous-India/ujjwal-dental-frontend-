@@ -37,6 +37,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PaymentIcon from "@mui/icons-material/Payment";
 import LockIcon from "@mui/icons-material/Lock";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import api from "../../../api/axios";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import CollectPaymentModal from "./CollectPaymentModal";
@@ -132,7 +133,7 @@ const treatmentStatusLabels = {
   abandoned: "Abandoned",
 };
 
-const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew }) => {
+const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, onDelete, onRenew, onCloneTreatment }) => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [collectPaymentOpen, setCollectPaymentOpen] = useState(false);
   const [closeTreatmentOpen, setCloseTreatmentOpen] = useState(false);
@@ -469,6 +470,15 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
           )}
         </Box>
         <Box className="flex gap-2">
+          {onCloneTreatment && isParentTreatment && alreadyClosed && (
+            <Button
+              variant="outlined"
+              startIcon={<ContentCopyIcon />}
+              onClick={() => onCloneTreatment(appointment)}
+            >
+              Clone Treatment
+            </Button>
+          )}
           {canCloseTreatment && (
             <Button
               variant="outlined"
