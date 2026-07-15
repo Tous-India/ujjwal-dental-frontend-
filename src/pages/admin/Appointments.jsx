@@ -9,6 +9,7 @@
  * - Add, Edit, Cancel appointment via modals
  */
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -449,14 +450,6 @@ const filterOptions = [
       { value: "emergency", label: "Emergency" },
     ],
   },
-  {
-    key: "archived",
-    label: "View",
-    options: [
-      { value: "false", label: "Active" },
-      { value: "true", label: "Archived" },
-    ],
-  },
 ];
 
 const Appointments = () => {
@@ -464,15 +457,24 @@ const Appointments = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  // "archived" defaults to "false" (Active view) — completed appointments and
-  // closed treatments stay hidden until the admin explicitly picks "Archived".
-  const [filters, setFilters] = useState({ archived: "false" });
-  // 0 = Appointments (OPD), 1 = Treatments (treatment + treatment_session)
-  const [activeTab, setActiveTab] = useState(0);
+  // Status defaults to "scheduled" — completed OPD visits and closed
+  // treatments (unified onto appointment.status server-side) stay hidden
+  // until the admin explicitly picks "Completed" from this same dropdown.
+  const [filters, setFilters] = useState({ status: "scheduled" });
+  // 0 = Appointments (OPD), 1 = Treatments (treatment + treatment_session).
+  // Persisted in the URL (?tab=treatments) so it survives a page reload and
+  // is bookmarkable/shareable, matching the useSearchParams pattern already
+  // used elsewhere in the admin panel (Patients.jsx, Settings.jsx).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") === "treatments" ? 1 : 0;
   const activeVisitType = activeTab === 0 ? "opd" : "treatment,treatment_session";
 
   const handleTabChange = (_, newTab) => {
-    setActiveTab(newTab);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", newTab === 1 ? "treatments" : "appointments");
+      return next;
+    });
     setPage(1);
   };
 
@@ -659,7 +661,7 @@ const Appointments = () => {
 
   const handleReset = () => {
     setSearch("");
-    setFilters({ archived: "false" });
+    setFilters({ status: "scheduled" });
     setDateFilter("");
     setPage(1);
   };
