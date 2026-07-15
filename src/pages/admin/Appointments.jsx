@@ -476,6 +476,21 @@ const Appointments = () => {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [slipPreviewOpen, setSlipPreviewOpen] = useState(false);
   const [slipAppointment, setSlipAppointment] = useState(null);
+  const [cloneTreatmentData, setCloneTreatmentData] = useState(null);
+
+  // Clone Treatment — prefill a fresh Add Appointment modal from a completed
+  // treatment. Copies WHAT/WHO (patient, name, fee, sessions), never WHEN/payment.
+  const handleCloneTreatment = (appointment) => {
+    setDetailModalOpen(false);
+    setCloneTreatmentData({
+      patient: appointment.patient,
+      treatmentName: appointment.treatmentName,
+      treatmentItems: [{ description: appointment.treatmentName || "", unitPrice: appointment.fee || "" }],
+      sessionsPlanned: appointment.sessionsPlanned,
+      visitType: "treatment",
+    });
+    setAddModalOpen(true);
+  };
 
   // Delete + update mutations
   const { deleteAppointment, isDeleting: isDeletingAppointment, updateAppointment: updateApptMutation } = useAppointmentMutations();
@@ -964,13 +979,15 @@ const Appointments = () => {
         onEdit={handleEditAppointment}
         onCancel={handleCancelAppointment}
         onDelete={handleDeleteAppointment}
+        onCloneTreatment={handleCloneTreatment}
       />
 
       {/* Add Appointment Modal */}
       <AddAppointmentModal
         open={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
+        onClose={() => { setAddModalOpen(false); setCloneTreatmentData(null); }}
         onSuccess={handleAppointmentCreated}
+        prefillData={cloneTreatmentData}
       />
 
       {/* Edit Appointment Modal */}
