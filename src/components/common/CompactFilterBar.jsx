@@ -32,6 +32,9 @@ const CompactFilterBar = ({
   onFromChange,
   onToChange,
   onClearDates,
+  // Optional custom date-range filter element (e.g. QuickDateRangeFilter)
+  // rendered in place of the bare From/To inputs above when provided.
+  dateFilterSlot,
   // Search (omit onSearchChange to hide)
   search = "",
   onSearchChange,
@@ -48,7 +51,8 @@ const CompactFilterBar = ({
   return (
     <Paper className="p-3 mb-4">
       <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 1.5, alignItems: "center" }}>
-        {showDates && (
+        {dateFilterSlot}
+        {!dateFilterSlot && showDates && (
           <>
             <TextField
               type="date"
