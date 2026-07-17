@@ -264,6 +264,44 @@ const treatmentsData = {
       { question: "How long do crowns and bridges last?", answer: "With proper care, dental crowns and bridges can last 10-15 years or longer." },
       { question: "What materials are used?", answer: "Options include porcelain, ceramic, zirconia, metal alloys, and porcelain-fused-to-metal. The best choice depends on the location and your preferences." },
       { question: "Is the procedure painful?", answer: "The procedure is performed under local anesthesia and is generally comfortable. Some sensitivity after placement is normal and temporary." },
+      {
+        question: "Which is better, Zirconia or E-Max?",
+        answer:
+          'Neither material is universally "better" -- they serve different purposes depending on where the restoration is located and your functional needs. E-Max (lithium disilicate glass-ceramic) provides superior, lifelike translucency and light reflection. It is considered the gold standard for front teeth (anterior restorations) and veneers. However, its flexural strength is lower (around 470-530 MPa), so it is not recommended for back molars or patients who grind their teeth. Zirconia (zirconium dioxide) is essentially "ceramic steel." Ranging from 557 MPa to over 1,200 MPa in flexural strength, it is highly durable, fracture-resistant, and ideal for molars, multi-unit bridges, or patients with a heavy bite. While older generations of zirconia were highly opaque, modern translucent zirconia (such as multilayered variants) offers great aesthetic results. When to choose E-Max: front teeth or highly visible areas; single-tooth crowns or veneers where aesthetics are the primary concern; low-stress areas. When to choose Zirconia: back teeth and molars that handle heavy chewing forces; multi-unit bridges; if you suffer from bruxism (teeth grinding); masking dark or stained underlying tooth structures.',
+        answerBlocks: [
+          {
+            type: "p",
+            text: 'Neither material is universally "better" -- they serve different purposes depending on where the restoration is located and your functional needs.',
+          },
+          {
+            type: "p",
+            text: "E-Max (lithium disilicate glass-ceramic) provides superior, lifelike translucency and light reflection. It is considered the gold standard for front teeth (anterior restorations) and veneers. However, its flexural strength is lower (around 470-530 MPa), so it is not recommended for back molars or patients who grind their teeth.",
+          },
+          {
+            type: "p",
+            text: 'Zirconia (zirconium dioxide) is essentially "ceramic steel." Ranging from 557 MPa to over 1,200 MPa in flexural strength, it is highly durable, fracture-resistant, and ideal for molars, multi-unit bridges, or patients with a heavy bite. While older generations of zirconia were highly opaque, modern translucent zirconia (such as multilayered variants) offers great aesthetic results.',
+          },
+          {
+            type: "ul",
+            label: "When to choose E-Max:",
+            items: [
+              "Front teeth or highly visible areas",
+              "Single-tooth crowns or veneers where aesthetics are the primary concern",
+              "Low-stress areas",
+            ],
+          },
+          {
+            type: "ul",
+            label: "When to choose Zirconia:",
+            items: [
+              "Back teeth and molars that handle heavy chewing forces",
+              "Multi-unit bridges",
+              "If you suffer from bruxism (teeth grinding)",
+              "Masking dark or stained underlying tooth structures",
+            ],
+          },
+        ],
+      },
     ],
     keywords: ["dental crown", "dental bridge", "tooth cap", "missing teeth", "porcelain crown", "zirconia crown", "fixed prosthetics"],
   },

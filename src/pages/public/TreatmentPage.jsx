@@ -385,9 +385,45 @@ const TreatmentPage = () => {
                       }`}
                     >
                       <div className="overflow-hidden">
-                        <p className="text-gray-600 text-[15px]" style={{ lineHeight: 1.7 }}>
-                          {faq.answer}
-                        </p>
+                        {faq.answerBlocks ? (
+                          faq.answerBlocks.map((block, bi) =>
+                            block.type === "ul" ? (
+                              <div key={bi} className="mt-3 first:mt-0">
+                                {block.label && (
+                                  <p
+                                    className="text-gray-600 text-[15px] font-semibold mb-1"
+                                    style={{ lineHeight: 1.7 }}
+                                  >
+                                    {block.label}
+                                  </p>
+                                )}
+                                <ul className="list-disc pl-5 space-y-1">
+                                  {block.items.map((item, ii) => (
+                                    <li
+                                      key={ii}
+                                      className="text-gray-600 text-[15px]"
+                                      style={{ lineHeight: 1.7 }}
+                                    >
+                                      {item}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : (
+                              <p
+                                key={bi}
+                                className="text-gray-600 text-[15px] mt-3 first:mt-0"
+                                style={{ lineHeight: 1.7 }}
+                              >
+                                {block.text}
+                              </p>
+                            )
+                          )
+                        ) : (
+                          <p className="text-gray-600 text-[15px]" style={{ lineHeight: 1.7 }}>
+                            {faq.answer}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
