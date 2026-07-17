@@ -30,6 +30,7 @@ import CampaignIcon from "@mui/icons-material/Campaign";
 import InfoIcon from "@mui/icons-material/Info";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
+import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import {
   useAdminNotifications,
   useNotificationStats,
@@ -263,12 +264,6 @@ const Notifications = () => {
     setPage(1);
   };
 
-  const handleClearDates = () => {
-    setFromDate("");
-    setToDate("");
-    setPage(1);
-  };
-
   const handleReset = () => {
     setSearch("");
     setFilters({});
@@ -341,17 +336,16 @@ const Notifications = () => {
 
       {/* Filters — single compact row */}
       <CompactFilterBar
-        fromDate={fromDate}
-        toDate={toDate}
-        onFromChange={(e) => {
-          setFromDate(e.target.value);
-          setPage(1);
-        }}
-        onToChange={(e) => {
-          setToDate(e.target.value);
-          setPage(1);
-        }}
-        onClearDates={handleClearDates}
+        dateFilterSlot={
+          <QuickDateRangeFilter
+            value={{ from: fromDate, to: toDate }}
+            onChange={({ from, to }) => {
+              setFromDate(from);
+              setToDate(to);
+              setPage(1);
+            }}
+          />
+        }
         search={search}
         onSearchChange={handleSearch}
         searchPlaceholder="Search notifications..."

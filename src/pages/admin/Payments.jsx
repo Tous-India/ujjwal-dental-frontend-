@@ -38,6 +38,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import { getInvoice } from "../../api/admin/billing.api";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
+import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import CollectPaymentModal from "../../components/admin/modals/CollectPaymentModal";
 import PaymentDetailModal from "../../components/admin/modals/PaymentDetailModal";
 import InvoiceDetailModal from "../../components/admin/modals/InvoiceDetailModal";
@@ -303,22 +304,6 @@ const Payments = () => {
   const handleRowClick = (payment) => {
     setSelectedPayment(payment);
     setDetailModalOpen(true);
-  };
-
-  const handleFromDateChange = (e) => {
-    setFromDate(e.target.value);
-    setPage(1);
-  };
-
-  const handleToDateChange = (e) => {
-    setToDate(e.target.value);
-    setPage(1);
-  };
-
-  const handleClearDates = () => {
-    setFromDate("");
-    setToDate("");
-    setPage(1);
   };
 
   // ── Reversal ───────────────────────────────────────────────────────────────
@@ -900,11 +885,16 @@ const Payments = () => {
       </Box>
 
       <CompactFilterBar
-        fromDate={fromDate}
-        toDate={toDate}
-        onFromChange={handleFromDateChange}
-        onToChange={handleToDateChange}
-        onClearDates={handleClearDates}
+        dateFilterSlot={
+          <QuickDateRangeFilter
+            value={{ from: fromDate, to: toDate }}
+            onChange={({ from, to }) => {
+              setFromDate(from);
+              setToDate(to);
+              setPage(1);
+            }}
+          />
+        }
         search={search}
         onSearchChange={handleSearch}
         searchPlaceholder="Search by payment number or patient…"

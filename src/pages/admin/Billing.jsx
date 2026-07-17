@@ -43,6 +43,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import { useQueryClient } from "@tanstack/react-query";
 import InvoicePreviewModal from "../../components/InvoicePreviewModal";
+import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
 import { useInvoices, useBillingStats } from "../../hooks/admin/useBilling";
@@ -255,10 +256,6 @@ const Billing = () => {
     setSelectedInvoice(invoice);
     setDetailModalOpen(true);
   };
-
-  const handleFromDateChange = (e) => { setFromDate(e.target.value); setPage(1); };
-  const handleToDateChange = (e) => { setToDate(e.target.value); setPage(1); };
-  const handleClearDates = () => { setFromDate(""); setToDate(""); setPage(1); };
 
   const handleReset = () => {
     setSearch("");
@@ -644,11 +641,16 @@ const Billing = () => {
 
       {/* Filters */}
       <CompactFilterBar
-        fromDate={fromDate}
-        toDate={toDate}
-        onFromChange={handleFromDateChange}
-        onToChange={handleToDateChange}
-        onClearDates={handleClearDates}
+        dateFilterSlot={
+          <QuickDateRangeFilter
+            value={{ from: fromDate, to: toDate }}
+            onChange={({ from, to }) => {
+              setFromDate(from);
+              setToDate(to);
+              setPage(1);
+            }}
+          />
+        }
         search={search}
         onSearchChange={handleSearch}
         searchPlaceholder="Search by invoice number or patient..."
