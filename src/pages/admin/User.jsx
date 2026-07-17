@@ -63,8 +63,8 @@ const columns = [
     headerName: "Role",
     minWidth: 100,
     render: (value) => {
-      const label = value === "admin" ? "Admin" : value === "blog_editor" ? "SEO Executive" : "Staff";
-      const color = value === "admin" ? "primary" : value === "blog_editor" ? "secondary" : "default";
+      const label = value === "admin" ? "Admin" : value === "blog_editor" ? "SEO Executive" : value === "clinic_manager" ? "Clinic Manager" : "Staff";
+      const color = value === "admin" ? "primary" : value === "blog_editor" ? "secondary" : value === "clinic_manager" ? "info" : "default";
       return <Chip label={label} size="small" color={color} variant="outlined" />;
     },
   },
@@ -105,6 +105,7 @@ const filterOptions = [
       { value: "admin", label: "Admin" },
       { value: "user", label: "Staff" },
       { value: "blog_editor", label: "SEO Executive" },
+      { value: "clinic_manager", label: "Clinic Manager" },
     ],
   },
   {
