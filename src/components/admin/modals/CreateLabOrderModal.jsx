@@ -277,8 +277,7 @@ const CreateLabOrderModal = ({ open, onClose, onSuccess }) => {
               value={formData.expectedDelivery}
               onChange={(e) => setFormData((prev) => ({ ...prev, expectedDelivery: e.target.value }))}
               size="small"
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: todayStr(), max: MAX_DATE }}
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: todayStr(), max: MAX_DATE } }}
             />
           </Grid>
 
