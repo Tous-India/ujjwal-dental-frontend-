@@ -26,7 +26,6 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
-import ClearIcon from "@mui/icons-material/Clear";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
@@ -37,6 +36,7 @@ import DataTable from "../../components/common/DataTable";
 import { useLabOrders, useLabOrderMutations } from "../../hooks/admin/useLabOrders";
 import { useLabs } from "../../hooks/admin/useLabs";
 import CreateLabOrderModal from "../../components/admin/modals/CreateLabOrderModal";
+import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import LabOrderDetailModal from "../../components/admin/modals/LabOrderDetailModal";
 import LabFormModal from "../../components/admin/modals/LabFormModal";
 
@@ -233,36 +233,15 @@ const LabOrdersTab = () => {
               <ToggleButton value="archived">Archived</ToggleButton>
             </ToggleButtonGroup>
           </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField
-              fullWidth
-              type="date"
-              size="small"
-              label="From"
-              value={fromDate}
-              onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
-              slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <QuickDateRangeFilter
+              value={{ from: fromDate, to: toDate }}
+              onChange={({ from, to }) => {
+                setFromDate(from);
+                setToDate(to);
+                setPage(1);
+              }}
             />
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <TextField
-                fullWidth
-                type="date"
-                size="small"
-                label="To"
-                value={toDate}
-                onChange={(e) => { setToDate(e.target.value); setPage(1); }}
-                slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ "& .MuiInputBase-root": { height: 36, fontSize: "12px" } }}
-              />
-              {(fromDate || toDate) && (
-                <IconButton size="small" onClick={() => { setFromDate(""); setToDate(""); setPage(1); }} title="Clear dates">
-                  <ClearIcon fontSize="small" />
-                </IconButton>
-              )}
-            </Box>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
