@@ -27,6 +27,7 @@ import PhoneCallbackIcon from "@mui/icons-material/PhoneCallback";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
+import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import { useEnquiries, useEnquiryStats, useEnquiryMutations } from "../../hooks/admin/useEnquiries";
 import EnquiryDetailModal from "../../components/admin/modals/EnquiryDetailModal";
 
@@ -244,7 +245,6 @@ const Enquiries = () => {
     setPage(1);
   };
   const handleRowClick = (enq) => { setSelectedEnquiry(enq); setDetailModalOpen(true); };
-  const handleClearDates = () => { setFromDate(""); setToDate(""); setPage(1); };
 
   const handleReset = () => {
     setSearch("");
@@ -290,11 +290,16 @@ const Enquiries = () => {
 
       {/* Filters — single compact row */}
       <CompactFilterBar
-        fromDate={fromDate}
-        toDate={toDate}
-        onFromChange={(e) => { setFromDate(e.target.value); setPage(1); }}
-        onToChange={(e) => { setToDate(e.target.value); setPage(1); }}
-        onClearDates={handleClearDates}
+        dateFilterSlot={
+          <QuickDateRangeFilter
+            value={{ from: fromDate, to: toDate }}
+            onChange={({ from, to }) => {
+              setFromDate(from);
+              setToDate(to);
+              setPage(1);
+            }}
+          />
+        }
         search={search}
         onSearchChange={handleSearch}
         searchPlaceholder="Search by name, phone, email, or lead #..."
