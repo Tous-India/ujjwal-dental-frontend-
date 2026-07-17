@@ -77,10 +77,20 @@ const ADMIN_NAV = [
 // SEO Executive (blog_editor role) — access restricted to Blogs only.
 const BLOG_EDITOR_NAV = ADMIN_NAV.filter((item) => item.path === "/admin/blogs");
 
+// Clinic Manager — full access except Staff and Settings.
+const CLINIC_MANAGER_NAV = ADMIN_NAV.filter(
+  (item) => item.path !== "/admin/users" && item.path !== "/admin/settings"
+);
+
 const AdminSidebar = ({ open, onClose }) => {
   const location = useLocation();
   const { admin } = useAdminStore();
-  const navItems = admin?.role === "blog_editor" ? BLOG_EDITOR_NAV : ADMIN_NAV;
+  const navItems =
+    admin?.role === "blog_editor"
+      ? BLOG_EDITOR_NAV
+      : admin?.role === "clinic_manager"
+      ? CLINIC_MANAGER_NAV
+      : ADMIN_NAV;
 
   // Fetch badge counts
   const { data: badgeCounts } = useQuery({
