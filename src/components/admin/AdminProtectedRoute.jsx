@@ -35,6 +35,16 @@ const AdminProtectedRoute = () => {
     return <Navigate to="/admin/blogs" replace />;
   }
 
+  // Clinic Manager has full access except Staff (/admin/users) and Settings.
+  // Blocks direct URL entry into either from bypassing the hidden sidebar items.
+  if (
+    admin?.role === "clinic_manager" &&
+    (location.pathname.startsWith("/admin/users") ||
+      location.pathname.startsWith("/admin/settings"))
+  ) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
   // Authenticated - render child routes
   return <Outlet />;
 };
