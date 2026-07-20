@@ -14,15 +14,17 @@ import api from "../axios";
 
 /**
  * Get dashboard statistics by aggregating multiple endpoints
- * @returns {Promise} - { totalPatients, totalAppointments, pendingPayments, todayAppointments }
+ * @returns {Promise} - { totalPatients, totalAppointments, pendingPayments, todayAppointments, pendingLabOrders }
  */
 export const getDashboardStats = async () => {
   // Fetch data from multiple endpoints in parallel
-  const [patientsRes, appointmentsRes, todayRes, pendingPaymentsRes] = await Promise.all([
+  const [patientsRes, appointmentsRes, todayRes, pendingPaymentsRes, pendingLabOrdersRes] = await Promise.all([
     api.get("/patients?limit=1"),
     api.get("/appointments?limit=1"),
     api.get("/appointments/today"),
     api.get("/payments?status=pending&limit=1").catch(() => ({ data: { pagination: { total: 0 } } })),
+    // Pending = not yet delivered/rejected (terminal states), active (non-archived) orders only.
+    api.get("/lab-orders?deliveryStatus=pending,in_progress&archived=false&limit=1").catch(() => ({ data: { pagination: { total: 0 } } })),
   ]);
 
   return {
@@ -31,6 +33,7 @@ export const getDashboardStats = async () => {
       totalAppointments: appointmentsRes.data?.pagination?.total || 0,
       todayAppointments: todayRes.data?.data?.length || 0,
       pendingPayments: pendingPaymentsRes.data?.pagination?.total || 0,
+      pendingLabOrders: pendingLabOrdersRes.data?.pagination?.total || 0,
     },
   };
 };

@@ -30,6 +30,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import EventIcon from "@mui/icons-material/Event";
 import PaymentIcon from "@mui/icons-material/Payment";
 import TodayIcon from "@mui/icons-material/Today";
+import ScienceIcon from "@mui/icons-material/Science";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useNavigate } from "react-router-dom";
@@ -159,7 +160,7 @@ const Dashboard = () => {
 
       {/* Stats Cards */}
       <Grid container spacing={3} className="mb-6">
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatsCard
             title="Total Patients"
             value={stats?.totalPatients}
@@ -170,7 +171,7 @@ const Dashboard = () => {
             onClick={() => navigate("/admin/patients")}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatsCard
             title="Total Appointments"
             value={stats?.totalAppointments}
@@ -181,7 +182,7 @@ const Dashboard = () => {
             onClick={() => navigate("/admin/appointments")}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatsCard
             title="Pending Payments"
             value={stats?.pendingPayments}
@@ -192,7 +193,7 @@ const Dashboard = () => {
             onClick={() => navigate("/admin/payments")}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatsCard
             title="Today's Appointments"
             value={stats?.todayAppointments}
@@ -201,6 +202,17 @@ const Dashboard = () => {
             iconColor="text-green-500"
             loading={isLoadingStats}
             onClick={() => navigate("/admin/appointments?filter=today")}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+          <StatsCard
+            title="Pending Lab Orders"
+            value={stats?.pendingLabOrders}
+            icon={ScienceIcon}
+            iconBg="bg-purple-50"
+            iconColor="text-purple-500"
+            loading={isLoadingStats}
+            onClick={() => navigate("/admin/lab?deliveryStatus=pending")}
           />
         </Grid>
       </Grid>

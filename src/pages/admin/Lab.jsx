@@ -5,6 +5,7 @@
  * Tab 2: Labs — manage labs and their procedure price lists.
  */
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -96,9 +97,13 @@ const orderColumns = [
 ];
 
 const LabOrdersTab = () => {
+  const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState(() => {
+    const deliveryStatus = searchParams.get("deliveryStatus");
+    return deliveryStatus ? { deliveryStatus } : {};
+  });
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
