@@ -329,6 +329,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                   label="Select Patient *"
                   placeholder="Search by name or phone..."
                   size="small"
+                  slotProps={{ inputLabel: { shrink: true } }}
                   InputProps={{
                     ...params.InputProps,
                     endAdornment: (
@@ -424,7 +425,7 @@ const CreateInvoiceModal = ({ open, onClose, onSuccess }) => {
                     </TextField>
                     {index === 0 && (
                       <Typography variant="caption" sx={{ color: "#6b7280", display: "block", mt: 0.5, lineHeight: 1.3 }}>
-                        Appointment and Treatment invoices are created automatically when booking an appointment. Use this form only for Surgery, Membership, Test, Medicine, or Other.
+                        Excluding Appointment and Treatment (created automatically at booking).
                       </Typography>
                     )}
                   </Grid>
