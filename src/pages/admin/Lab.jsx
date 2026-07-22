@@ -32,9 +32,16 @@ import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import PaymentsIcon from "@mui/icons-material/Payments";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import Skeleton from "@mui/material/Skeleton";
+import CardContent from "@mui/material/CardContent";
+import Card from "@mui/material/Card";
 import { toast } from "react-toastify";
 import DataTable from "../../components/common/DataTable";
-import { useLabOrders, useLabOrderMutations } from "../../hooks/admin/useLabOrders";
+import { useLabOrders, useLabOrderStats, useLabOrderMutations } from "../../hooks/admin/useLabOrders";
 import { useLabs } from "../../hooks/admin/useLabs";
 import CreateLabOrderModal from "../../components/admin/modals/CreateLabOrderModal";
 import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
@@ -47,6 +54,29 @@ const deliveryStatusColors = { pending: "default", in_progress: "info", delivere
 const deliveryStatusLabels = { pending: "Pending", in_progress: "In Progress", delivered: "Delivered", rejected: "Rejected" };
 
 const money = (v) => `₹${(Number(v) || 0).toLocaleString("en-IN")}`;
+
+/** Stats Card — mirrors Dashboard's StatsCard visual style. */
+const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading }) => (
+  <Card elevation={0} className="h-full rounded-xl! border border-gray-100 shadow-xs!">
+    <CardContent className="flex items-center gap-4 p-5!">
+      <Box className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${iconBg}`}>
+        <Icon className={`${iconColor} text-2xl`} />
+      </Box>
+      <Box>
+        <Typography variant="body2" className="text-gray-500 mb-1 text-[13px] font-medium">
+          {title}
+        </Typography>
+        {loading ? (
+          <Skeleton width={60} height={32} />
+        ) : (
+          <Typography variant="h5" className="font-numbers font-bold text-[#003366] text-[28px]">
+            {value ?? 0}
+          </Typography>
+        )}
+      </Box>
+    </CardContent>
+  </Card>
+);
 
 // ---------- Lab Orders tab ----------
 const orderColumns = [
@@ -126,6 +156,12 @@ const LabOrdersTab = () => {
   const orders = data?.data || [];
   const pagination = data?.pagination || { total: 0 };
 
+  const { data: statsData, isLoading: statsLoading } = useLabOrderStats({
+    ...(fromDate && { from: fromDate }),
+    ...(toDate && { to: toDate }),
+  });
+  const stats = statsData?.data || {};
+
   const handleArchive = (row) => {
     archiveLabOrder(row._id, {
       onSuccess: () => { toast.success("Order archived"); refetch(); },
@@ -204,6 +240,50 @@ const LabOrdersTab = () => {
 
   return (
     <Box>
+      {/* Stat cards — recompute for whichever date range is selected below */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatsCard
+            title="Total Spent"
+            value={money(stats.totalSpent)}
+            icon={PaymentsIcon}
+            iconBg="bg-orange-50"
+            iconColor="text-orange-500"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatsCard
+            title="Undelivered"
+            value={stats.undelivered}
+            icon={LocalShippingIcon}
+            iconBg="bg-amber-50"
+            iconColor="text-amber-500"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatsCard
+            title="Total Orders"
+            value={stats.totalOrders}
+            icon={ReceiptLongIcon}
+            iconBg="bg-blue-50"
+            iconColor="text-blue-500"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatsCard
+            title="Overdue"
+            value={stats.overdue}
+            icon={ReportProblemIcon}
+            iconBg="bg-red-50"
+            iconColor="text-red-500"
+            loading={statsLoading}
+          />
+        </Grid>
+      </Grid>
+
       {/* Filter bar */}
       <Paper className="p-3 mb-4">
         {/* Actions: New Lab Order (left) + Refresh (right, above filter rows) */}

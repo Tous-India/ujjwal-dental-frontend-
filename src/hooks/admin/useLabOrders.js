@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getLabOrders,
+  getLabOrderStats,
   getLabOrder,
   createLabOrder,
   updateLabOrder,
@@ -13,6 +14,13 @@ export const useLabOrders = (params = {}) =>
   useQuery({
     queryKey: ["admin", "lab-orders", params],
     queryFn: () => getLabOrders(params),
+    staleTime: 60 * 1000,
+  });
+
+export const useLabOrderStats = (params = {}) =>
+  useQuery({
+    queryKey: ["admin", "lab-orders", "stats", params],
+    queryFn: () => getLabOrderStats(params),
     staleTime: 60 * 1000,
   });
 

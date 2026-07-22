@@ -6,6 +6,9 @@ import api from "../axios";
 export const getLabOrders = (params = {}) =>
   api.get("/lab-orders", { params }).then((res) => res.data);
 
+export const getLabOrderStats = (params = {}) =>
+  api.get("/lab-orders/stats", { params }).then((res) => res.data);
+
 export const getLabOrder = (id) =>
   api.get(`/lab-orders/${id}`).then((res) => res.data);
 
