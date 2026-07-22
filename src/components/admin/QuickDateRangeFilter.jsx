@@ -100,7 +100,10 @@ const QuickDateRangeFilter = ({ value = {}, onChange }) => {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       <FormControl size="small" sx={{ minWidth: 150 }}>
-        <InputLabel shrink={preset !== ""}>Date Range</InputLabel>
+        {/* Select uses displayEmpty (the "" value renders "All Time"), so the
+            label must always render shrunk -- otherwise it sits in the same
+            vertical space as the displayed value and visually overlaps it. */}
+        <InputLabel shrink>Date Range</InputLabel>
         <Select
           displayEmpty
           value={preset}
