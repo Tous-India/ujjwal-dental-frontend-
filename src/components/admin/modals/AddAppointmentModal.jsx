@@ -49,10 +49,20 @@ import {
   MAX_DATE,
   todayStr,
   dateGuards,
-  isPastDate,
   isPastSlotForDate,
 } from "../../../utils/dateInput";
 import { generateTimeSlots } from "../../../utils/timeSlots";
+
+// Admin (this modal only) may backdate a walk-in entry up to this many days.
+// The shared dateInput.js util stays today-forward for every other picker,
+// including the patient-facing booking form -- this override is local.
+const MIN_BACKDATE_DAYS = 10;
+const minBackdateStr = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - MIN_BACKDATE_DAYS);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const isBeyondBackdateWindow = (value) => !!value && value < minBackdateStr();
 /**
  * Appointment type options
  */
@@ -446,11 +456,15 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
     }
   };
 
-  // Date field: reject past dates (manual typing / picker), reset to today.
+  // Date field: admin may backdate up to MIN_BACKDATE_DAYS (walk-in logged
+  // late); anything further back is rejected same as before.
   const handleDateChange = (e) => {
     const value = e.target.value;
-    if (isPastDate(value)) {
-      setErrors((prev) => ({ ...prev, date: "Date cannot be in the past" }));
+    if (isBeyondBackdateWindow(value)) {
+      setErrors((prev) => ({
+        ...prev,
+        date: `Cannot backdate more than ${MIN_BACKDATE_DAYS} days`,
+      }));
       setFormData((prev) => ({ ...prev, date: todayStr(), timeSlot: "" }));
       return;
     }
@@ -953,7 +967,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               required
               size="small"
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: todayStr(), max: MAX_DATE, ...dateGuards }}
+              inputProps={{ min: minBackdateStr(), max: MAX_DATE, ...dateGuards }}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>

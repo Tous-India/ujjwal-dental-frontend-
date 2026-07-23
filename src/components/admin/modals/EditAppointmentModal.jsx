@@ -43,6 +43,15 @@ import {
 } from "../../../utils/dateInput";
 import { generateTimeSlots } from "../../../utils/timeSlots";
 
+// Admin/clinic_manager may edit an appointment's date up to this many days
+// into the past (backend enforces the same window, gated to those roles).
+const MIN_BACKDATE_DAYS = 10;
+const minBackdateStr = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - MIN_BACKDATE_DAYS);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 const OTHER_TREATMENT = { _id: "other", name: "Other (custom treatment)", price: null };
 
 const typeOptions = [
@@ -360,7 +369,7 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
               required
               size="small"
               InputLabelProps={{ shrink: true }}
-              inputProps={{ max: MAX_DATE, ...dateGuards }}
+              inputProps={{ min: minBackdateStr(), max: MAX_DATE, ...dateGuards }}
             />
           </Grid>
 

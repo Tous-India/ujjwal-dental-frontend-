@@ -31,6 +31,15 @@ const todayStr = () => new Date().toISOString().split("T")[0];
 // Admin can book up to 10 PM (doctor works late evenings)
 const ALL_SLOTS = generateTimeSlots("09:00", "22:00");
 
+// Admin/clinic_manager may reschedule to a date up to this many days in the
+// past (backend enforces the same window, gated to those roles).
+const MIN_BACKDATE_DAYS = 10;
+const minBackdateStr = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - MIN_BACKDATE_DAYS);
+  return d.toISOString().split("T")[0];
+};
+
 const RescheduleAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
   const [newDate, setNewDate] = useState(todayStr());
   const [newTimeSlot, setNewTimeSlot] = useState("");
@@ -189,7 +198,7 @@ const RescheduleAppointmentModal = ({ open, onClose, appointment, onSuccess }) =
               setNewTimeSlot("");
             }}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ min: todayStr() }}
+            inputProps={{ min: minBackdateStr() }}
             fullWidth
             size="small"
             disabled={isRescheduling}
