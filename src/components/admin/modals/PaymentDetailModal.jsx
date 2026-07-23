@@ -30,6 +30,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import UndoIcon from "@mui/icons-material/Undo";
 import { toast } from "react-toastify";
 import { usePaymentMutations, useAdminPaymentMutations } from "../../../hooks/admin/usePayments";
+import { usePermissions } from "../../../hooks/admin/usePermissions";
 import ConfirmDialog from "../../common/ConfirmDialog";
 
 /**
@@ -282,7 +283,9 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
   // instead — those are handled by the Reverse flow below.
   const refundEligible = payment.status === "paid" && !payment.settledInvoices?.length;
   const canRefund = refundEligible && !refundWindowExpired;
-  const canReverse = !!(payment.settledInvoices?.length) && !payment.reversed && payment.status !== "reversed";
+  const { hasPermission } = usePermissions();
+  const canDeletePermission = hasPermission("payments", "delete");
+  const canReverse = !!(payment.settledInvoices?.length) && !payment.reversed && payment.status !== "reversed" && canDeletePermission;
 
   return (
     <>
@@ -617,16 +620,18 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
             </Button>
           </Tooltip>
         )}
-        <Button
-          variant="outlined"
-          color="error"
-          startIcon={isDeleting ? <CircularProgress size={16} /> : <DeleteIcon />}
-          onClick={handleDelete}
-          disabled={isDeleting || isRefunding || isReversing}
-          sx={{ textTransform: "none", fontSize: "12px" }}
-        >
-          Delete
-        </Button>
+        {canDeletePermission && (
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={isDeleting ? <CircularProgress size={16} /> : <DeleteIcon />}
+            onClick={handleDelete}
+            disabled={isDeleting || isRefunding || isReversing}
+            sx={{ textTransform: "none", fontSize: "12px" }}
+          >
+            Delete
+          </Button>
+        )}
         <Box className="flex-grow" />
         <Button onClick={handleClose} color="inherit" disabled={isRefunding || isReversing || isConfirmingManual} sx={{ textTransform: "none", fontSize: "12px" }}>
           Close

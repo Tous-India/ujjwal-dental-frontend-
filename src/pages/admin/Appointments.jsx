@@ -43,6 +43,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AppointmentSlipPreviewModal from "../../components/AppointmentSlipPreviewModal";
 import DataTable from "../../components/common/DataTable";
 import { useAppointments, useAppointmentMutations } from "../../hooks/admin/useAppointments";
+import { usePermissions } from "../../hooks/admin/usePermissions";
 import {
   getFeeSettings,
   updateFeeSettings,
@@ -254,7 +255,7 @@ const rowPaymentStatus = (row) => {
 };
 
 // Function to get columns with action handlers
-const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId, onStatusChange, updatingStatusId, onRescheduleRow) => [
+const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId, onStatusChange, updatingStatusId, onRescheduleRow, canDelete = true) => [
   ...columns.filter((c) => c.field !== "paymentStatus" && c.field !== "status"),
   {
     field: "status",
@@ -409,17 +410,19 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
               <EventBusyIcon fontSize="small" />
             </IconButton>
           )}
-          <IconButton
-            size="small"
-            color="error"
-            title="Delete Permanently"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteRow(row);
-            }}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          {canDelete && (
+            <IconButton
+              size="small"
+              color="error"
+              title="Delete Permanently"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteRow(row);
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
       );
     },
@@ -529,6 +532,7 @@ const Appointments = () => {
 
   // Delete + update mutations
   const { deleteAppointment, isDeleting: isDeletingAppointment, updateAppointment: updateApptMutation } = useAppointmentMutations();
+  const { hasPermission } = usePermissions();
 
   // Payment status dropdown — update appointment + sync invoice via backend
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
@@ -960,6 +964,7 @@ const Appointments = () => {
           handleStatusChange,
           updatingStatusId,
           (row) => { setSelectedAppointment(row); setRescheduleModalOpen(true); },
+          hasPermission("appointments", "delete"),
         )}
         getRowSx={(row) => {
           const today = isToday(row?.date);

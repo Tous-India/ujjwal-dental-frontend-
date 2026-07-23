@@ -41,6 +41,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import Tooltip from "@mui/material/Tooltip";
 import { toast } from "react-toastify";
 import { useInvoice, useBillingMutations } from "../../../hooks/admin/useBilling";
+import { usePermissions } from "../../../hooks/admin/usePermissions";
 import InvoicePreviewModal from "../../InvoicePreviewModal";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import EditInvoiceModal from "./EditInvoiceModal";
@@ -118,6 +119,7 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
 
   // Fetch full details
   const { data: fullData, isLoading, isError, refetch: refetchInvoice } = useInvoice(invoice?._id);
+  const { hasPermission } = usePermissions();
   const inv = fullData?.data?.invoice || invoice;
 
   const {
@@ -748,7 +750,7 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
           )}
 
           {/* Edit Invoice — self-service correction, any non-voided invoice */}
-          {!inv?.isVoided && (
+          {!inv?.isVoided && hasPermission("billing", "edit") && (
             <Button
               variant="outlined"
               startIcon={<EditIcon />}
@@ -760,7 +762,7 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
           )}
 
           {/* Void Invoice — works even on paid invoices, unlike Cancel above */}
-          {!inv?.isVoided && (
+          {!inv?.isVoided && hasPermission("billing", "delete") && (
             <Button
               variant="outlined"
               color="error"

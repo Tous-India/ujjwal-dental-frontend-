@@ -32,6 +32,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import { useUserMutations } from "../../../hooks/admin/useUsers";
+import { usePermissions } from "../../../hooks/admin/usePermissions";
 import { useAdminStore } from "../../../store/admin.store";
 
 const roleOptions = [
@@ -63,6 +64,9 @@ const InfoRow = ({ label, children }) => (
 
 const UserDetailModal = ({ open, onClose, user, onRefresh }) => {
   const currentAdmin = useAdminStore((state) => state.admin);
+  const { hasPermission } = usePermissions();
+  const canEditStaff = hasPermission("staff", "edit");
+  const canDeleteStaff = hasPermission("staff", "delete");
   const isSelf = useMemo(
     () => currentAdmin?._id === user?._id,
     [currentAdmin?._id, user?._id]
@@ -318,63 +322,71 @@ const UserDetailModal = ({ open, onClose, user, onRefresh }) => {
               <Chip label="This is your account" size="small" color="info" />
             )}
             {!isSelf && user.isActive ? (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={
-                  isDeactivating ? (
-                    <CircularProgress size={16} />
-                  ) : (
-                    <BlockIcon />
-                  )
-                }
-                onClick={handleDeactivate}
-                disabled={isDeactivating}
-              >
-                Deactivate
-              </Button>
-            ) : !isSelf ? (
-              <>
+              canDeleteStaff && (
                 <Button
                   variant="outlined"
                   color="error"
                   startIcon={
-                    isPermanentDeleting ? (
+                    isDeactivating ? (
                       <CircularProgress size={16} />
                     ) : (
-                      <DeleteIcon />
+                      <BlockIcon />
                     )
                   }
-                  onClick={handlePermanentDelete}
-                  disabled={isPermanentDeleting || isReactivating}
+                  onClick={handleDeactivate}
+                  disabled={isDeactivating}
                 >
-                  Delete Permanently
+                  Deactivate
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="success"
-                  startIcon={
-                    isReactivating ? (
-                      <CircularProgress size={16} />
-                    ) : (
-                      <CheckCircleIcon />
-                    )
-                  }
-                  onClick={handleReactivate}
-                  disabled={isReactivating || isPermanentDeleting}
-                >
-                  Reactivate
-                </Button>
+              )
+            ) : !isSelf ? (
+              <>
+                {canDeleteStaff && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={
+                      isPermanentDeleting ? (
+                        <CircularProgress size={16} />
+                      ) : (
+                        <DeleteIcon />
+                      )
+                    }
+                    onClick={handlePermanentDelete}
+                    disabled={isPermanentDeleting || isReactivating}
+                  >
+                    Delete Permanently
+                  </Button>
+                )}
+                {canEditStaff && (
+                  <Button
+                    variant="outlined"
+                    color="success"
+                    startIcon={
+                      isReactivating ? (
+                        <CircularProgress size={16} />
+                      ) : (
+                        <CheckCircleIcon />
+                      )
+                    }
+                    onClick={handleReactivate}
+                    disabled={isReactivating || isPermanentDeleting}
+                  >
+                    Reactivate
+                  </Button>
+                )}
               </>
             ) : null}
-            <Button
-              variant="contained"
-              startIcon={<EditIcon />}
-              onClick={handleEdit}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              Edit
-            </Button>
+            {canEditStaff && (
+              <Button
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={handleEdit}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                Edit
+              </Button>
+            )}
           </>
         )}
       </DialogActions>

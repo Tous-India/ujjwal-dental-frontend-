@@ -15,6 +15,7 @@ import { toast } from "react-toastify";
 import { useSearchParams } from "react-router-dom";
 import DataTable from "../../components/common/DataTable";
 import { usePatients, usePatientMutations } from "../../hooks/admin/usePatients";
+import { usePermissions } from "../../hooks/admin/usePermissions";
 import { getPatient } from "../../api/admin/patients.api";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
 import AddPatientModal from "../../components/admin/modals/AddPatientModal";
@@ -157,6 +158,7 @@ const Patients = () => {
 
   // Mutations
   const { deletePatient, updatePatient, isDeleting, reactivatePatient } = usePatientMutations();
+  const { hasPermission } = usePermissions();
 
   // Extract data from response
   const patients = data?.data || [];
@@ -368,7 +370,7 @@ const Patients = () => {
         }}
         patient={selectedPatient}
         onEdit={handleEditPatient}
-        onDelete={handleDeletePatient}
+        onDelete={hasPermission("patients", "delete") ? handleDeletePatient : undefined}
         onReactivate={handleReactivatePatient}
       />
 
