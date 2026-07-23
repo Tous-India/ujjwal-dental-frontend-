@@ -69,6 +69,7 @@ const AdminReports = lazy(() => import("./pages/admin/Reports"));
 const AdminMemberships = lazy(() => import("./pages/admin/Memberships"));
 const AdminClinics = lazy(() => import("./pages/admin/Clinics"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
+const AdminPermissionManager = lazy(() => import("./pages/admin/PermissionManager"));
 const AdminBilling = lazy(() => import("./pages/admin/Billing"));
 const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
 const AdminUsers = lazy(() => import("./pages/admin/User"));
@@ -221,6 +222,7 @@ const App = () => {
             <Route path="clinics" element={<AdminClinics />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="permissions" element={<AdminPermissionManager />} />
           </Route>
         </Route>
 

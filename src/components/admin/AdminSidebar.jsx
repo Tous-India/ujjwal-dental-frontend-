@@ -45,7 +45,9 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import GroupIcon from "@mui/icons-material/Group";
 import ContactPhoneIcon from "@mui/icons-material/ContactPhone";
 import ArticleIcon from "@mui/icons-material/Article";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { useAdminStore } from "../../store/admin.store";
+import { usePermissions } from "../../hooks/admin/usePermissions";
 
 import logo from "../../../public/ujjwal-dental-logo.png";
 
@@ -56,41 +58,53 @@ const DRAWER_WIDTH = 260;
  * Navigation items configuration
  * Easy to add/remove menu items here
  */
+// `module` matches the Permission collection's module key exactly (see
+// backend src/modules/permissions/permission.constants.js). A nav item with
+// no `module` (Main Website) is always shown -- it's not access-gated at all.
 const ADMIN_NAV = [
-  { label: "Dashboard", path: "/admin/dashboard", icon: DashboardIcon },
-  { label: "Patients", path: "/admin/patients", icon: PeopleIcon, badgeKey: "patients" },
-  { label: "Enquiries", path: "/admin/enquiries", icon: ContactPhoneIcon, badgeKey: "enquiries", badgeColor: "#ef4444" },
-  { label: "Appointments", path: "/admin/appointments", icon: EventIcon, badgeKey: "appointments", badgeColor: "#3b82f6" },
-  { label: "Lab", path: "/admin/lab", icon: BiotechIcon },
-  { label: "Payment History", path: "/admin/payments", icon: PaymentIcon, badgeKey: "payments", badgeColor: "#f59e0b" },
-  { label: "Billing", path: "/admin/billing", icon: ReceiptLongIcon },
-  { label: "Reports", path: "/admin/reports", icon: AssessmentIcon },
-  { label: "Memberships", path: "/admin/memberships", icon: CardMembershipIcon, badgeKey: "memberships", badgeColor: "#8b5cf6" },
-  { label: "Blogs", path: "/admin/blogs", icon: ArticleIcon },
-  { label: "Notifications", path: "/admin/notifications", icon: NotificationsIcon, badgeKey: "notifications", badgeColor: "#ec4899" },
-  { label: "Clinics", path: "/admin/clinics", icon: BusinessIcon },
-  { label: "Staff", path: "/admin/users", icon: GroupIcon },
-  { label: "Settings", path: "/admin/settings", icon: SettingsIcon },
+  { label: "Dashboard", path: "/admin/dashboard", icon: DashboardIcon, module: "dashboard" },
+  { label: "Patients", path: "/admin/patients", icon: PeopleIcon, badgeKey: "patients", module: "patients" },
+  { label: "Enquiries", path: "/admin/enquiries", icon: ContactPhoneIcon, badgeKey: "enquiries", badgeColor: "#ef4444", module: "enquiries" },
+  { label: "Appointments", path: "/admin/appointments", icon: EventIcon, badgeKey: "appointments", badgeColor: "#3b82f6", module: "appointments" },
+  { label: "Lab", path: "/admin/lab", icon: BiotechIcon, module: "lab" },
+  { label: "Payment History", path: "/admin/payments", icon: PaymentIcon, badgeKey: "payments", badgeColor: "#f59e0b", module: "payments" },
+  { label: "Billing", path: "/admin/billing", icon: ReceiptLongIcon, module: "billing" },
+  { label: "Reports", path: "/admin/reports", icon: AssessmentIcon, module: "reports" },
+  { label: "Memberships", path: "/admin/memberships", icon: CardMembershipIcon, badgeKey: "memberships", badgeColor: "#8b5cf6", module: "memberships" },
+  { label: "Blogs", path: "/admin/blogs", icon: ArticleIcon, module: "blogs" },
+  { label: "Notifications", path: "/admin/notifications", icon: NotificationsIcon, badgeKey: "notifications", badgeColor: "#ec4899", module: "notifications" },
+  { label: "Clinics", path: "/admin/clinics", icon: BusinessIcon, module: "clinics" },
+  { label: "Staff", path: "/admin/users", icon: GroupIcon, module: "staff" },
+  { label: "Settings", path: "/admin/settings", icon: SettingsIcon, module: "settings" },
   { label: "Main Website", path: "https://ujjwaldentalplanet.com", icon: LanguageIcon, external: true },
 ];
-
-// SEO Executive (blog_editor role) — access restricted to Blogs only.
-const BLOG_EDITOR_NAV = ADMIN_NAV.filter((item) => item.path === "/admin/blogs");
-
-// Clinic Manager — full access except Staff and Settings.
-const CLINIC_MANAGER_NAV = ADMIN_NAV.filter(
-  (item) => item.path !== "/admin/users" && item.path !== "/admin/settings"
-);
 
 const AdminSidebar = ({ open, onClose }) => {
   const location = useLocation();
   const { admin } = useAdminStore();
-  const navItems =
-    admin?.role === "blog_editor"
-      ? BLOG_EDITOR_NAV
-      : admin?.role === "clinic_manager"
-      ? CLINIC_MANAGER_NAV
-      : ADMIN_NAV;
+  const { hasPermission, isReady } = usePermissions();
+
+  // Dynamic, permission-driven nav -- a module shows only when this role's
+  // `view` flag is true. Items with no `module` (Main Website) always show.
+  // While permissions are still loading, show nothing gated yet rather than
+  // flashing the full nav then collapsing it.
+  const navItems = ADMIN_NAV.filter((item) => {
+    if (!item.module) return true;
+    if (!isReady) return false;
+    return hasPermission(item.module, "view");
+  });
+
+  // "Permissions" (the matrix editor itself) is admin-only by direct role
+  // check, not permission-driven -- it must never be hideable via the
+  // matrix it itself edits (avoids a self-lockout on the nav item).
+  const navItemsWithPermissions =
+    admin?.role === "admin"
+      ? [
+          ...navItems.slice(0, -1),
+          { label: "Permissions", path: "/admin/permissions", icon: AdminPanelSettingsIcon, module: null },
+          navItems[navItems.length - 1],
+        ]
+      : navItems;
 
   // Fetch badge counts
   const { data: badgeCounts } = useQuery({
@@ -119,12 +133,12 @@ const AdminSidebar = ({ open, onClose }) => {
 
   // Save seen count when page is active
   React.useEffect(() => {
-    navItems.forEach((item) => {
+    navItemsWithPermissions.forEach((item) => {
       if (item.badgeKey && location.pathname.startsWith(item.path) && rawBadges[item.badgeKey] !== undefined) {
         localStorage.setItem(getSeenKey(item.badgeKey), String(rawBadges[item.badgeKey]));
       }
     });
-  }, [location.pathname, rawBadges, navItems]);
+  }, [location.pathname, rawBadges, navItemsWithPermissions]);
 
   // Calculate unseen badges
   const badges = {};
@@ -174,7 +188,7 @@ const AdminSidebar = ({ open, onClose }) => {
 
       {/* Navigation List */}
       <List className="px-3 py-1">
-        {navItems.map((item) => {
+        {navItemsWithPermissions.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
 
