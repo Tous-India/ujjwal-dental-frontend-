@@ -28,13 +28,19 @@ import {
   Divider,
   Tabs,
   Tab,
+  Skeleton,
 } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import UndoIcon from "@mui/icons-material/Undo";
 import PrintIcon from "@mui/icons-material/Print";
 import ReplayIcon from "@mui/icons-material/Replay";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import DownloadIcon from "@mui/icons-material/Download";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import ReplayCircleFilledIcon from "@mui/icons-material/ReplayCircleFilled";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 import { getInvoice } from "../../api/admin/billing.api";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
@@ -43,13 +49,36 @@ import CollectPaymentModal from "../../components/admin/modals/CollectPaymentMod
 import PaymentDetailModal from "../../components/admin/modals/PaymentDetailModal";
 import InvoiceDetailModal from "../../components/admin/modals/InvoiceDetailModal";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
-import { usePayments, useAdminPaymentMutations, usePatientUnpaidInvoices } from "../../hooks/admin/usePayments";
+import { usePayments, useAdminPaymentMutations, usePatientUnpaidInvoices, usePaymentSummaryStats } from "../../hooks/admin/usePayments";
 import { searchPatients } from "../../api/admin/patients.api";
 import AddPaymentModal from "../../components/admin/modals/AddPaymentModal";
 import { downloadInvoicePDF } from "../../utils/downloadInvoicePDF";
 import { exportPaymentsPdf } from "../../api/admin/payments.api";
 
 const fmt = (n) => (n || 0).toLocaleString("en-IN");
+
+/** Stats Card — mirrors Dashboard's StatsCard visual style. */
+const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading }) => (
+  <Card elevation={0} className="h-full rounded-xl! border border-gray-100 shadow-xs!">
+    <CardContent className="flex items-center gap-4 p-5!">
+      <Box className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${iconBg}`}>
+        <Icon className={`${iconColor} text-2xl`} />
+      </Box>
+      <Box>
+        <Typography variant="body2" className="text-gray-500 mb-1 text-[13px] font-medium">
+          {title}
+        </Typography>
+        {loading ? (
+          <Skeleton width={60} height={32} />
+        ) : (
+          <Typography variant="h5" className="font-numbers font-bold text-[#003366] text-[28px]">
+            {value ?? 0}
+          </Typography>
+        )}
+      </Box>
+    </CardContent>
+  </Card>
+);
 
 const formatDate = (d) =>
   d
@@ -610,8 +639,58 @@ const Payments = () => {
   const patientInfo = unpaidData?.patient || {};
   const totalPending = unpaidData?.totalPending || 0;
 
+  const { data: summaryStatsData, isLoading: summaryStatsLoading } = usePaymentSummaryStats({
+    ...(fromDate && { from: fromDate }),
+    ...(toDate && { to: toDate }),
+  });
+  const summaryStats = summaryStatsData?.data || {};
+
   return (
     <Box sx={{ minHeight: "100vh" }}>
+      {/* ── SUMMARY CARDS — computed from the Payment collection only ──────── */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatsCard
+            title="Total Collected"
+            value={`₹${fmt(summaryStats.totalCollected)}`}
+            icon={TrendingUpIcon}
+            iconBg="bg-green-50"
+            iconColor="text-green-500"
+            loading={summaryStatsLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatsCard
+            title="Total Refunded"
+            value={`₹${fmt(summaryStats.totalRefunded)}`}
+            icon={ReplayCircleFilledIcon}
+            iconBg="bg-amber-50"
+            iconColor="text-amber-500"
+            loading={summaryStatsLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatsCard
+            title="Net Collection"
+            value={`₹${fmt(summaryStats.netCollection)}`}
+            icon={AccountBalanceWalletIcon}
+            iconBg="bg-blue-50"
+            iconColor="text-[#003366]"
+            loading={summaryStatsLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatsCard
+            title="Transactions"
+            value={summaryStats.transactionCount}
+            icon={ReceiptIcon}
+            iconBg="bg-gray-100"
+            iconColor="text-gray-500"
+            loading={summaryStatsLoading}
+          />
+        </Grid>
+      </Grid>
+
       {/* ── HEADER + PATIENT SEARCH (one row) ──────────────────────────────── */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1f2937", whiteSpace: "nowrap" }}>Payment History</Typography>

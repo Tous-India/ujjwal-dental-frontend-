@@ -71,6 +71,15 @@ export const getPaymentStats = (params = {}) =>
   api.get("/payments/stats", { params }).then((res) => res.data);
 
 /**
+ * Get Payment History page summary: Total Collected/Refunded/Net/Transactions.
+ * Computed purely from the Payment collection on the backend.
+ * @param {Object} params - Query params (from, to)
+ * @returns {Promise}
+ */
+export const getPaymentSummaryStats = (params = {}) =>
+  api.get("/payments/summary-stats", { params }).then((res) => res.data);
+
+/**
  * Get daily collection report
  * @param {string} clinic - Clinic ID
  * @param {string} date - Date

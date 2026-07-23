@@ -10,6 +10,7 @@ import {
   createPayment,
   processRefund,
   getPaymentStats,
+  getPaymentSummaryStats,
   deletePayment,
   recordAdminPayment,
   collectPayment,
@@ -51,6 +52,19 @@ export const usePaymentStats = (params = {}) => {
     queryKey: ["admin", "payments", "stats", params],
     queryFn: () => getPaymentStats(params),
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+/**
+ * Hook for the Payment History page's 4 summary cards (Total Collected/
+ * Refunded/Net/Transactions) -- computed from the Payment collection only.
+ * @param {Object} params - Query params (from, to)
+ */
+export const usePaymentSummaryStats = (params = {}) => {
+  return useQuery({
+    queryKey: ["admin", "payments", "summary-stats", params],
+    queryFn: () => getPaymentSummaryStats(params),
+    staleTime: 60 * 1000,
   });
 };
 
