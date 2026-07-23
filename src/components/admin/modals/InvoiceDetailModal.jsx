@@ -35,10 +35,15 @@ import PaymentIcon from "@mui/icons-material/Payment";
 import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import BlockIcon from "@mui/icons-material/Block";
+import EditIcon from "@mui/icons-material/Edit";
+import HistoryIcon from "@mui/icons-material/History";
+import Tooltip from "@mui/material/Tooltip";
 import { toast } from "react-toastify";
 import { useInvoice, useBillingMutations } from "../../../hooks/admin/useBilling";
 import InvoicePreviewModal from "../../InvoicePreviewModal";
 import ConfirmDialog from "../../common/ConfirmDialog";
+import EditInvoiceModal from "./EditInvoiceModal";
 
 /**
  * Status config
@@ -101,11 +106,15 @@ const InfoRow = ({ label, children }) => (
 const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showCancelForm, setShowCancelForm] = useState(false);
+  const [showVoidForm, setShowVoidForm] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [cancelReason, setCancelReason] = useState("");
+  const [voidReason, setVoidReason] = useState("");
   const [issueConfirmOpen, setIssueConfirmOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [editInvoiceOpen, setEditInvoiceOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Fetch full details
   const { data: fullData, isLoading, isError, refetch: refetchInvoice } = useInvoice(invoice?._id);
@@ -118,6 +127,8 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
     isRecordingPayment,
     cancelInvoice,
     isCancelling,
+    voidInvoice,
+    isVoiding,
     deleteInvoice,
     isDeleting,
   } = useBillingMutations();
@@ -125,8 +136,10 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
   const resetForms = () => {
     setShowPaymentForm(false);
     setShowCancelForm(false);
+    setShowVoidForm(false);
     setPaymentAmount("");
     setCancelReason("");
+    setVoidReason("");
   };
 
   const handleClose = () => {
@@ -197,6 +210,25 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
     );
   };
 
+  const handleVoid = () => {
+    if (isVoiding) return;
+    if (!voidReason.trim() || voidReason.trim().length < 10)
+      return toast.error("Please provide a reason of at least 10 characters");
+    voidInvoice(
+      { id: inv._id, data: { reason: voidReason.trim() } },
+      {
+        onSuccess: () => {
+          toast.success("Invoice voided");
+          refetchInvoice();
+          onRefresh?.();
+          resetForms();
+        },
+        onError: (err) =>
+          toast.error(err.response?.data?.message || "Failed to void invoice"),
+      }
+    );
+  };
+
   const handleDeleteInvoice = () => {
     if (isDeleting) return;
     setDeleteConfirmOpen(true);
@@ -239,7 +271,7 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
               <Typography variant="h6" component="span" className="font-bold">
                 {inv?.invoiceNumber || "Invoice"}
               </Typography>
-              <Box className="flex gap-2 mt-1">
+              <Box className="flex gap-2 mt-1 items-center">
                 <Chip
                   label={status.label}
                   size="small"
@@ -252,6 +284,26 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
                   color={payStatus.color}
                   className="text-xs"
                 />
+                {inv?.isVoided && (
+                  <Chip
+                    label="Voided"
+                    size="small"
+                    sx={{ bgcolor: "#7f1d1d", color: "#fff" }}
+                    className="text-xs"
+                  />
+                )}
+                {inv?.editHistory?.length > 0 && (
+                  <Tooltip title="View correction history">
+                    <Chip
+                      icon={<HistoryIcon sx={{ color: "#fff !important" }} />}
+                      label={`Edited (${inv.editHistory.length})`}
+                      size="small"
+                      onClick={() => setHistoryOpen(true)}
+                      sx={{ bgcolor: "#7c3aed", color: "#fff", cursor: "pointer" }}
+                      className="text-xs"
+                    />
+                  </Tooltip>
+                )}
               </Box>
             </Box>
           </Box>
@@ -273,6 +325,13 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
           </Alert>
         ) : (
           <>
+            {inv?.isVoided && (
+              <Alert severity="error" className="mb-4">
+                <strong>Voided</strong>
+                {inv.voidedAt ? ` on ${formatDate(inv.voidedAt)}` : ""} — {inv.voidReason}
+              </Alert>
+            )}
+
             {/* Invoice & Patient Info */}
             <Grid container spacing={3} className="mb-4">
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -544,12 +603,52 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
                 </Box>
               </Paper>
             )}
+
+            {/* Inline Void Form */}
+            {showVoidForm && (
+              <Paper className="p-4 mb-3 bg-red-50 border border-red-200">
+                <Typography variant="subtitle2" className="font-semibold text-red-800 mb-2">
+                  Void Invoice
+                </Typography>
+                <Typography variant="caption" className="text-red-700 block mb-2">
+                  Voiding works on any invoice, including paid ones — use this for phantom/erroneous
+                  invoices. It never deletes the record or touches linked payments.
+                </Typography>
+                <Box className="flex items-start gap-3">
+                  <TextField
+                    label="Reason (min 10 characters)"
+                    size="small"
+                    multiline
+                    minRows={2}
+                    value={voidReason}
+                    onChange={(e) => setVoidReason(e.target.value)}
+                    placeholder="Why is this invoice being voided?"
+                    className="flex-1"
+                  />
+                  <Box className="flex flex-col gap-1">
+                    <Button
+                      variant="contained"
+                      color="error"
+                      size="small"
+                      onClick={handleVoid}
+                      disabled={isVoiding || voidReason.trim().length < 10}
+                      startIcon={isVoiding ? <CircularProgress size={16} /> : <BlockIcon />}
+                    >
+                      Confirm Void
+                    </Button>
+                    <Button size="small" onClick={() => setShowVoidForm(false)}>
+                      Back
+                    </Button>
+                  </Box>
+                </Box>
+              </Paper>
+            )}
           </>
         )}
       </DialogContent>
 
       {/* Actions */}
-      {!showPaymentForm && !showCancelForm && (
+      {!showPaymentForm && !showCancelForm && !showVoidForm && (
         <DialogActions className="p-4 bg-gray-50">
           <Button onClick={handleClose} color="inherit">
             Close
@@ -647,8 +746,70 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
               Delete Permanently
             </Button>
           )}
+
+          {/* Edit Invoice — self-service correction, any non-voided invoice */}
+          {!inv?.isVoided && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => setEditInvoiceOpen(true)}
+              sx={{ borderColor: "#7c3aed", color: "#7c3aed", "&:hover": { borderColor: "#6d28d9", bgcolor: "#f5f3ff" } }}
+            >
+              Edit Invoice
+            </Button>
+          )}
+
+          {/* Void Invoice — works even on paid invoices, unlike Cancel above */}
+          {!inv?.isVoided && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<BlockIcon />}
+              onClick={() => setShowVoidForm(true)}
+            >
+              Void Invoice
+            </Button>
+          )}
         </DialogActions>
       )}
+    </Dialog>
+
+    <EditInvoiceModal
+      open={editInvoiceOpen}
+      onClose={() => setEditInvoiceOpen(false)}
+      invoice={inv}
+      onSuccess={() => {
+        setEditInvoiceOpen(false);
+        refetchInvoice();
+        onRefresh?.();
+      }}
+    />
+
+    <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} maxWidth="sm" fullWidth>
+      <DialogTitle className="flex items-center justify-between">
+        Correction History
+        <IconButton onClick={() => setHistoryOpen(false)} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        {(inv?.editHistory || []).slice().reverse().map((entry, idx) => (
+          <Paper key={idx} variant="outlined" className="p-3 mb-2">
+            <Typography variant="caption" className="text-gray-500 block">
+              {formatDate(entry.editedAt)} by {entry.editedBy?.name || "admin"}
+            </Typography>
+            <Typography variant="body2" className="font-medium mb-1">
+              {entry.reason}
+            </Typography>
+            <Typography variant="caption" className="text-gray-600 font-mono break-all">
+              {JSON.stringify(entry.changes)}
+            </Typography>
+          </Paper>
+        ))}
+        {!(inv?.editHistory || []).length && (
+          <Typography variant="body2" className="text-gray-500">No corrections recorded.</Typography>
+        )}
+      </DialogContent>
     </Dialog>
 
     <ConfirmDialog

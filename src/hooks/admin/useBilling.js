@@ -13,6 +13,8 @@ import {
   removeInvoiceItem,
   issueInvoice,
   cancelInvoice,
+  voidInvoice,
+  correctInvoice,
   recordInvoicePayment,
   getBillingStats,
   getOverdueInvoices,
@@ -100,6 +102,16 @@ export const useBillingMutations = () => {
     onSuccess: invalidateBilling,
   });
 
+  const voidInv = useMutation({
+    mutationFn: ({ id, data }) => voidInvoice(id, data),
+    onSuccess: invalidateBilling,
+  });
+
+  const correct = useMutation({
+    mutationFn: ({ id, data }) => correctInvoice(id, data),
+    onSuccess: invalidateBilling,
+  });
+
   const recordPayment = useMutation({
     mutationFn: ({ id, data }) => recordInvoicePayment(id, data),
     onSuccess: invalidateBilling,
@@ -133,6 +145,14 @@ export const useBillingMutations = () => {
 
     cancelInvoice: cancel.mutate,
     isCancelling: cancel.isPending,
+
+    voidInvoice: voidInv.mutate,
+    voidInvoiceAsync: voidInv.mutateAsync,
+    isVoiding: voidInv.isPending,
+
+    correctInvoice: correct.mutate,
+    correctInvoiceAsync: correct.mutateAsync,
+    isCorrecting: correct.isPending,
 
     recordPayment: recordPayment.mutate,
     isRecordingPayment: recordPayment.isPending,

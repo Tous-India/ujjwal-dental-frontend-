@@ -104,6 +104,11 @@ const filterOptions = [
       { value: "paid", label: "Paid" },
     ],
   },
+  {
+    key: "voided",
+    label: "Voided",
+    options: [{ value: "true", label: "Voided Only" }],
+  },
 ];
 
 /**

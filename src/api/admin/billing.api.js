@@ -128,3 +128,22 @@ export const getPatientUnpaidInvoices = (patientId) =>
  */
 export const deleteInvoice = (id) =>
   api.delete(`/billing/invoices/${id}`).then((res) => res.data);
+
+/**
+ * Void invoice -- self-service correction for phantom/erroneous invoices.
+ * Works even on paid invoices (unlike cancelInvoice). Never deletes the
+ * record; sets isVoided + audit fields. admin/clinic_manager only.
+ * @param {string} id - Invoice ID
+ * @param {Object} data - { reason } (required, min 10 chars)
+ */
+export const voidInvoice = (id, data) =>
+  api.post(`/billing/invoices/${id}/void`, data).then((res) => res.data);
+
+/**
+ * Manually correct an invoice's items/discount/amountPaid.
+ * admin/clinic_manager only. Logs an editHistory entry.
+ * @param {string} id - Invoice ID
+ * @param {Object} data - { items, discount, amountPaid, reason } (reason required)
+ */
+export const correctInvoice = (id, data) =>
+  api.patch(`/billing/invoices/${id}/correct`, data).then((res) => res.data);
