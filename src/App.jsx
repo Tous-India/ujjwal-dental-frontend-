@@ -49,6 +49,7 @@ const PlansPage = lazy(() => import("./pages/public/PlansPage"));
 const PlanDetailPage = lazy(() => import("./pages/public/PlanDetailPage"));
 const TermsPage = lazy(() => import("./pages/public/TermsPage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/public/PrivacyPolicyPage"));
+const RefundPolicyPage = lazy(() => import("./pages/public/RefundPolicyPage"));
 const BookAppointmentPage = lazy(() => import("./pages/public/BookAppointmentPage"));
 const DoctorProfilePage = lazy(() => import("./pages/public/DoctorProfilePage"));
 const DoctorProfile = lazy(() => import("./pages/public/DoctorProfile"));
@@ -157,6 +158,7 @@ const App = () => {
           <Route path="/doctors/:slug" element={<DoctorProfilePage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
         </Route>
 
         {/* ======================== */}

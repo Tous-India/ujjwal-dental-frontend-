@@ -31,6 +31,7 @@ const quickLinks = [
   { label: "Contact Us", to: "/contact" },
   { label: "Terms & Conditions", to: "/terms" },
   { label: "Privacy Policy", to: "/privacy-policy" },
+  { label: "Refund & Re-treatment Policy", to: "/refund-policy" },
 ];
 
 const treatmentLinks = [
