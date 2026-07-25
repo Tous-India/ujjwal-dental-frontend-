@@ -38,7 +38,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import AppointmentSlipPreviewModal from "../../AppointmentSlipPreviewModal";
-import { useAppointmentMutations } from "../../../hooks/admin/useAppointments";
+import { useAppointmentMutations, useAppointments } from "../../../hooks/admin/useAppointments";
 import { usePatientActiveContext } from "../../../hooks/admin/usePatients";
 import { useAdminPaymentMutations } from "../../../hooks/admin/usePayments";
 import { searchPatients, createPatient } from "../../../api/admin/patients.api";
@@ -130,6 +130,7 @@ const getInitialFormState = () => ({
   sessionPaymentMode: "cash",
   selectedTreatmentInvoiceId: null,
   selectedTreatmentInvoiceBalance: 0,
+  originatingOpdAppointment: null, // optional link to a prior OPD visit (treatment mode only)
 });
 
 const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, initialVisitType = null }) => {
@@ -168,6 +169,20 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
   const patientId = formData.patient?._id;
   const { data: contextData } = usePatientActiveContext(patientId);
   const activeTreatments = contextData?.data?.activeTreatments || [];
+
+  // Recent OPD visits for this patient — powers the optional "Link to a
+  // previous OPD visit" dropdown in treatment mode. Reuses the existing
+  // appointments list endpoint (search by phone, filtered to visitType=opd)
+  // rather than adding a new backend query param.
+  const isTreatmentMode = formData.visitType === "treatment";
+  const canFetchOpdHistory = isTreatmentMode && !!formData.patient?.phone;
+  const { data: opdHistoryData } = useAppointments(
+    { visitType: "opd", search: formData.patient?.phone || "", limit: 25 },
+    { enabled: canFetchOpdHistory }
+  );
+  const patientOpdAppointments = (opdHistoryData?.data || []).filter(
+    (a) => a.patient?._id === patientId
+  );
 
   // Active-membership discount for the selected patient (server re-verifies it).
   const membership = formData.patient?.membership;
@@ -568,6 +583,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
             ...(formData.sessionsPlanned ? { sessionsPlanned: formData.sessionsPlanned } : {}),
             ...(feeCollected && !formData.isFree && formData.treatmentPaymentAmount != null
               ? { amountPaid: Number(formData.treatmentPaymentAmount) }
+              : {}),
+            ...(formData.originatingOpdAppointment
+              ? { originatingOpdAppointmentId: formData.originatingOpdAppointment }
               : {}),
           }
         : formData.visitType === "treatment_session"
@@ -1352,6 +1370,42 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                       placeholder="e.g. 4"
                     />
                   </Box>
+                </Box>
+              )}
+
+              {!isSessionMode && formData.visitType === "treatment" && (
+                <Box sx={{ flex: "1 1 100%" }}>
+                  <Autocomplete
+                    options={patientOpdAppointments}
+                    value={
+                      patientOpdAppointments.find(
+                        (a) => a._id === formData.originatingOpdAppointment
+                      ) || null
+                    }
+                    getOptionLabel={(opt) =>
+                      opt
+                        ? `${opt.appointmentNumber || "OPD"} — ${
+                            opt.date ? new Date(opt.date).toLocaleDateString("en-IN") : ""
+                          } — ${opt.reason || ""}`
+                        : ""
+                    }
+                    isOptionEqualToValue={(opt, val) => opt._id === val._id}
+                    onChange={(_, value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        originatingOpdAppointment: value?._id || null,
+                      }))
+                    }
+                    disabled={!formData.patient}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        size="small"
+                        label="Link to a previous OPD visit (optional)"
+                        placeholder="Search this patient's OPD visits…"
+                      />
+                    )}
+                  />
                 </Box>
               )}
 
