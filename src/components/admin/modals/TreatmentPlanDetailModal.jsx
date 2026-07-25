@@ -36,6 +36,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
+import LinkIcon from "@mui/icons-material/Link";
 import SaveIcon from "@mui/icons-material/Save";
 import api from "../../../api/axios";
 import { useAppointments, useAppointmentMutations } from "../../../hooks/admin/useAppointments";
@@ -208,6 +209,14 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                 <Box className="flex items-center gap-2 py-0.5">
                   <PhoneIcon className="text-indigo-500" sx={{ fontSize: 14 }} />
                   <Typography variant="caption" className="font-semibold text-gray-900">{appointment.patient?.phone || "-"}</Typography>
+                </Box>
+                <Box className="flex items-center gap-2 py-0.5">
+                  <LinkIcon className="text-indigo-500" sx={{ fontSize: 14 }} />
+                  <Typography variant="caption" className="text-gray-600">
+                    {appointment.originatingOpdAppointment?.appointmentNumber
+                      ? `Linked OPD Visit: ${appointment.originatingOpdAppointment.appointmentNumber}`
+                      : "No OPD visit linked"}
+                  </Typography>
                 </Box>
               </Box>
 

@@ -534,6 +534,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
         }
         setErrors((prev) => ({ ...prev, treatmentItems: "" }));
       }
+      if (!formData.originatingOpdAppointment) {
+        toast.error("Please select the OPD visit this treatment originated from");
+        return;
+      }
     }
 
     if (formData.visitType === "treatment_session") {
@@ -1401,8 +1405,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                       <TextField
                         {...params}
                         size="small"
-                        label="Link to a previous OPD visit (optional)"
+                        required
+                        label="Link to the OPD visit this treatment originated from *"
                         placeholder="Search this patient's OPD visits…"
+                        error={!formData.originatingOpdAppointment && !!formData.patient}
                       />
                     )}
                   />
