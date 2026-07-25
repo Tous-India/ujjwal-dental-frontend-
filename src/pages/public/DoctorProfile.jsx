@@ -70,11 +70,11 @@ const DoctorProfile = () => {
   return (
     <>
       <title>
-        Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Clinic
+        Dr. Ujjwal Prem | Oral & Maxillofacial Surgeon & Implantologist
       </title>
       <meta
         name="description"
-        content="Dr. Ujjwal Prem, MDS Oral & Maxillofacial Surgeon in Sonipat, has 15+ years experience and 11,000+ implants placed. Ex-Air Force surgeon. Book a consultation."
+        content="Meet Dr. Ujjwal Prem, an experienced Oral & Maxillofacial Surgeon and Implantologist dedicated to providing advanced, patient-focused dental care, dental implants, oral surgery, and smile restoration."
       />
       <meta
         name="keywords"
@@ -84,11 +84,11 @@ const DoctorProfile = () => {
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Clinic"
+        content="Dr. Ujjwal Prem | Oral & Maxillofacial Surgeon & Implantologist"
       />
       <meta
         property="og:description"
-        content="MDS Oral & Maxillofacial Surgeon and Implantologist with 15+ years' experience and 11,000+ implants placed. Ex-IAF. Full-mouth rehabilitation specialist in Sonipat."
+        content="Meet Dr. Ujjwal Prem, an experienced Oral & Maxillofacial Surgeon and Implantologist dedicated to providing advanced, patient-focused dental care, dental implants, oral surgery, and smile restoration."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/doctors/ujjwal-prem" />
       <meta
@@ -96,10 +96,10 @@ const DoctorProfile = () => {
         content="https://ujjwaldentalplanet.com/doctors/ujjwal.jpg"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Clinic" />
+      <meta name="twitter:title" content="Dr. Ujjwal Prem | Oral & Maxillofacial Surgeon & Implantologist" />
       <meta
         name="twitter:description"
-        content="MDS Oral & Maxillofacial Surgeon and Implantologist with 15+ years' experience and 11,000+ implants placed in Sonipat."
+        content="Meet Dr. Ujjwal Prem, an experienced Oral & Maxillofacial Surgeon and Implantologist dedicated to providing advanced, patient-focused dental care, dental implants, oral surgery, and smile restoration."
       />
       <meta
         name="twitter:image"
