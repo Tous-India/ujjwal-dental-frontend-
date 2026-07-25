@@ -160,7 +160,7 @@ const PlansPage = () => {
       <title>Dental Membership Plans | Ujjwal Dental Clinic Sonipat</title>
       <meta
         name="description"
-        content="Save with annual dental membership plans at Ujjwal Dental Planet, Sonipat, from ₹2,000. Free consultations, X-rays, and treatment discounts included."
+        content="Save with annual dental membership plans at Ujjwal Dental Clinic, Sonipat, from ₹2,000. Free consultations, X-rays, and treatment discounts included."
       />
       <meta
         name="keywords"
@@ -174,7 +174,7 @@ const PlansPage = () => {
       />
       <meta
         property="og:description"
-        content="Save with annual dental membership plans at Ujjwal Dental Planet, Sonipat. Free consultations, X-rays, and treatment discounts."
+        content="Save with annual dental membership plans at Ujjwal Dental Clinic, Sonipat. Free consultations, X-rays, and treatment discounts."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/membership-plans" />
       <meta
@@ -185,7 +185,7 @@ const PlansPage = () => {
       <meta name="twitter:title" content="Dental Membership Plans | Ujjwal Dental Clinic Sonipat" />
       <meta
         name="twitter:description"
-        content="Save with annual dental membership plans at Ujjwal Dental Planet, Sonipat. Free consultations, X-rays, and treatment discounts."
+        content="Save with annual dental membership plans at Ujjwal Dental Clinic, Sonipat. Free consultations, X-rays, and treatment discounts."
       />
       <meta
         name="twitter:image"
@@ -211,7 +211,7 @@ const PlansPage = () => {
                   name: `${plan.name} Membership`,
                   provider: {
                     "@type": "Dentist",
-                    name: "Ujjwal Dental Planet",
+                    name: "Ujjwal Dental Clinic",
                   },
                 },
               })),
@@ -486,7 +486,7 @@ const PlansPage = () => {
                 Login details will be emailed to you after purchase.
               </p>
               <p className="text-[12px] text-gray-500 mt-1 text-center">
-                Payments processed by Healing Fairy Health Care Pvt. Ltd.
+                Payments processed by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
               </p>
             </div>
 

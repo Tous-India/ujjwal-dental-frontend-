@@ -69,7 +69,7 @@ const jsonLd = {
   name: "Dr. Aashish Sonik",
   jobTitle: "Implantologist and Laser Dentistry Specialist",
   description:
-    "Dr. Aashish Sonik, BDS, MBA, Fellowship in Implantology (IFCDE Canada). 500+ dental implants placed. Expert in sinus lifts, ridge splits, and laser dentistry at Ujjwal Dental Planet, Sonipat.",
+    "Dr. Aashish Sonik, BDS, MBA, Fellowship in Implantology (IFCDE Canada). 500+ dental implants placed. Expert in sinus lifts, ridge splits, and laser dentistry at Ujjwal Dental Clinic, Sonipat.",
   image: "https://ujjwaldentalplanet.com/doctors/dr-sonik.jpg",
   url: "https://ujjwaldentalplanet.com/doctors/aashish-sonik",
   telephone: "+91-8708362763",
@@ -93,7 +93,7 @@ const jsonLd = {
   worksFor: {
     "@type": "Dentist",
     "@id": "https://ujjwaldentalplanet.com/#sonipat",
-    name: "Ujjwal Dental Planet",
+    name: "Ujjwal Dental Clinic",
   },
   address: {
     "@type": "PostalAddress",
@@ -116,11 +116,11 @@ const DoctorProfileAashishSonik = () => {
   return (
     <>
       <title>
-        Dr. Aashish Sonik — Implantologist in Sonipat | Ujjwal Dental Planet
+        Dr. Aashish Sonik — Implantologist in Sonipat | Ujjwal Dental Clinic
       </title>
       <meta
         name="description"
-        content="Dr. Aashish Sonik, BDS, MBA, Fellowship in Implantology (IFCDE Canada), is an expert implantologist at Ujjwal Dental Planet, Sonipat. 500+ implants placed. Book an appointment today."
+        content="Dr. Aashish Sonik, BDS, MBA, Fellowship in Implantology (IFCDE Canada), is an expert implantologist at Ujjwal Dental Clinic, Sonipat. 500+ implants placed. Book an appointment today."
       />
       <meta
         name="keywords"
@@ -130,11 +130,11 @@ const DoctorProfileAashishSonik = () => {
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Dr. Aashish Sonik — Implantologist in Sonipat | Ujjwal Dental Planet"
+        content="Dr. Aashish Sonik — Implantologist in Sonipat | Ujjwal Dental Clinic"
       />
       <meta
         property="og:description"
-        content="BDS, MBA, Fellowship in Implantology (IFCDE Canada). 500+ implants placed. Expert in sinus lifts, ridge splits, and laser dentistry at Ujjwal Dental Planet, Sonipat."
+        content="BDS, MBA, Fellowship in Implantology (IFCDE Canada). 500+ implants placed. Expert in sinus lifts, ridge splits, and laser dentistry at Ujjwal Dental Clinic, Sonipat."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/doctors/aashish-sonik" />
       <meta
@@ -142,10 +142,10 @@ const DoctorProfileAashishSonik = () => {
         content="https://ujjwaldentalplanet.com/doctors/dr-sonik.jpg"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Dr. Aashish Sonik — Implantologist in Sonipat | Ujjwal Dental Planet" />
+      <meta name="twitter:title" content="Dr. Aashish Sonik — Implantologist in Sonipat | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="BDS, MBA, Fellowship in Implantology (IFCDE Canada). 500+ implants placed at Ujjwal Dental Planet, Sonipat."
+        content="BDS, MBA, Fellowship in Implantology (IFCDE Canada). 500+ implants placed at Ujjwal Dental Clinic, Sonipat."
       />
       <meta
         name="twitter:image"
@@ -238,7 +238,7 @@ const DoctorProfileAashishSonik = () => {
             With his MBA in Hospital Management (First Division), Dr. Sonik
             brings a unique combination of clinical expertise and healthcare
             administration skills, ensuring efficient patient care delivery
-            and practice management at Ujjwal Dental Planet.
+            and practice management at Ujjwal Dental Clinic.
           </p>
         </div>
       </section>

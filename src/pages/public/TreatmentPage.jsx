@@ -149,7 +149,7 @@ const TreatmentPage = () => {
             ...(page.img ? { image: `https://ujjwaldentalplanet.com${page.img}` } : {}),
             provider: {
               "@type": "Dentist",
-              name: "Ujjwal Dental Planet",
+              name: "Ujjwal Dental Clinic",
               url: "https://ujjwaldentalplanet.com/",
             },
           }),

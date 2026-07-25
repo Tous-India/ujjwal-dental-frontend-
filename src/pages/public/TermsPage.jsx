@@ -15,18 +15,18 @@ const Section = ({ title, children }) => (
 const TermsPage = () => {
   return (
     <>
-      <title>Terms &amp; Conditions | Ujjwal Dental Planet</title>
+      <title>Terms &amp; Conditions | Ujjwal Dental Clinic</title>
       <meta
         name="description"
-        content="Terms & Conditions for Ujjwal Dental Planet, Sonipat — appointment policies, payments, membership plans, cancellations, and patient data handling explained."
+        content="Terms & Conditions for Ujjwal Dental Clinic, Sonipat — appointment policies, payments, membership plans, cancellations, and patient data handling explained."
       />
       <meta name="keywords" content="Ujjwal Dental terms and conditions, dental clinic policy Sonipat" />
       <link rel="canonical" href="https://ujjwaldentalplanet.com/terms" />
       <meta name="robots" content="index, follow" />
-      <meta property="og:title" content="Terms & Conditions | Ujjwal Dental Planet" />
+      <meta property="og:title" content="Terms & Conditions | Ujjwal Dental Clinic" />
       <meta
         property="og:description"
-        content="Terms & Conditions for Ujjwal Dental Planet, Sonipat — appointment policies, payments, membership plans, cancellations, and patient data handling."
+        content="Terms & Conditions for Ujjwal Dental Clinic, Sonipat — appointment policies, payments, membership plans, cancellations, and patient data handling."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/terms" />
       <meta
@@ -34,10 +34,10 @@ const TermsPage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary" />
-      <meta name="twitter:title" content="Terms & Conditions | Ujjwal Dental Planet" />
+      <meta name="twitter:title" content="Terms & Conditions | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="Terms & Conditions for Ujjwal Dental Planet, Sonipat — appointment policies, payments, membership plans, and patient policies."
+        content="Terms & Conditions for Ujjwal Dental Clinic, Sonipat — appointment policies, payments, membership plans, and patient policies."
       />
       <meta
         name="twitter:image"
@@ -58,7 +58,7 @@ const TermsPage = () => {
             Last updated: June 2, 2026
           </p>
           <p className="text-gray-500 text-[14px] mb-10">
-            Ujjwal Dental Clinic is operated by Healing Fairy Health Care Pvt. Ltd.
+            Ujjwal Dental Clinic is operated by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
           </p>
 
           <p className="text-gray-700 text-[15px] leading-[1.8] mb-8">

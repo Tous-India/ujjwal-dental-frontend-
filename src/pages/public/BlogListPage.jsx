@@ -31,21 +31,21 @@ const BlogListPage = () => {
 
   return (
     <>
-      <title>Dental Health Blog | Ujjwal Dental Planet, Sonipat</title>
+      <title>Dental Health Blog | Ujjwal Dental Clinic, Sonipat</title>
       <meta
         name="description"
-        content="Read expert dental health tips, treatment guides, and clinic updates from Ujjwal Dental Planet in Sonipat. Stay informed about painless dentistry, implants, and more."
+        content="Read expert dental health tips, treatment guides, and clinic updates from Ujjwal Dental Clinic in Sonipat. Stay informed about painless dentistry, implants, and more."
       />
       <meta
         name="keywords"
-        content="dental blog Sonipat, dental health tips, Ujjwal Dental Planet blog"
+        content="dental blog Sonipat, dental health tips, Ujjwal Dental Clinic blog"
       />
       <link rel="canonical" href="https://ujjwaldentalplanet.com/blog" />
       <meta name="robots" content="index, follow" />
-      <meta property="og:title" content="Dental Health Blog | Ujjwal Dental Planet, Sonipat" />
+      <meta property="og:title" content="Dental Health Blog | Ujjwal Dental Clinic, Sonipat" />
       <meta
         property="og:description"
-        content="Read expert dental health tips, treatment guides, and clinic updates from Ujjwal Dental Planet in Sonipat."
+        content="Read expert dental health tips, treatment guides, and clinic updates from Ujjwal Dental Clinic in Sonipat."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/blog" />
       <meta
@@ -53,10 +53,10 @@ const BlogListPage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Dental Health Blog | Ujjwal Dental Planet, Sonipat" />
+      <meta name="twitter:title" content="Dental Health Blog | Ujjwal Dental Clinic, Sonipat" />
       <meta
         name="twitter:description"
-        content="Read expert dental health tips, treatment guides, and clinic updates from Ujjwal Dental Planet in Sonipat."
+        content="Read expert dental health tips, treatment guides, and clinic updates from Ujjwal Dental Clinic in Sonipat."
       />
       <script
         type="application/ld+json"
@@ -65,7 +65,7 @@ const BlogListPage = () => {
             "@context": "https://schema.org",
             "@type": "Blog",
             "@id": "https://ujjwaldentalplanet.com/blog#blog",
-            name: "Ujjwal Dental Planet Blog",
+            name: "Ujjwal Dental Clinic Blog",
             url: "https://ujjwaldentalplanet.com/blog",
             publisher: { "@id": "https://ujjwaldentalplanet.com/#organization" },
           }),
@@ -80,7 +80,7 @@ const BlogListPage = () => {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <p className="text-center text-gray-500 mb-12 max-w-3xl mx-auto" style={{ fontSize: "1rem" }}>
-            Dental health tips, treatment guides, and updates from the Ujjwal Dental Planet team in
+            Dental health tips, treatment guides, and updates from the Ujjwal Dental Clinic team in
             Sonipat.
           </p>
 

@@ -70,7 +70,7 @@ const DoctorProfile = () => {
   return (
     <>
       <title>
-        Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Planet
+        Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Clinic
       </title>
       <meta
         name="description"
@@ -84,7 +84,7 @@ const DoctorProfile = () => {
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Planet"
+        content="Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Clinic"
       />
       <meta
         property="og:description"
@@ -96,7 +96,7 @@ const DoctorProfile = () => {
         content="https://ujjwaldentalplanet.com/doctors/ujjwal.jpg"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Planet" />
+      <meta name="twitter:title" content="Dr. Ujjwal Prem — Oral Surgeon in Sonipat | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
         content="MDS Oral & Maxillofacial Surgeon and Implantologist with 15+ years' experience and 11,000+ implants placed in Sonipat."
@@ -115,7 +115,7 @@ const DoctorProfile = () => {
             name: "Dr. Ujjwal Prem",
             jobTitle: "Oral & Maxillofacial Surgeon, Implantologist",
             description:
-              "Dr. Ujjwal Prem is a renowned Oral & Maxillofacial Surgeon and Implantologist with over 15 years of experience and 11,000+ implants placed at Ujjwal Dental Planet, Sonipat.",
+              "Dr. Ujjwal Prem is a renowned Oral & Maxillofacial Surgeon and Implantologist with over 15 years of experience and 11,000+ implants placed at Ujjwal Dental Clinic, Sonipat.",
             image: "https://ujjwaldentalplanet.com/doctors/ujjwal.jpg",
             url: "https://ujjwaldentalplanet.com/doctors/ujjwal-prem",
             telephone: "+91-8708362763",
@@ -129,7 +129,7 @@ const DoctorProfile = () => {
             worksFor: {
               "@type": "Dentist",
               "@id": "https://ujjwaldentalplanet.com/#sonipat",
-              name: "Ujjwal Dental Planet",
+              name: "Ujjwal Dental Clinic",
             },
             address: {
               "@type": "PostalAddress",

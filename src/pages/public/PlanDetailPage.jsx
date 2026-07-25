@@ -195,7 +195,7 @@ const PlanDetailPage = () => {
   if (!plan) {
     return (
       <>
-        <title>Plan Not Found | Ujjwal Dental Planet</title>
+        <title>Plan Not Found | Ujjwal Dental Clinic</title>
         <meta name="robots" content="noindex, follow" />
         <BreadcrumbBanner title="Plan Not Found" breadcrumbs={[{ label: "Home", path: "/" }, { label: "Plans", path: "/membership-plans" }]} />
         <Container maxWidth="md" sx={{ py: 10, textAlign: "center" }}>
@@ -210,10 +210,10 @@ const PlanDetailPage = () => {
 
   const planSlug = plan.name?.toLowerCase().replace(/\s+/g, "-");
   const canonicalUrl = `https://ujjwaldentalplanet.com/membership-plans/${planSlug}`;
-  const metaTitle = `${plan.name} Membership Plan | Ujjwal Dental Planet, Sonipat`;
+  const metaTitle = `${plan.name} Membership Plan | Ujjwal Dental Clinic, Sonipat`;
   const metaDescription = (
     plan.description ||
-    `${plan.name} dental membership plan at Ujjwal Dental Planet, Sonipat — ₹${plan.price?.toLocaleString("en-IN")}, ${plan.discountPercentage || plan.discountPercent || 0}% treatment discount, ${plan.validityMonths || 12} months validity.`
+    `${plan.name} dental membership plan at Ujjwal Dental Clinic, Sonipat — ₹${plan.price?.toLocaleString("en-IN")}, ${plan.discountPercentage || plan.discountPercent || 0}% treatment discount, ${plan.validityMonths || 12} months validity.`
   ).slice(0, 160);
 
   return (
@@ -241,7 +241,7 @@ const PlanDetailPage = () => {
             description: metaDescription,
             image: `https://ujjwaldentalplanet.com${image}`,
             url: canonicalUrl,
-            brand: { "@type": "Organization", name: "Ujjwal Dental Planet" },
+            brand: { "@type": "Organization", name: "Ujjwal Dental Clinic" },
             offers: {
               "@type": "Offer",
               price: plan.price,

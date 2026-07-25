@@ -78,7 +78,7 @@ const ContactPage = () => {
       <title>Contact Ujjwal Dental Clinic Sonipat | Book Appointment</title>
       <meta
         name="description"
-        content="Visit Ujjwal Dental Planet at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or message us online. Mon–Sat, 9 AM–8 PM."
+        content="Visit Ujjwal Dental Clinic at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or message us online. Mon–Sat, 9 AM–8 PM."
       />
       <meta
         name="keywords"
@@ -92,7 +92,7 @@ const ContactPage = () => {
       />
       <meta
         property="og:description"
-        content="Visit Ujjwal Dental Planet at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or send a message online."
+        content="Visit Ujjwal Dental Clinic at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or send a message online."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/contact" />
       <meta
@@ -103,7 +103,7 @@ const ContactPage = () => {
       <meta name="twitter:title" content="Contact Ujjwal Dental Clinic Sonipat | Book Appointment" />
       <meta
         name="twitter:description"
-        content="Visit Ujjwal Dental Planet at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or send a message online."
+        content="Visit Ujjwal Dental Clinic at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or send a message online."
       />
       <meta
         name="twitter:image"
@@ -123,7 +123,7 @@ const ContactPage = () => {
             url: "https://ujjwaldentalplanet.com/contact",
             mainEntity: {
               "@type": "Dentist",
-              name: "Ujjwal Dental Planet",
+              name: "Ujjwal Dental Clinic",
               telephone: "+91-8708362763",
               contactPoint: [
                 {
@@ -219,7 +219,7 @@ const ContactPage = () => {
                   Villa 445, A Block, Parsvnath City, Sonipat, Haryana 131001
                 </a>
                 <p className="text-gray-500 text-[13px] mt-3 pt-3 border-t border-gray-100">
-                  Operated by Healing Fairy Health Care Pvt. Ltd.
+                  Operated by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
                 </p>
               </InfoCard>
 

@@ -268,24 +268,24 @@ const HomePage = () => {
 
   return (
     <div>
-      <title>Best Dental Clinic in Sonipat | Ujjwal Dental Planet</title>
+      <title>Best Dental Clinic in Sonipat | Ujjwal Dental Clinic</title>
       <meta
         name="description"
-        content="Ujjwal Dental Planet, Sonipat offers dental implants, root canal treatment, braces, and family dental care. 15+ years expertise. Book your visit today."
+        content="Ujjwal Dental Clinic, Sonipat offers dental implants, root canal treatment, braces, and family dental care. 15+ years expertise. Book your visit today."
       />
       <meta
         name="keywords"
-        content="best dentist Sonipat, dental clinic Sonipat, dental implants Sonipat, Ujjwal Dental Planet"
+        content="best dentist Sonipat, dental clinic Sonipat, dental implants Sonipat, Ujjwal Dental Clinic"
       />
       <link rel="canonical" href="https://ujjwaldentalplanet.com/" />
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Best Dental Clinic in Sonipat | Ujjwal Dental Planet"
+        content="Best Dental Clinic in Sonipat | Ujjwal Dental Clinic"
       />
       <meta
         property="og:description"
-        content="Ujjwal Dental Planet, Sonipat offers dental implants, root canal treatment, braces, and complete family dental care. 15+ years of trusted expertise."
+        content="Ujjwal Dental Clinic, Sonipat offers dental implants, root canal treatment, braces, and complete family dental care. 15+ years of trusted expertise."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/" />
       <meta
@@ -293,10 +293,10 @@ const HomePage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Best Dental Clinic in Sonipat | Ujjwal Dental Planet" />
+      <meta name="twitter:title" content="Best Dental Clinic in Sonipat | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="Ujjwal Dental Planet, Sonipat offers dental implants, root canal treatment, braces, and complete family dental care."
+        content="Ujjwal Dental Clinic, Sonipat offers dental implants, root canal treatment, braces, and complete family dental care."
       />
       <meta
         name="twitter:image"
@@ -316,8 +316,8 @@ const HomePage = () => {
               {
                 "@type": "Organization",
                 "@id": "https://ujjwaldentalplanet.com/#organization",
-                name: "Ujjwal Dental Planet",
-                legalName: "Healing Fairy Health Care Pvt. Ltd.",
+                name: "Ujjwal Dental Clinic",
+                legalName: "Ujjwal Dental Clinic and Maxillofacial Surgery Center",
                 url: "https://ujjwaldentalplanet.com/",
                 logo: "https://ujjwaldentalplanet.com/ujjwal-dental-logo.png",
                 sameAs: [
@@ -329,7 +329,7 @@ const HomePage = () => {
               {
                 "@type": "Dentist",
                 "@id": "https://ujjwaldentalplanet.com/#sonipat",
-                name: "Ujjwal Dental Planet — Sonipat",
+                name: "Ujjwal Dental Clinic — Sonipat",
                 url: "https://ujjwaldentalplanet.com/",
                 telephone: "+91 8708362763",
                 priceRange: "Rs Rs",
@@ -358,7 +358,7 @@ const HomePage = () => {
             "@type": "WebSite",
             "@id": "https://ujjwaldentalplanet.com/#website",
             url: "https://ujjwaldentalplanet.com/",
-            name: "Ujjwal Dental Planet",
+            name: "Ujjwal Dental Clinic",
             publisher: { "@id": "https://ujjwaldentalplanet.com/#organization" },
           }),
         }}
@@ -483,7 +483,7 @@ const HomePage = () => {
             className="text-center text-gray-500 mb-12 max-w-3xl mx-auto w-[100%] md:w-[45%]"
             style={{ fontSize: "1rem" }}
           >
-            Ujjwal Dental Clinic, a unit of Healing Fairy Health Care Pvt. Ltd., is
+            Ujjwal Dental Clinic is
             committed to providing the best dental experience with modern technology
             and compassionate care
           </p>

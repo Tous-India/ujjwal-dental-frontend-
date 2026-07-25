@@ -52,7 +52,7 @@ const BlogDetailPage = () => {
   if (isError || !blog) {
     return (
       <>
-        <title>Blog Post Not Found | Ujjwal Dental Planet</title>
+        <title>Blog Post Not Found | Ujjwal Dental Clinic</title>
         <meta name="robots" content="noindex, follow" />
         <div className="max-w-2xl mx-auto px-4 py-24 text-center">
           <h1 className="text-[#003366] text-2xl font-bold mb-3">Blog post not found</h1>
@@ -70,7 +70,7 @@ const BlogDetailPage = () => {
     );
   }
 
-  const metaTitle = `${blog.seoTitle || blog.title} | Ujjwal Dental Planet`;
+  const metaTitle = `${blog.seoTitle || blog.title} | Ujjwal Dental Clinic`;
   const metaDescription = blog.seoDescription || blog.excerpt || blog.title;
   const canonicalUrl = `https://ujjwaldentalplanet.com/blog/${blog.slug}`;
 
@@ -100,10 +100,10 @@ const BlogDetailPage = () => {
             ...(blog.coverImage ? { image: blog.coverImage } : {}),
             datePublished: blog.publishedAt,
             dateModified: blog.updatedAt,
-            author: { "@type": "Person", name: blog.author?.name || "Ujjwal Dental Planet" },
+            author: { "@type": "Person", name: blog.author?.name || "Ujjwal Dental Clinic" },
             publisher: {
               "@type": "Organization",
-              name: "Ujjwal Dental Planet",
+              name: "Ujjwal Dental Clinic",
               logo: {
                 "@type": "ImageObject",
                 url: "https://ujjwaldentalplanet.com/ujjwal-dental-logo.png",
@@ -220,7 +220,7 @@ const BlogDetailPage = () => {
       <section className="bg-[#0D1B4A] py-12">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <h2 className="text-white font-bold text-2xl mb-2">Ready to book an appointment?</h2>
-          <p className="text-gray-300 mb-6">Visit Ujjwal Dental Planet in Sonipat for expert dental care.</p>
+          <p className="text-gray-300 mb-6">Visit Ujjwal Dental Clinic in Sonipat for expert dental care.</p>
           <Link
             to="/book-appointment"
             onClick={fireBookAppointmentConversion}

@@ -15,18 +15,18 @@ const Section = ({ title, children }) => (
 const PrivacyPolicyPage = () => {
   return (
     <>
-      <title>Privacy Policy | Ujjwal Dental Planet</title>
+      <title>Privacy Policy | Ujjwal Dental Clinic</title>
       <meta
         name="description"
-        content="Privacy Policy for Ujjwal Dental Planet, Sonipat — how we collect, use, store, and protect your personal and medical information, and your data rights."
+        content="Privacy Policy for Ujjwal Dental Clinic, Sonipat — how we collect, use, store, and protect your personal and medical information, and your data rights."
       />
       <meta name="keywords" content="Ujjwal Dental privacy policy, patient data protection Sonipat" />
       <link rel="canonical" href="https://ujjwaldentalplanet.com/privacy-policy" />
       <meta name="robots" content="index, follow" />
-      <meta property="og:title" content="Privacy Policy | Ujjwal Dental Planet" />
+      <meta property="og:title" content="Privacy Policy | Ujjwal Dental Clinic" />
       <meta
         property="og:description"
-        content="Privacy Policy for Ujjwal Dental Planet, Sonipat — how we collect, use, store, and protect your personal and medical information."
+        content="Privacy Policy for Ujjwal Dental Clinic, Sonipat — how we collect, use, store, and protect your personal and medical information."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/privacy-policy" />
       <meta
@@ -34,10 +34,10 @@ const PrivacyPolicyPage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary" />
-      <meta name="twitter:title" content="Privacy Policy | Ujjwal Dental Planet" />
+      <meta name="twitter:title" content="Privacy Policy | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="Privacy Policy for Ujjwal Dental Planet, Sonipat — how we collect, use, store, and protect your personal and medical information."
+        content="Privacy Policy for Ujjwal Dental Clinic, Sonipat — how we collect, use, store, and protect your personal and medical information."
       />
       <meta
         name="twitter:image"
@@ -58,7 +58,7 @@ const PrivacyPolicyPage = () => {
             Last updated: June 2, 2026
           </p>
           <p className="text-gray-500 text-[14px] mb-10">
-            Ujjwal Dental Clinic is operated by Healing Fairy Health Care Pvt. Ltd.
+            Ujjwal Dental Clinic is operated by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
           </p>
 
           <p className="text-gray-700 text-[15px] leading-[1.8] mb-8">

@@ -115,7 +115,7 @@ const marqueeItems = [
 const faqs = [
   {
     q: "Who is the best dentist in Sonipat?",
-    a: "The best dentist is someone who provides quality treatment, listens to your concerns, and makes you feel comfortable. At Ujjwal Dental Planet, we focus on providing honest advice, personalized care, and modern dental treatments for every patient.",
+    a: "The best dentist is someone who provides quality treatment, listens to your concerns, and makes you feel comfortable. At Ujjwal Dental Clinic, we focus on providing honest advice, personalized care, and modern dental treatments for every patient.",
   },
   {
     q: "How much does a dental implant cost in Sonipat?",
@@ -164,24 +164,24 @@ const SonipatPage = () => {
 
   return (
     <div>
-      <title>Best Dentist in Sonipat | Ujjwal Dental Planet</title>
+      <title>Best Dentist in Sonipat | Ujjwal Dental Clinic</title>
       <meta
         name="description"
-        content="Ujjwal Dental Planet is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry with an experienced team. Book today."
+        content="Ujjwal Dental Clinic is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry with an experienced team. Book today."
       />
       <meta
         name="keywords"
-        content="dentist in Sonipat, dental clinic Sonipat, best dentist Sonipat, Ujjwal Dental Planet Sonipat"
+        content="dentist in Sonipat, dental clinic Sonipat, best dentist Sonipat, Ujjwal Dental Clinic Sonipat"
       />
       <link rel="canonical" href="https://ujjwaldentalplanet.com/dentist-in-sonipat" />
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Best Dentist in Sonipat | Ujjwal Dental Planet"
+        content="Best Dentist in Sonipat | Ujjwal Dental Clinic"
       />
       <meta
         property="og:description"
-        content="Ujjwal Dental Planet is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry with an experienced team."
+        content="Ujjwal Dental Clinic is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry with an experienced team."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/dentist-in-sonipat" />
       <meta
@@ -189,10 +189,10 @@ const SonipatPage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Best Dentist in Sonipat | Ujjwal Dental Planet" />
+      <meta name="twitter:title" content="Best Dentist in Sonipat | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="Ujjwal Dental Planet is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry."
+        content="Ujjwal Dental Clinic is a trusted dentist in Sonipat offering implants, root canal, braces, and cosmetic dentistry."
       />
       <meta
         name="twitter:image"
@@ -211,7 +211,7 @@ const SonipatPage = () => {
             "@context": "https://schema.org",
             "@type": "Dentist",
             "@id": "https://ujjwaldentalplanet.com/#sonipat-page",
-            name: "Ujjwal Dental Planet — Sonipat",
+            name: "Ujjwal Dental Clinic — Sonipat",
             url: "https://ujjwaldentalplanet.com/dentist-in-sonipat",
             telephone: "+91 8708362763",
             priceRange: "Rs Rs",
@@ -253,10 +253,10 @@ const SonipatPage = () => {
       <section className="py-[48px] md:py-[64px] bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
           <h2 className="text-[#0D1B4A] text-center mb-6 text-3xl md:text-4xl font-bold">
-            Welcome to Ujjwal Dental Planet – Your Trusted Dental Clinic in Sonipat
+            Welcome to Ujjwal Dental Clinic – Your Trusted Dental Clinic in Sonipat
           </h2>
           <p className="text-center text-gray-500 max-w-4xl mx-auto text-base md:text-lg leading-relaxed">
-            At Ujjwal Dental Planet, we believe everyone deserves a healthy smile. As a
+            At Ujjwal Dental Clinic, we believe everyone deserves a healthy smile. As a
             trusted dental clinic in Sonipat, we provide complete dental care using modern
             technology, experienced dentists, and a patient-first approach. From regular
             dental check-ups to advanced treatments like dental implants, root canals,

@@ -48,7 +48,7 @@ const DoctorProfilePage = () => {
   if (!doctor) {
     return (
       <>
-        <title>Doctor Not Found | Ujjwal Dental Planet</title>
+        <title>Doctor Not Found | Ujjwal Dental Clinic</title>
         <meta name="robots" content="noindex, follow" />
         <BreadcrumbBanner
           title="Doctor Not Found"
@@ -76,8 +76,8 @@ const DoctorProfilePage = () => {
 
   const canonicalUrl = `https://ujjwaldentalplanet.com/doctors/${doctor.slug}`;
   const imageUrl = `https://ujjwaldentalplanet.com${doctor.img}`;
-  const metaTitle = `${doctor.name} — ${doctor.specialization} in Sonipat | Ujjwal Dental Planet`;
-  const metaDescription = `${doctor.name}, ${doctor.specialization} with ${doctor.experience}+ years of experience at Ujjwal Dental Planet, Sonipat. Book an appointment today.`;
+  const metaTitle = `${doctor.name} — ${doctor.specialization} in Sonipat | Ujjwal Dental Clinic`;
+  const metaDescription = `${doctor.name}, ${doctor.specialization} with ${doctor.experience}+ years of experience at Ujjwal Dental Clinic, Sonipat. Book an appointment today.`;
 
   return (
     <>
@@ -113,7 +113,7 @@ const DoctorProfilePage = () => {
             worksFor: {
               "@type": "Dentist",
               "@id": "https://ujjwaldentalplanet.com/#sonipat",
-              name: "Ujjwal Dental Planet",
+              name: "Ujjwal Dental Clinic",
             },
             address: {
               "@type": "PostalAddress",
