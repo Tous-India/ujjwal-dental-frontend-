@@ -12,10 +12,10 @@ const BookAppointment = lazy(() => import("../patient/BookAppointment"));
 const BookAppointmentPage = () => {
   return (
     <>
-      <title>Book Dental Appointment Online | Ujjwal Dental Clinic Sonipat</title>
+      <title>Online Dental Appointment Booking | Ujjwal Dental Clinic</title>
       <meta
         name="description"
-        content="Book your dental appointment online at Ujjwal Dental Clinic, Sonipat in minutes. Select your clinic, preferred date and time, and get instant confirmation."
+        content="Book your dental appointment online with ease. Schedule a consultation with our experienced dentists for personalized dental care and take the first step toward a healthier smile."
       />
       <meta
         name="keywords"
@@ -25,11 +25,11 @@ const BookAppointmentPage = () => {
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Book Dental Appointment Online | Ujjwal Dental Clinic Sonipat"
+        content="Online Dental Appointment Booking | Ujjwal Dental Clinic"
       />
       <meta
         property="og:description"
-        content="Book your dental appointment online at Ujjwal Dental Clinic, Sonipat in minutes. Select your clinic, date and time, and get instant confirmation."
+        content="Book your dental appointment online with ease. Schedule a consultation with our experienced dentists for personalized dental care and take the first step toward a healthier smile."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/book-appointment" />
       <meta
@@ -37,10 +37,10 @@ const BookAppointmentPage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Book Dental Appointment Online | Ujjwal Dental Clinic Sonipat" />
+      <meta name="twitter:title" content="Online Dental Appointment Booking | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="Book your dental appointment online at Ujjwal Dental Clinic, Sonipat in minutes. Instant confirmation."
+        content="Book your dental appointment online with ease. Schedule a consultation with our experienced dentists for personalized dental care and take the first step toward a healthier smile."
       />
       <meta
         name="twitter:image"
