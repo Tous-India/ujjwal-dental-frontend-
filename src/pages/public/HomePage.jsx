@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../api/axios";
 import { Swiper, SwiperSlide } from "swiper/react";
 import {
   Autoplay,
@@ -73,41 +75,6 @@ const doctors = [
     lead: false,
     img: "/doctors/dr-sonik.jpg",
     to: "/doctors/aashish-sonik",
-  },
-];
-
-const dentalPlans = [
-  {
-    title: "Premium Dental Health Plan",
-    img: "/images/clear-aligner.png",
-    features: [
-      "₹1,500 treatment coupon redeemable against any dental procedure",
-      "Free consultation and X-ray",
-    ],
-    price: "666",
-  },
-  {
-    title: "Star Dental Health Plan",
-    img: "/images/cosmatic-dental-bonding.png",
-    features: [
-      "₹1,500 treatment coupon redeemable against any dental procedure",
-      "Free consultation and X-ray",
-      "₹4,000 off on orthodontic and implant treatments",
-    ],
-    price: "999",
-  },
-  {
-    title: "Implant Post Care",
-    img: "/images/dental-implant.png",
-    features: [
-      "OPD for one year",
-      "Oral Prophylaxis (twice a year)",
-      "Two oral health kits in a year",
-      "RVG for one year",
-      "Post Operative Dental Implant Care",
-    ],
-    price: "4500",
-    annual: true,
   },
 ];
 
@@ -232,7 +199,7 @@ const faqs = [
   },
   {
     q: "What are the dental membership plans and pricing?",
-    a: "We offer three plans: Premium Dental Health Plan (₹666, includes ₹1,500 treatment coupon + free consultation & X-ray), Star Dental Health Plan (₹999, includes ₹1,500 coupon + free consultation & X-ray + ₹4,000 off on ortho & implants), and Implant Post Care (₹4,500). Plans are valid for 6 months. Buy online or at the clinic.",
+    a: "We offer three plans: Premium Dental Health Plan (₹499, includes ₹1,500 treatment coupon + free consultation & X-ray), Star Dental Health Plan (₹699, includes ₹1,500 coupon + free consultation & X-ray + ₹4,000 off on ortho & implants), and Implant Post Care (₹4,500). Plans are valid for 6 months. Buy online or at the clinic.",
   },
   {
     q: "Is Ujjwal Dental Clinic good for kids?",
@@ -249,22 +216,27 @@ const faqs = [
 ];
 
 const HomePage = () => {
-  const [planPrices, setPlanPrices] = useState(null);
   const [openFaqs, setOpenFaqs] = useState({});
   const reviewsPrevRef = useRef(null);
   const reviewsNextRef = useRef(null);
   const doctorsPrevRef = useRef(null);
   const doctorsNextRef = useRef(null);
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("dental_plans_pricing");
-      if (saved) setPlanPrices(JSON.parse(saved));
-    } catch {}
-  }, []);
-
-  const getPrice = (title, defaultPrice) =>
-    planPrices?.[title] || defaultPrice;
+  // Live membership plans -- same API + React Query pattern as PlansPage.jsx
+  // (single source of truth; was previously a hardcoded array that had
+  // drifted from the real CRM-managed prices, with no backend connection
+  // at all -- not a caching bug, there was nothing to cache).
+  const { data: plansData } = useQuery({
+    queryKey: ["public", "membership-plans"],
+    queryFn: () => api.get("/memberships/plans").then((res) => res.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const dentalPlans = [...(plansData?.data?.plans || plansData?.data || [])].sort(
+    (a, b) => (a.price || 0) - (b.price || 0)
+  );
+  // Same "middle plan is Most Popular" heuristic PlansPage.jsx uses -- not a
+  // stored flag on the plan data, a position-based convention.
+  const featuredIndex = dentalPlans.length ? Math.floor(dentalPlans.length / 2) : -1;
 
   return (
     <div>
@@ -877,10 +849,10 @@ const HomePage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto items-stretch">
             {dentalPlans.map((plan, i) => {
-              const featured = i === 1;
+              const featured = i === featuredIndex;
               return (
                 <div
-                  key={i}
+                  key={plan._id || i}
                   className={`relative rounded-2xl py-8 px-6 flex flex-col border ${
                     featured
                       ? "bg-white border-[#003366] md:scale-[1.03] order-first md:order-none"
@@ -896,13 +868,13 @@ const HomePage = () => {
                   {/* Plan name + price */}
                   <div className="text-center">
                     <h3 className="text-[#003366] text-[21px] font-bold leading-tight">
-                      {plan.title}
+                      {plan.name}
                     </h3>
                     <p className="mt-3">
                       <span className="font-numbers text-[#003366] text-[38px] font-extrabold">
-                        ₹{getPrice(plan.title, plan.price)}
+                        ₹{(plan.price || 0).toLocaleString("en-IN")}
                       </span>
-                      {plan.annual && (
+                      {plan.durationMonths >= 12 && (
                         <span className="font-numbers text-gray-500 text-sm">/year</span>
                       )}
                     </p>
@@ -912,7 +884,7 @@ const HomePage = () => {
 
                   {/* Benefits */}
                   <ul className="flex-grow">
-                    {plan.features.map((f, j) => (
+                    {(plan.features || []).map((f, j) => (
                       <li
                         key={j}
                         className="flex items-start gap-2 py-1.5 text-gray-700 text-[15px] leading-snug"
