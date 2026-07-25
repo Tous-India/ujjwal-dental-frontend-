@@ -46,10 +46,108 @@ const reportCategories = [
   { value: "other", label: "Other" },
 ];
 
-const AddReportModal = ({ open, onClose, onSuccess }) => {
+const MAX_FILES = 10;
+
+/**
+ * A single file row: Choose File / Take Photo buttons, preview, per-file
+ * description, and a remove-slot button. Owns its own hidden inputs so
+ * each row's camera-capture trigger is independent of the others.
+ */
+const FileSlot = ({
+  index,
+  fileEntry,
+  onFileSelect,
+  onDescriptionChange,
+  onRemoveFile,
+  onRemoveSlot,
+  canRemoveSlot,
+  formatFileSize,
+}) => {
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
+  return (
+    <Paper variant="outlined" className="p-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={onFileSelect}
+        className="hidden"
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        capture="environment"
+        onChange={onFileSelect}
+        className="hidden"
+      />
+
+      <Box className="flex items-center justify-between gap-3">
+        {!fileEntry.file ? (
+          <Box className="flex items-center gap-2 flex-1">
+            <CloudUploadIcon className="text-gray-400" />
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<UploadFileIcon />}
+              onClick={() => fileInputRef.current?.click()}
+              className="border-teal-600 text-teal-700 hover:border-teal-700"
+            >
+              Choose File
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<PhotoCameraIcon />}
+              onClick={() => cameraInputRef.current?.click()}
+              className="border-teal-600 text-teal-700 hover:border-teal-700"
+            >
+              Take Photo
+            </Button>
+          </Box>
+        ) : (
+          <Box className="flex items-center gap-2 flex-1 min-w-0">
+            <DescriptionIcon className="text-teal-600" sx={{ fontSize: 28 }} />
+            <Box className="min-w-0">
+              <Typography variant="body2" className="font-medium text-gray-800 truncate">
+                {fileEntry.file.name}
+              </Typography>
+              <Typography variant="caption" className="text-gray-500">
+                {formatFileSize(fileEntry.file.size)}
+              </Typography>
+            </Box>
+            <IconButton onClick={onRemoveFile} size="small" className="text-red-500">
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        )}
+
+        <IconButton
+          onClick={onRemoveSlot}
+          size="small"
+          disabled={!canRemoveSlot}
+          title="Remove this row"
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Box>
+
+      <TextField
+        fullWidth
+        size="small"
+        label="Description (optional)"
+        value={fileEntry.description}
+        onChange={onDescriptionChange}
+        className="mt-2"
+        placeholder={`Note for file ${index + 1}`}
+      />
+    </Paper>
+  );
+};
+
+const AddReportModal = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     patient: null,
     title: "",
@@ -59,7 +157,8 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
     isVisibleToPatient: true,
     notes: "",
   });
-  const [selectedFile, setSelectedFile] = useState(null);
+  // files: [{ file: File|null, description: string }]
+  const [files, setFiles] = useState([{ file: null, description: "" }]);
   const [patientSearch, setPatientSearch] = useState("");
 
   const { uploadReport, isUploading } = useReportMutations();
@@ -103,34 +202,50 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
     }));
   };
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error("Please select a PDF or image file (JPEG, PNG)");
-        return;
-      }
-
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size must be less than 10MB");
-        return;
-      }
-
-      setSelectedFile(file);
+  const validateFile = (file) => {
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please select a PDF or image file (JPEG, PNG)");
+      return false;
     }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return false;
+    }
+    return true;
   };
 
-  const handleRemoveFile = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const handleFileSelect = (index) => (e) => {
+    const file = e.target.files?.[0];
+    if (file && validateFile(file)) {
+      setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, file } : f)));
     }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = "";
+    e.target.value = "";
+  };
+
+  const handleDescriptionChange = (index) => (e) => {
+    const value = e.target.value;
+    setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, description: value } : f)));
+  };
+
+  const handleRemoveFile = (index) => () => {
+    setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, file: null } : f)));
+  };
+
+  const addFileSlot = () => {
+    if (files.length >= MAX_FILES) {
+      toast.error(`Maximum ${MAX_FILES} files per report`);
+      return;
     }
+    setFiles((prev) => [...prev, { file: null, description: "" }]);
+  };
+
+  const removeFileSlot = (index) => {
+    if (files.length <= 1) {
+      toast.error("At least one file is required");
+      return;
+    }
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
@@ -143,14 +258,16 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
       toast.error("Report title is required");
       return;
     }
-    if (!selectedFile) {
-      toast.error("Please select a file to upload");
+    const selectedFiles = files.filter((f) => f.file);
+    if (selectedFiles.length === 0) {
+      toast.error("Please select at least one file to upload");
       return;
     }
 
     // Build FormData for multipart upload
     const data = new FormData();
-    data.append("file", selectedFile);
+    selectedFiles.forEach((f) => data.append("files", f.file));
+    data.append("descriptions", JSON.stringify(selectedFiles.map((f) => f.description.trim())));
     data.append("patient", formData.patient._id);
     data.append("title", formData.title.trim());
     data.append("category", formData.category);
@@ -183,14 +300,8 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
       isVisibleToPatient: true,
       notes: "",
     });
-    setSelectedFile(null);
+    setFiles([{ file: null, description: "" }]);
     setPatientSearch("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = "";
-    }
   };
 
   const handleClose = () => {
@@ -371,85 +482,37 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
             />
           </Grid>
 
-          {/* File Upload */}
+          {/* Files Upload (up to MAX_FILES, each with its own description) */}
           <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-2">
-              Upload File *
+              Upload Files * ({files.length}/{MAX_FILES})
             </Typography>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              capture="environment"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
+            <Box className="flex flex-col gap-3">
+              {files.map((f, index) => (
+                <FileSlot
+                  key={index}
+                  index={index}
+                  fileEntry={f}
+                  onFileSelect={handleFileSelect(index)}
+                  onDescriptionChange={handleDescriptionChange(index)}
+                  onRemoveFile={handleRemoveFile(index)}
+                  onRemoveSlot={() => removeFileSlot(index)}
+                  canRemoveSlot={files.length > 1}
+                  formatFileSize={formatFileSize}
+                />
+              ))}
+            </Box>
 
-            {!selectedFile ? (
-              <Paper
-                variant="outlined"
-                className="p-8 border-2 border-dashed border-gray-300 transition-colors"
-              >
-                <Box className="flex flex-col items-center gap-2 text-gray-500">
-                  <CloudUploadIcon sx={{ fontSize: 48 }} className="text-gray-400" />
-                  <Typography variant="body1" className="font-medium">
-                    Choose a file or take a photo
-                  </Typography>
-                  <Typography variant="body2" className="text-gray-400 mb-3">
-                    PDF, JPEG, PNG (max 10MB)
-                  </Typography>
-                  <Box className="flex items-center gap-3">
-                    <Button
-                      variant="outlined"
-                      startIcon={<UploadFileIcon />}
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-teal-600 text-teal-700 hover:border-teal-700"
-                    >
-                      Choose File
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<PhotoCameraIcon />}
-                      onClick={() => cameraInputRef.current?.click()}
-                      className="border-teal-600 text-teal-700 hover:border-teal-700"
-                    >
-                      Take Photo
-                    </Button>
-                  </Box>
-                </Box>
-              </Paper>
-            ) : (
-              <Paper variant="outlined" className="p-4 bg-teal-50 border-teal-200">
-                <Box className="flex items-center justify-between">
-                  <Box className="flex items-center gap-3">
-                    <DescriptionIcon className="text-teal-600" sx={{ fontSize: 40 }} />
-                    <Box>
-                      <Typography variant="body2" className="font-medium text-gray-800">
-                        {selectedFile.name}
-                      </Typography>
-                      <Typography variant="caption" className="text-gray-500">
-                        {formatFileSize(selectedFile.size)} | {selectedFile.type}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <IconButton
-                    onClick={handleRemoveFile}
-                    size="small"
-                    className="text-red-500"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              </Paper>
-            )}
+            <Button
+              variant="text"
+              startIcon={<UploadFileIcon />}
+              onClick={addFileSlot}
+              disabled={files.length >= MAX_FILES}
+              className="mt-2 text-teal-700"
+            >
+              + Add More
+            </Button>
           </Grid>
         </Grid>
       </DialogContent>
