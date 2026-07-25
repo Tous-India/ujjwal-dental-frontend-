@@ -75,7 +75,10 @@ const TreatmentPage = () => {
     page?.title ||
     slug?.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-  const metaTitle = `${title} in Sonipat | Ujjwal Dental Clinic`;
+  // Prefer the finalized per-treatment seoTitle/seoDescription copy when
+  // present; otherwise fall back to the generated template (used for any
+  // slug without dedicated SEO copy yet).
+  const metaTitle = page?.seoTitle || `${title} in Sonipat | Ujjwal Dental Clinic`;
   // Trim to the last full word within ~155 chars so the snippet doesn't end
   // mid-word, then add an ellipsis (targets the 150-160 char SEO range).
   const buildDescription = (content) => {
@@ -85,6 +88,7 @@ const TreatmentPage = () => {
     return `${truncated.slice(0, truncated.lastIndexOf(" "))}…`;
   };
   const metaDescription =
+    page?.seoDescription ||
     buildDescription(page?.content) ||
     `Learn about ${title} at Ujjwal Dental Clinic, Sonipat. Call ${PHONE_DISPLAY} to book your consultation with our expert dental team today.`;
   const canonicalUrl = `https://ujjwaldentalplanet.com/treatments/${slug}`;

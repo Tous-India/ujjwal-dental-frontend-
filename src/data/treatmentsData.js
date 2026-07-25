@@ -1,6 +1,9 @@
 const treatmentsData = {
   "dental-implant": {
     title: "Dental Implant",
+    seoTitle: "Advanced Dental Implant Treatment | Restore Your Smile",
+    seoDescription:
+      "Restore your smile with advanced dental implant treatment. Get natural-looking, long-lasting tooth replacement using safe and modern implant dentistry. Book your consultation today.",
     img: "/images/dental-implant.png",
     content:
       "Dental implants are the gold standard for replacing missing teeth. They are titanium posts surgically placed into the jawbone, providing a strong foundation for fixed or removable replacement teeth that are made to match your natural teeth.",
@@ -53,6 +56,9 @@ const treatmentsData = {
 
   "root-canal-treatment-rct": {
     title: "Root Canal Treatment (RCT)",
+    seoTitle: "Root Canal Treatment (RCT) | Save Your Natural Tooth & Relieve Pain",
+    seoDescription:
+      "Root canal treatment effectively removes infected pulp, relieves tooth pain, and strengthens your tooth for long-term oral health and function.",
     img: "/images/root-canal.png",
     content:
       "Root canal treatment is a procedure to save a badly damaged or infected tooth. It involves removing the damaged area of the tooth (the pulp), cleaning and disinfecting it, then filling and sealing it to prevent further infection.",
@@ -84,6 +90,9 @@ const treatmentsData = {
 
   "wisdom-teeth": {
     title: "Wisdom Teeth",
+    seoTitle: "Wisdom Tooth Extraction | Safe & Painless Wisdom Teeth Removal",
+    seoDescription:
+      "Need wisdom tooth removal? Get safe and comfortable wisdom tooth extraction from experienced dentists. Book your consultation for expert care and faster recovery.",
     img: "/images/wisdom-teeth.png",
     content:
       "Wisdom teeth are the third set of molars that typically emerge in your late teens or early twenties. When they don't have enough room to emerge or develop normally, they become impacted and may require extraction to prevent complications.",
@@ -115,6 +124,9 @@ const treatmentsData = {
 
   "clear-aligners": {
     title: "Clear Aligners",
+    seoTitle: "Clear Aligners | Invisible Braces for a Confident Smile",
+    seoDescription:
+      "Looking for invisible braces? Clear aligners offer a comfortable, removable, and effective way to straighten your teeth without metal brackets or wires.",
     img: "/images/clear-aligner.png",
     content:
       "Clear aligners are a modern, virtually invisible orthodontic solution for straightening teeth. These custom-made, removable trays gradually shift your teeth into the desired position without the need for traditional metal braces.",
@@ -146,6 +158,9 @@ const treatmentsData = {
 
   "cosmatic-dental-bonding": {
     title: "Cosmetic Dental Bonding",
+    seoTitle: "Cosmetic Dental Bonding | Repair Chipped, Gapped & Discolored Teeth",
+    seoDescription:
+      "Enhance your smile with cosmetic dental bonding. Repair chipped, cracked, stained, or uneven teeth with a quick, minimally invasive, and natural-looking treatment. Book your consultation today.",
     img: "/images/cosmatic-dental-bonding.png",
     content:
       "Cosmetic dental bonding is a quick and affordable procedure where a tooth-colored composite resin is applied and hardened with a special light, bonding the material to the tooth to restore or improve a person's smile.",
@@ -177,6 +192,9 @@ const treatmentsData = {
 
   "laser-dentistry": {
     title: "Laser Dentistry",
+    seoTitle: "Advanced Laser Dentistry | Painless Dental Treatments",
+    seoDescription:
+      "Laser dentistry offers a comfortable alternative to traditional dental procedures with greater precision, less bleeding, quicker recovery, and improved patient comfort.",
     img: "/images/laser-dentistry.png",
     content:
       "Laser dentistry uses focused light beams to perform a variety of dental procedures with greater precision, less pain, and faster recovery. It represents the cutting edge of modern dental technology for both hard and soft tissue treatments.",
@@ -208,6 +226,9 @@ const treatmentsData = {
 
   "kids-dentistry": {
     title: "Kids Dentistry",
+    seoTitle: "Kids Dentistry | Gentle & Expert Dental Care for Children",
+    seoDescription:
+      "Keep your child's smile healthy with gentle kids dentistry. We provide preventive dental care, cavity treatment, fluoride therapy, and pediatric dental services in a friendly environment.",
     img: "/images/kid-dentistry.png",
     content:
       "Kids dentistry (pediatric dentistry) focuses on the oral health of children from infancy through their teen years. Our child-friendly environment and gentle approach ensure that your little ones have a positive dental experience.",
@@ -239,6 +260,9 @@ const treatmentsData = {
 
   "dental-crowns-and-bridges": {
     title: "Dental Crowns and Bridges",
+    seoTitle: "Dental Crowns and Bridges | Restore Your Smile Naturally",
+    seoDescription:
+      "Protect damaged teeth and replace missing ones with high-quality dental crowns and bridges. Experience comfortable treatment and long-lasting, natural-looking results.",
     img: "/images/dental-crown-and-bridges.png",
     content:
       "Dental crowns and bridges are fixed prosthetic devices used to restore damaged teeth or replace missing ones. Crowns cover and protect weakened teeth, while bridges fill the gap created by one or more missing teeth.",
@@ -308,6 +332,9 @@ const treatmentsData = {
 
   "gum-disease-treatment": {
     title: "Gum Disease Treatment",
+    seoTitle: "Gum Disease Treatment | Healthy Gums & Advanced Periodontal Care",
+    seoDescription:
+      "Protect your smile with advanced gum disease treatment. Our expert periodontal care helps treat bleeding gums, gingivitis, and periodontitis to restore healthy gums and long-term oral health.",
     img: "/images/gum-deases-treatment.png",
     content:
       "Gum disease (periodontal disease) is a serious infection of the gums that damages the soft tissue and, if untreated, can destroy the bone supporting your teeth. Our comprehensive treatment plans help restore gum health and prevent tooth loss.",
@@ -339,6 +366,9 @@ const treatmentsData = {
 
   "dental-filling": {
     title: "Dental Filling",
+    seoTitle: "Dental Filling Treatment | Repair Cavities & Protect Your Teeth",
+    seoDescription:
+      "Repair cavities and damaged teeth with safe, effective dental fillings. Our natural-looking restorations help improve your oral health and restore tooth function.",
     img: "/images/dental-implant.png",
     content:
       "Dental fillings are used to restore teeth damaged by decay back to their normal function and shape. When a dentist gives you a filling, the decayed tooth material is removed, the area is cleaned, and the cavity is filled with a restorative material.",
@@ -370,6 +400,9 @@ const treatmentsData = {
 
   dentures: {
     title: "Dentures",
+    seoTitle: "Dentures | Comfortable & Natural-Looking Tooth Replacement",
+    seoDescription:
+      "Restore your smile with custom-made complete and partial dentures. Enjoy comfortable, natural-looking tooth replacement that improves chewing, speech, and confidence. Book your consultation today.",
     img: "/images/dental-implant.png",
     content:
       "Dentures are removable replacements for missing teeth and surrounding tissues. They are designed to closely resemble your natural teeth and can significantly improve your smile and oral health.",
@@ -401,6 +434,9 @@ const treatmentsData = {
 
   "teeth-whitening": {
     title: "Teeth Whitening",
+    seoTitle: "Laser Teeth Whitening | Achieve a Brighter, Whiter Smile",
+    seoDescription:
+      "Brighten your smile with advanced teeth whitening. Our safe and effective treatment removes stains caused by coffee, tea, smoking, and aging.",
     img: "/images/dental-implant.png",
     content:
       "Professional teeth whitening is one of the most popular cosmetic dental procedures. It effectively lightens teeth and removes stains and discoloration, giving you a brighter, more confident smile.",
@@ -432,6 +468,9 @@ const treatmentsData = {
 
   "mouth-ulcers": {
     title: "Mouth Ulcers",
+    seoTitle: "Mouth Ulcer Treatment | Fast Relief & Expert Dental Care",
+    seoDescription:
+      "Get effective treatment for mouth ulcers with expert dental care. Learn the causes, symptoms, prevention, and treatment options to relieve pain and promote faster healing.",
     img: "/images/dental-implant.png",
     content:
       "Mouth ulcers (canker sores) are small, painful lesions that develop in the mouth or at the base of the gums. While usually harmless, they can be very uncomfortable and may interfere with eating and speaking.",
@@ -463,6 +502,9 @@ const treatmentsData = {
 
   braces: {
     title: "Braces",
+    seoTitle: "Dental Braces Treatment | Metal, Ceramic & Clear Aligners",
+    seoDescription:
+      "Looking for teeth straightening? Our dental braces treatment corrects crooked teeth, bite issues, and spacing problems using advanced orthodontic solutions.",
     img: "/images/dental-implant.png",
     content:
       "Dental braces are orthodontic devices used to correct misaligned teeth and jaws. They apply continuous pressure over time to slowly move teeth into the desired position, resulting in a straighter, healthier smile.",
@@ -494,6 +536,9 @@ const treatmentsData = {
 
   "smile-makeover": {
     title: "Smile Makeover",
+    seoTitle: "Smile Makeover | Transform Your Smile with Cosmetic Dentistry",
+    seoDescription:
+      "Achieve a confident, natural-looking smile with a personalized smile makeover. From teeth whitening and veneers to dental bonding and implants, we create treatment plans tailored to your unique smile goals.",
     img: "/images/dental-implant.png",
     content:
       "A smile makeover is a comprehensive approach to improving the appearance of your smile through one or more cosmetic dental procedures. It is customized to address your unique dental concerns and aesthetic goals.",
