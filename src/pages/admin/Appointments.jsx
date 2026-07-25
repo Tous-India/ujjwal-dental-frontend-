@@ -485,7 +485,7 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
 // here is derived from treatmentStatus, never the per-appointment `status`
 // field, since a plan spans many sessions with individually varying statuses.
 const treatmentPlanStatusColors = { active: "primary", completed: "success" };
-const getTreatmentColumns = (onView) => [
+const getTreatmentColumns = (onView, sessionsBookedMap = {}) => [
   {
     field: "patient",
     headerName: "Patient",
@@ -512,14 +512,33 @@ const getTreatmentColumns = (onView) => [
     ),
   },
   {
-    field: "sessionsPlanned",
-    headerName: "Progress",
+    field: "createdAt",
+    headerName: "Date Created",
     minWidth: 120,
     render: (value) => (
       <Typography variant="body2" className="font-numbers" sx={{ fontSize: "12px" }}>
-        {value ? `Planned: ${value} sessions` : "Not set"}
+        {value
+          ? new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+          : "—"}
       </Typography>
     ),
+  },
+  {
+    field: "sessionsPlanned",
+    headerName: "Progress",
+    minWidth: 130,
+    render: (value, row) => {
+      // sessionsBooked = parent counts as session 1 + non-cancelled linked
+      // treatment_session children -- same computation the backend already
+      // uses (checkAndAutoCompleteTreatment / updateAppointment's sanity
+      // guard), reproduced here client-side from a bulk-fetched count map.
+      const booked = sessionsBookedMap[row?._id] ?? 1;
+      return (
+        <Typography variant="body2" className="font-numbers" sx={{ fontSize: "12px" }}>
+          {value ? `${booked}/${value} sessions` : `${booked} sessions (no plan set)`}
+        </Typography>
+      );
+    },
   },
   {
     field: "totalFee",
@@ -834,6 +853,27 @@ const Appointments = () => {
   // Extract data from response
   const appointments = data?.data || [];
   const pagination = data?.pagination || { total: 0 };
+
+  // Sessions delivered so far, for the Treatments tab's Progress column --
+  // one bulk fetch of this page's session appointments (not per-row), grouped
+  // client-side by parentAppointment. Same "non-cancelled children + 1 for
+  // the parent" rule the backend already uses for sessionsBooked.
+  const treatmentIds = activeTab === 1 ? appointments.map((a) => a._id) : [];
+  const { data: sessionsData } = useAppointments(
+    { visitType: "treatment_session", limit: 1000 },
+    { enabled: activeTab === 1 && treatmentIds.length > 0 }
+  );
+  const sessionsBookedMap = {};
+  if (activeTab === 1) {
+    treatmentIds.forEach((id) => { sessionsBookedMap[id] = 1; });
+    (sessionsData?.data || []).forEach((s) => {
+      if (s.status === "cancelled") return;
+      const parentId = s.parentAppointment;
+      if (parentId && sessionsBookedMap[parentId] !== undefined) {
+        sessionsBookedMap[parentId] += 1;
+      }
+    });
+  }
 
   // console.log(appointments,"apppointent");
   /**
@@ -1152,7 +1192,7 @@ const Appointments = () => {
       <DataTable
         columns={
           activeTab === 1
-            ? getTreatmentColumns((row) => { setSelectedTreatment(row); setTreatmentDetailOpen(true); })
+            ? getTreatmentColumns((row) => { setSelectedTreatment(row); setTreatmentDetailOpen(true); }, sessionsBookedMap)
             : getColumns(
                 handleDeleteRow,
                 (row) => { setSelectedAppointment(row); setCancelModalOpen(true); },
