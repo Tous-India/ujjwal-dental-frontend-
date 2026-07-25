@@ -14,16 +14,18 @@ import {
   cancelAppointment,
   deleteAppointment,
   rescheduleAppointment,
+  reopenTreatment,
 } from "../../api/admin/appointments.api";
 
 /**
  * Hook for fetching appointments list
  */
-export const useAppointments = (params = {}) => {
+export const useAppointments = (params = {}, options = {}) => {
   return useQuery({
     queryKey: ["admin", "appointments", params],
     queryFn: () => getAppointments(params),
     staleTime: 2 * 60 * 1000,
+    ...options,
   });
 };
 
@@ -103,6 +105,14 @@ export const useAppointmentMutations = () => {
     },
   });
 
+  const reopenTreatmentMutation = useMutation({
+    mutationFn: ({ id, reason }) => reopenTreatment(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+    },
+  });
+
   return {
     createAppointment: createMutation.mutate,
     isCreating: createMutation.isPending,
@@ -116,6 +126,8 @@ export const useAppointmentMutations = () => {
     isDeleting: deleteMutation.isPending,
     rescheduleAppointment: rescheduleMutation.mutate,
     isRescheduling: rescheduleMutation.isPending,
+    reopenTreatment: reopenTreatmentMutation.mutate,
+    isReopeningTreatment: reopenTreatmentMutation.isPending,
   };
 };
 

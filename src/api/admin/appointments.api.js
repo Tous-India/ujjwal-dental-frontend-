@@ -66,3 +66,9 @@ export const deleteAppointment = (id) =>
  */
 export const rescheduleAppointment = (id, data) =>
   api.post(`/appointments/${id}/reschedule`, data).then((res) => res.data);
+
+/**
+ * Reopen a closed treatment plan
+ */
+export const reopenTreatment = (id, reason) =>
+  api.post(`/appointments/${id}/reopen-treatment`, { reason }).then((res) => res.data);

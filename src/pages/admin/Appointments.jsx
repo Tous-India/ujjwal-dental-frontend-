@@ -40,6 +40,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import AppointmentSlipPreviewModal from "../../components/AppointmentSlipPreviewModal";
 import DataTable from "../../components/common/DataTable";
 import { useAppointments, useAppointmentMutations } from "../../hooks/admin/useAppointments";
@@ -49,6 +50,7 @@ import {
   updateFeeSettings,
 } from "../../api/admin/settings.api";
 import AppointmentDetailModal from "../../components/admin/modals/AppointmentDetailModal";
+import TreatmentPlanDetailModal from "../../components/admin/modals/TreatmentPlanDetailModal";
 import AddAppointmentModal from "../../components/admin/modals/AddAppointmentModal";
 import EditAppointmentModal from "../../components/admin/modals/EditAppointmentModal";
 import CancelAppointmentModal from "../../components/admin/modals/CancelAppointmentModal";
@@ -479,6 +481,131 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
   },
 ];
 
+// Treatments-tab-only columns — one row per treatment plan (Part A/D). Status
+// here is derived from treatmentStatus, never the per-appointment `status`
+// field, since a plan spans many sessions with individually varying statuses.
+const treatmentPlanStatusColors = { active: "primary", completed: "success" };
+const getTreatmentColumns = (onView) => [
+  {
+    field: "patient",
+    headerName: "Patient",
+    minWidth: 160,
+    render: (value) => (
+      <Box>
+        <Typography variant="body2" className="font-medium" sx={{ fontSize: "12px" }}>
+          {value?.name || "Unknown"}
+        </Typography>
+        <Typography variant="caption" className="text-gray-500">
+          {value?.phone || "-"}
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    field: "treatmentName",
+    headerName: "Treatment Name",
+    minWidth: 160,
+    render: (value, row) => (
+      <Typography variant="body2" sx={{ fontSize: "12px" }}>
+        {value || row?.treatmentId?.name || "Treatment"}
+      </Typography>
+    ),
+  },
+  {
+    field: "sessionsPlanned",
+    headerName: "Progress",
+    minWidth: 120,
+    render: (value) => (
+      <Typography variant="body2" className="font-numbers" sx={{ fontSize: "12px" }}>
+        {value ? `Planned: ${value} sessions` : "Not set"}
+      </Typography>
+    ),
+  },
+  {
+    field: "totalFee",
+    headerName: "Total Fee",
+    minWidth: 95,
+    render: (_, row) => (
+      <Typography variant="body2" className="font-numbers font-medium" sx={{ fontSize: "12px" }}>
+        ₹{(row?.invoice?.grandTotal ?? row?.fee ?? 0).toLocaleString("en-IN")}
+      </Typography>
+    ),
+  },
+  {
+    field: "paid",
+    headerName: "Paid",
+    minWidth: 90,
+    render: (_, row) => (
+      <Typography variant="body2" className="font-numbers" sx={{ fontSize: "12px", color: "#059669" }}>
+        ₹{(row?.invoice?.amountPaid ?? 0).toLocaleString("en-IN")}
+      </Typography>
+    ),
+  },
+  {
+    field: "balanceDue",
+    headerName: "Balance Due",
+    minWidth: 100,
+    render: (_, row) => {
+      const bal = row?.invoice?.balanceDue ?? 0;
+      return (
+        <Typography
+          variant="body2"
+          className="font-numbers font-medium"
+          sx={{ fontSize: "12px", color: bal > 0 ? "#dc2626" : "#059669" }}
+        >
+          ₹{bal.toLocaleString("en-IN")}
+        </Typography>
+      );
+    },
+  },
+  {
+    field: "treatmentClosedAt",
+    headerName: "Completed Date",
+    minWidth: 130,
+    render: (_, row) => (
+      <Typography variant="body2" className="font-numbers" sx={{ fontSize: "12px" }}>
+        {row?.treatmentClosedAt
+          ? new Date(row.treatmentClosedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+          : "—"}
+      </Typography>
+    ),
+  },
+  {
+    field: "treatmentStatus",
+    headerName: "Status",
+    minWidth: 100,
+    render: (value) => {
+      const isClosed = !!value;
+      return (
+        <Chip
+          size="small"
+          label={isClosed ? "Completed" : "Active"}
+          color={treatmentPlanStatusColors[isClosed ? "completed" : "active"]}
+          sx={{ fontSize: "11px" }}
+        />
+      );
+    },
+  },
+  {
+    field: "_actions",
+    headerName: "Actions",
+    minWidth: 80,
+    render: (_, row) => (
+      <IconButton
+        size="small"
+        title="View Treatment"
+        onClick={(e) => {
+          e.stopPropagation();
+          onView(row);
+        }}
+        sx={{ color: "#6366f1" }}
+      >
+        <LocalHospitalIcon fontSize="small" />
+      </IconButton>
+    ),
+  },
+];
+
 /**
  * Filters
  */
@@ -521,7 +648,10 @@ const Appointments = () => {
   // used elsewhere in the admin panel (Patients.jsx, Settings.jsx).
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") === "treatments" ? 1 : 0;
-  const activeVisitType = activeTab === 0 ? "opd" : "treatment,treatment_session";
+  // Treatments tab shows one row per treatment PLAN (parent appointments
+  // only) — individual sessions are drilled into via TreatmentPlanDetailModal,
+  // not listed as their own rows.
+  const activeVisitType = activeTab === 0 ? "opd" : "treatment";
 
   const handleTabChange = (_, newTab) => {
     setSearchParams((prev) => {
@@ -543,6 +673,8 @@ const Appointments = () => {
   const [slipPreviewOpen, setSlipPreviewOpen] = useState(false);
   const [slipAppointment, setSlipAppointment] = useState(null);
   const [cloneTreatmentData, setCloneTreatmentData] = useState(null);
+  const [selectedTreatment, setSelectedTreatment] = useState(null);
+  const [treatmentDetailOpen, setTreatmentDetailOpen] = useState(false);
 
   // Clone Treatment — prefill a fresh Add Appointment modal from a completed
   // treatment. Copies WHAT/WHO (patient, name, fee, sessions), never WHEN/payment.
@@ -681,13 +813,19 @@ const Appointments = () => {
     }
   };
 
-  // Fetch appointments with React Query
+  // Fetch appointments with React Query. Treatments tab rows are collapsed
+  // to one-per-plan, so the OPD-appointment "status" filter (scheduled/
+  // confirmed/etc, defaulting to "scheduled") doesn't map onto them — a
+  // treatment plan spans many sessions with individually varying statuses.
+  // Drop it entirely on that tab; Active/Completed is instead communicated
+  // via the treatmentStatus-derived Status chip (Part D).
+  const { status: _statusFilter, ...filtersWithoutStatus } = filters;
   const { data, isLoading, refetch } = useAppointments({
     page,
     limit,
     search,
     visitType: activeVisitType,
-    ...filters,
+    ...(activeTab === 1 ? filtersWithoutStatus : filters),
   });
 
   // Extract data from response
@@ -725,6 +863,11 @@ const Appointments = () => {
    * Row click → open detail modal
    */
   const handleRowClick = (row) => {
+    if (activeTab === 1) {
+      setSelectedTreatment(row);
+      setTreatmentDetailOpen(true);
+      return;
+    }
     setSelectedAppointment(row);
     setDetailModalOpen(true);
   };
@@ -1004,19 +1147,23 @@ const Appointments = () => {
 
       {/* Table */}
       <DataTable
-        columns={getColumns(
-          handleDeleteRow,
-          (row) => { setSelectedAppointment(row); setCancelModalOpen(true); },
-          (row) => { setSlipAppointment(row); setSlipPreviewOpen(true); },
-          (row) => { setSelectedAppointment(row); setEditModalOpen(true); },
-          handlePaymentStatusChange,
-          updatingPaymentId,
-          handleStatusChange,
-          updatingStatusId,
-          (row) => { setSelectedAppointment(row); setRescheduleModalOpen(true); },
-          hasPermission("appointments", "delete"),
-          activeTab === 1,
-        )}
+        columns={
+          activeTab === 1
+            ? getTreatmentColumns((row) => { setSelectedTreatment(row); setTreatmentDetailOpen(true); })
+            : getColumns(
+                handleDeleteRow,
+                (row) => { setSelectedAppointment(row); setCancelModalOpen(true); },
+                (row) => { setSlipAppointment(row); setSlipPreviewOpen(true); },
+                (row) => { setSelectedAppointment(row); setEditModalOpen(true); },
+                handlePaymentStatusChange,
+                updatingPaymentId,
+                handleStatusChange,
+                updatingStatusId,
+                (row) => { setSelectedAppointment(row); setRescheduleModalOpen(true); },
+                hasPermission("appointments", "delete"),
+                activeTab === 1,
+              )
+        }
         getRowSx={(row) => {
           const today = isToday(row?.date);
           const unpaid = rowPaymentStatus(row) === "unpaid";
@@ -1049,7 +1196,7 @@ const Appointments = () => {
         loading={isLoading}
         searchPlaceholder="Search patient name or phone..."
         onSearch={handleSearch}
-        filters={filterOptions}
+        filters={activeTab === 1 ? filterOptions.filter((f) => f.key !== "status") : filterOptions}
         filterValues={filters}
         onFilterChange={handleFilterChange}
         pagination={{
@@ -1078,6 +1225,22 @@ const Appointments = () => {
         onDelete={handleDeleteAppointment}
         onCloneTreatment={handleCloneTreatment}
         onBookNextSession={handleBookNextSession}
+      />
+
+      {/* Treatment Plan Detail Modal — Treatments-tab collapsed-row flow */}
+      <TreatmentPlanDetailModal
+        open={treatmentDetailOpen}
+        onClose={() => setTreatmentDetailOpen(false)}
+        appointment={selectedTreatment}
+        onCloneTreatment={(appointment) => {
+          setTreatmentDetailOpen(false);
+          handleCloneTreatment(appointment);
+        }}
+        onBookNextSession={(appointment, activeContext) => {
+          setTreatmentDetailOpen(false);
+          handleBookNextSession(appointment, activeContext);
+        }}
+        onRefetch={refetch}
       />
 
       {/* Add Appointment Modal */}
