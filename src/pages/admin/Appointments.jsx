@@ -180,6 +180,39 @@ const columns = [
     },
   },
   {
+    field: "sessionNumber",
+    headerName: "Session",
+    minWidth: 100,
+    render: (_, row) => {
+      // Reuses the existing sessionNumber field established in the
+      // treatment redesign -- parent treatment appointments are implicitly
+      // "Session 1" (never stored as such on the doc itself, matching the
+      // backend's own auto-calc comment: "Parent appointment is implicitly
+      // Session 1, so first child = 2"). Only shown for treatment/session
+      // rows -- blank for plain OPD visits, where sessions don't apply.
+      if (row?.visitType === "treatment") {
+        const total = row?.sessionsPlanned;
+        return (
+          <Typography variant="body2" className="font-numbers" sx={{ fontSize: "12px" }}>
+            {total ? `Session 1 of ${total}` : "Session 1"}
+          </Typography>
+        );
+      }
+      if (row?.visitType === "treatment_session") {
+        return (
+          <Typography variant="body2" className="font-numbers" sx={{ fontSize: "12px" }}>
+            {row?.sessionNumber ? `Session ${row.sessionNumber}` : "-"}
+          </Typography>
+        );
+      }
+      return (
+        <Typography variant="body2" className="text-gray-400" sx={{ fontSize: "12px" }}>
+          -
+        </Typography>
+      );
+    },
+  },
+  {
     field: "fee",
     headerName: "Fee",
     minWidth: 85,
@@ -255,8 +288,12 @@ const rowPaymentStatus = (row) => {
 };
 
 // Function to get columns with action handlers
-const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId, onStatusChange, updatingStatusId, onRescheduleRow, canDelete = true) => [
-  ...columns.filter((c) => c.field !== "paymentStatus" && c.field !== "status"),
+const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId, onStatusChange, updatingStatusId, onRescheduleRow, canDelete = true, showSessionColumn = true) => [
+  ...columns.filter((c) =>
+    c.field !== "paymentStatus" &&
+    c.field !== "status" &&
+    (c.field !== "sessionNumber" || showSessionColumn)
+  ),
   {
     field: "status",
     headerName: "Status",
@@ -965,6 +1002,7 @@ const Appointments = () => {
           updatingStatusId,
           (row) => { setSelectedAppointment(row); setRescheduleModalOpen(true); },
           hasPermission("appointments", "delete"),
+          activeTab === 1,
         )}
         getRowSx={(row) => {
           const today = isToday(row?.date);
