@@ -614,11 +614,13 @@ const filterOptions = [
     key: "status",
     label: "Status",
     options: [
+      { value: "scheduled,in_progress", label: "Active (Scheduled + In Progress)" },
+      { value: "all", label: "All" },
+      { value: "completed", label: "Completed" },
       { value: "scheduled", label: "Scheduled" },
       { value: "confirmed", label: "Confirmed" },
       { value: "checked_in", label: "Checked In" },
       { value: "in_progress", label: "In Progress" },
-      { value: "completed", label: "Completed" },
       { value: "cancelled", label: "Cancelled" },
       { value: "no_show", label: "No Show" },
     ],
@@ -638,10 +640,11 @@ const Appointments = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  // Status defaults to "scheduled" — completed OPD visits and closed
-  // treatments (unified onto appointment.status server-side) stay hidden
-  // until the admin explicitly picks "Completed" from this same dropdown.
-  const [filters, setFilters] = useState({ status: "scheduled" });
+  // Status defaults to "Active" (Scheduled + In Progress, comma-grouped --
+  // same $in pattern the backend already uses for visitType) — completed
+  // OPD visits and cancelled/no-show rows stay hidden until the admin
+  // explicitly picks "All" or "Completed" from this same dropdown.
+  const [filters, setFilters] = useState({ status: "scheduled,in_progress" });
   // 0 = Appointments (OPD), 1 = Treatments (treatment + treatment_session).
   // Persisted in the URL (?tab=treatments) so it survives a page reload and
   // is bookmarkable/shareable, matching the useSearchParams pattern already
