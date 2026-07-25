@@ -268,10 +268,10 @@ const HomePage = () => {
 
   return (
     <div>
-      <title>Best Dental Clinic in Sonipat | Ujjwal Dental Clinic</title>
+      <title>Best Dental Care Clinic in India | Ujjwal Dental Clinic</title>
       <meta
         name="description"
-        content="Ujjwal Dental Clinic, Sonipat offers dental implants, root canal treatment, braces, and family dental care. 15+ years expertise. Book your visit today."
+        content="Ujjwal Dental Clinic offers advanced dental care through its branches across India. Visit our expert dentists for implants, orthodontics, cosmetic dentistry, pediatric dentistry, and oral health treatments."
       />
       <meta
         name="keywords"
@@ -281,11 +281,11 @@ const HomePage = () => {
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Best Dental Clinic in Sonipat | Ujjwal Dental Clinic"
+        content="Best Dental Care Clinic in India | Ujjwal Dental Clinic"
       />
       <meta
         property="og:description"
-        content="Ujjwal Dental Clinic, Sonipat offers dental implants, root canal treatment, braces, and complete family dental care. 15+ years of trusted expertise."
+        content="Ujjwal Dental Clinic offers advanced dental care through its branches across India. Visit our expert dentists for implants, orthodontics, cosmetic dentistry, pediatric dentistry, and oral health treatments."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/" />
       <meta
@@ -293,10 +293,10 @@ const HomePage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Best Dental Clinic in Sonipat | Ujjwal Dental Clinic" />
+      <meta name="twitter:title" content="Best Dental Care Clinic in India | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="Ujjwal Dental Clinic, Sonipat offers dental implants, root canal treatment, braces, and complete family dental care."
+        content="Ujjwal Dental Clinic offers advanced dental care through its branches across India. Visit our expert dentists for implants, orthodontics, cosmetic dentistry, pediatric dentistry, and oral health treatments."
       />
       <meta
         name="twitter:image"
