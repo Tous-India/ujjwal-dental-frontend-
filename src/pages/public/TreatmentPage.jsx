@@ -177,12 +177,7 @@ const TreatmentPage = () => {
               <h1 className="text-[#003366] text-3xl md:text-[40px] font-extrabold leading-tight">
                 {title}
               </h1>
-              {page.content && (
-                <p className="text-gray-600 text-base leading-relaxed mt-4 line-clamp-2">
-                  {page.content}
-                </p>
-              )}
-              <div className="flex flex-wrap gap-3 mt-6">
+              <div className="flex flex-wrap gap-3 mt-8">
                 <Link
                   to="/book-appointment"
                   onClick={fireBookAppointmentConversion}
