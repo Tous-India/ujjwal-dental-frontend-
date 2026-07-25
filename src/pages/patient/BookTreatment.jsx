@@ -200,7 +200,7 @@ const BookTreatment = () => {
           />
         )}
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>
-          Payments processed by Healing Fairy Health Care Pvt. Ltd.
+          Payments processed by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
         </Typography>
       </Box>
 

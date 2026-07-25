@@ -162,7 +162,7 @@ const InvoicePDF = ({ invoice }) => {
                 marginTop: "2px",
               }}
             >
-              Healing Fairy Health Care Pvt. Ltd.
+              Ujjwal Dental Clinic and Maxillofacial Surgery Center
             </div>
             <div
               style={{
@@ -447,7 +447,7 @@ const InvoicePDF = ({ invoice }) => {
             marginTop: "4px",
           }}
         >
-          Healing Fairy Health Care Pvt. Ltd.
+          Ujjwal Dental Clinic and Maxillofacial Surgery Center
         </div>
       </div>
     </div>

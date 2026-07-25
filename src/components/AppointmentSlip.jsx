@@ -52,7 +52,7 @@ const AppointmentSlip = ({ appointment }) => {
             Ujjwal Dental Clinic
           </text>
           <text x="32" y="85" fill="rgba(255,255,255,0.85)" fontSize="11" fontFamily="Arial">
-            Healing Fairy Health Care Pvt. Ltd.
+            Ujjwal Dental Clinic and Maxillofacial Surgery Center
           </text>
         </svg>
 

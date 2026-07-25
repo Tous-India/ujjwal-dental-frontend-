@@ -481,7 +481,7 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
 
             {/* Legal company line */}
             <Typography variant="caption" className="block text-center text-gray-500 mb-4">
-              Ujjwal Dental Clinic — A unit of Healing Fairy Health Care Pvt. Ltd.
+              Ujjwal Dental Clinic and Maxillofacial Surgery Center
             </Typography>
 
             {/* Notes */}

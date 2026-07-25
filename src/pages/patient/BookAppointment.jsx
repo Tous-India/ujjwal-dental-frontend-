@@ -1049,7 +1049,7 @@ const BookAppointment = () => {
                       : `Pay ${formatCurrency(getOpdFee())} & Book`}
                   </button>
                   <p className="text-[12px] text-gray-500 mt-2 text-center">
-                    Payments processed by Healing Fairy Health Care Pvt. Ltd.
+                    Payments processed by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
                   </p>
                 </div>
               )}
