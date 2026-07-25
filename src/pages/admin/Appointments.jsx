@@ -213,6 +213,18 @@ const columns = [
     },
   },
   {
+    field: "treatmentClosedAt",
+    headerName: "Completed Date",
+    minWidth: 130,
+    render: (_, row) => (
+      <Typography variant="body2" className="font-numbers" sx={{ fontSize: "12px" }}>
+        {row?.treatmentClosedAt
+          ? new Date(row.treatmentClosedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+          : "—"}
+      </Typography>
+    ),
+  },
+  {
     field: "fee",
     headerName: "Fee",
     minWidth: 85,
@@ -292,7 +304,8 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
   ...columns.filter((c) =>
     c.field !== "paymentStatus" &&
     c.field !== "status" &&
-    (c.field !== "sessionNumber" || showSessionColumn)
+    (c.field !== "sessionNumber" || showSessionColumn) &&
+    (c.field !== "treatmentClosedAt" || showSessionColumn)
   ),
   {
     field: "status",
