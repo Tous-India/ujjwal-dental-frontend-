@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
+import MembershipPlansSection from "../../components/public/MembershipPlansSection";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -23,7 +24,6 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import PersonIcon from "@mui/icons-material/Person";
 import AddIcon from "@mui/icons-material/Add";
-import CheckIcon from "@mui/icons-material/Check";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 const treatments = [
@@ -47,40 +47,6 @@ const doctors = [
   { name: "Dr. Aashish Sonik", experience: "500+ Implants Placed", subtitle: "BDS, MBA, Fellowship in Implantology", lead: false, img: "/doctors/dr-sonik.jpg", to: "/doctors/aashish-sonik" },
 ];
 
-const dentalPlans = [
-  {
-    title: "Premium Dental Health Plan",
-    img: "/images/clear-aligner.png",
-    features: [
-      "₹1,500 treatment coupon redeemable against any dental procedure",
-      "Free consultation and X-ray",
-    ],
-    price: "666",
-  },
-  {
-    title: "Star Dental Health Plan",
-    img: "/images/cosmatic-dental-bonding.png",
-    features: [
-      "₹1,500 treatment coupon redeemable against any dental procedure",
-      "Free consultation and X-ray",
-      "₹4,000 off on orthodontic and implant treatments",
-    ],
-    price: "999",
-  },
-  {
-    title: "Implant Post Care",
-    img: "/images/dental-implant.png",
-    features: [
-      "OPD for one year",
-      "Oral Prophylaxis (twice a year)",
-      "Two oral health kits in a year",
-      "RVG for one year",
-      "Post Operative Dental Implant Care",
-    ],
-    price: "4500",
-    annual: true,
-  },
-];
 
 const trustCards = [
   {
@@ -148,19 +114,9 @@ const faqs = [
 ];
 
 const SonipatPage = () => {
-  const [planPrices, setPlanPrices] = useState(null);
   const [openFaqs, setOpenFaqs] = useState({});
   const doctorsPrevRef = useRef(null);
   const doctorsNextRef = useRef(null);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("dental_plans_pricing");
-      if (saved) setPlanPrices(JSON.parse(saved));
-    } catch {}
-  }, []);
-
-  const getPrice = (title, defaultPrice) => planPrices?.[title] || defaultPrice;
 
   return (
     <div>
@@ -493,76 +449,7 @@ const SonipatPage = () => {
       </section>
 
       {/* Dental Plans */}
-      <section className="py-[48px] md:py-[64px] bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
-          <h2
-            className="text-[#003366] text-center mb-2"
-            style={{ fontSize: "2rem", fontWeight: 800 }}
-          >
-            Dental Health Plans for All
-          </h2>
-          <p className="text-center text-gray-500 mb-10 max-w-2xl mx-auto text-base">
-            Save more with our annual membership plans
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto items-stretch">
-            {dentalPlans.map((plan, i) => {
-              const featured = i === 1;
-              return (
-                <div
-                  key={i}
-                  className={`relative rounded-2xl py-8 px-6 flex flex-col border ${
-                    featured
-                      ? "bg-white border-[#003366] md:scale-[1.03] order-first md:order-none"
-                      : "bg-gray-50 border-gray-100"
-                  }`}
-                >
-                  {featured && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#003366] text-white text-[12px] font-semibold rounded-full px-3 py-1">
-                      Most Popular
-                    </span>
-                  )}
-
-                  <div className="text-center">
-                    <h3 className="text-[#003366] text-[21px] font-bold leading-tight">
-                      {plan.title}
-                    </h3>
-                    <p className="mt-3">
-                      <span className="font-numbers text-[#003366] text-[38px] font-extrabold">
-                        ₹{getPrice(plan.title, plan.price)}
-                      </span>
-                      {plan.annual && (
-                        <span className="font-numbers text-gray-500 text-sm">/year</span>
-                      )}
-                    </p>
-                  </div>
-
-                  <div className="border-t border-gray-100 my-5" />
-
-                  <ul className="flex-grow">
-                    {plan.features.map((f, j) => (
-                      <li
-                        key={j}
-                        className="flex items-start gap-2 py-1.5 text-gray-700 text-[15px] leading-snug"
-                      >
-                        <CheckIcon className="text-accent text-[16px]! mt-0.5 shrink-0" />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    to="/membership-plans"
-                    className="mt-6 block w-full text-center no-underline border-2 border-accent text-accent bg-transparent hover:bg-accent hover:text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200"
-                  >
-                    Buy Now
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      <MembershipPlansSection />
 
       {/* FAQ */}
       <section className="py-[48px] md:py-[64px] bg-gray-50">
