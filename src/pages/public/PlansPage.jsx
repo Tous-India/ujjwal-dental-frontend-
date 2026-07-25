@@ -157,10 +157,10 @@ const PlansPage = () => {
 
   return (
     <>
-      <title>Dental Membership Plans | Ujjwal Dental Clinic Sonipat</title>
+      <title>Dental Membership Plans | Affordable Preventive Dental Care</title>
       <meta
         name="description"
-        content="Save with annual dental membership plans at Ujjwal Dental Clinic, Sonipat, from ₹2,000. Free consultations, X-rays, and treatment discounts included."
+        content="Explore our dental membership plans designed to make quality dental care more affordable. Enjoy exclusive savings, preventive care benefits, and discounts on a wide range of dental treatments."
       />
       <meta
         name="keywords"
@@ -170,11 +170,11 @@ const PlansPage = () => {
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Dental Membership Plans | Ujjwal Dental Clinic Sonipat"
+        content="Dental Membership Plans | Affordable Preventive Dental Care"
       />
       <meta
         property="og:description"
-        content="Save with annual dental membership plans at Ujjwal Dental Clinic, Sonipat. Free consultations, X-rays, and treatment discounts."
+        content="Explore our dental membership plans designed to make quality dental care more affordable. Enjoy exclusive savings, preventive care benefits, and discounts on a wide range of dental treatments."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/membership-plans" />
       <meta
@@ -182,10 +182,10 @@ const PlansPage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Dental Membership Plans | Ujjwal Dental Clinic Sonipat" />
+      <meta name="twitter:title" content="Dental Membership Plans | Affordable Preventive Dental Care" />
       <meta
         name="twitter:description"
-        content="Save with annual dental membership plans at Ujjwal Dental Clinic, Sonipat. Free consultations, X-rays, and treatment discounts."
+        content="Explore our dental membership plans designed to make quality dental care more affordable. Enjoy exclusive savings, preventive care benefits, and discounts on a wide range of dental treatments."
       />
       <meta
         name="twitter:image"
