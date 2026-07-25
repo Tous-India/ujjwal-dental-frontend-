@@ -75,10 +75,10 @@ const ContactPage = () => {
 
   return (
     <>
-      <title>Contact Ujjwal Dental Clinic Sonipat | Book Appointment</title>
+      <title>Book a Dental Appointment | Ujjwal Dental Clinic</title>
       <meta
         name="description"
-        content="Visit Ujjwal Dental Clinic at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or message us online. Mon–Sat, 9 AM–8 PM."
+        content="Get in touch with Ujjwal Dental Clinic to book your dental appointment. Contact our friendly team for expert dental care, treatment inquiries, and personalized assistance."
       />
       <meta
         name="keywords"
@@ -88,11 +88,11 @@ const ContactPage = () => {
       <meta name="robots" content="index, follow" />
       <meta
         property="og:title"
-        content="Contact Ujjwal Dental Clinic Sonipat | Book Appointment"
+        content="Book a Dental Appointment | Ujjwal Dental Clinic"
       />
       <meta
         property="og:description"
-        content="Visit Ujjwal Dental Clinic at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or send a message online."
+        content="Get in touch with Ujjwal Dental Clinic to book your dental appointment. Contact our friendly team for expert dental care, treatment inquiries, and personalized assistance."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/contact" />
       <meta
@@ -100,10 +100,10 @@ const ContactPage = () => {
         content="https://ujjwaldentalplanet.com/ujjwal-dental-logo.png"
       />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Contact Ujjwal Dental Clinic Sonipat | Book Appointment" />
+      <meta name="twitter:title" content="Book a Dental Appointment | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="Visit Ujjwal Dental Clinic at our Delhi Road or Parsvnath City clinics in Sonipat, Haryana. Call +91 8708362763 or send a message online."
+        content="Get in touch with Ujjwal Dental Clinic to book your dental appointment. Contact our friendly team for expert dental care, treatment inquiries, and personalized assistance."
       />
       <meta
         name="twitter:image"
