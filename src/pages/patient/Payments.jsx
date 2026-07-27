@@ -383,6 +383,7 @@ const Payments = () => {
                     <TableCell>Service</TableCell>
                     <TableCell>Total Amount</TableCell>
                     <TableCell>Amount Paid</TableCell>
+                    <TableCell>Dues</TableCell>
                     <TableCell>Mode</TableCell>
                     <TableCell>Status</TableCell>
                   </TableRow>
@@ -413,6 +414,13 @@ const Payments = () => {
                       <TableCell>
                         <Typography variant="body2" fontWeight="bold" className="font-numbers text-green-600">
                           {formatCurrency(payment.amountPaid)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" className="font-numbers">
+                          {payment.dueAfterThisPayment != null
+                            ? formatCurrency(payment.dueAfterThisPayment)
+                            : "-"}
                         </Typography>
                       </TableCell>
                       <TableCell>
