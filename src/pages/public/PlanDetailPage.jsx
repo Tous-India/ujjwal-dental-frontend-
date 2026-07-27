@@ -35,6 +35,7 @@ import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
+import { ONLINE_PAYMENTS_ENABLED } from "../../utils/paymentFlags";
 import { useAuthStore } from "../../store/auth.store";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import StarIcon from "@mui/icons-material/Star";
@@ -398,33 +399,42 @@ const PlanDetailPage = () => {
               </CardContent>
             </Card>
 
-            {/* Buy Button — centered below card */}
+            {/* Buy Button — centered below card. Online purchase requires
+                Razorpay; when disabled, purchases aren't available online
+                (no server-side payment verification exists to safely
+                create an "unpaid" membership record instead). */}
             <Box sx={{ textAlign: "center", mt: 3 }}>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => {
-                  setBuyDialog(true);
-                  if (isLoggedIn && patient) {
-                    setBuyForm({ name: patient.name || "", phone: patient.phone || "", email: patient.email || "", gender: patient.gender || "", dateOfBirth: patient.dateOfBirth || "" });
-                    setIsNewUser(false);
-                  } else {
-                    setBuyForm({ name: "", phone: "", email: "", gender: "", dateOfBirth: "" });
-                    setIsNewUser(true);
-                  }
-                }}
-                sx={{
-                    bgcolor: "#006694",
-                    borderRadius: 5,
-                    py: 1.5,
-                    px: 5,
-                    fontWeight: 700,
-                    fontSize: "1.1rem",
-                    "&:hover": { bgcolor: "#005580" },
-                }}
-              >
-                Buy Now - <span className="font-numbers">₹{plan.price?.toLocaleString("en-IN")}</span>
-              </Button>
+              {ONLINE_PAYMENTS_ENABLED ? (
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => {
+                    setBuyDialog(true);
+                    if (isLoggedIn && patient) {
+                      setBuyForm({ name: patient.name || "", phone: patient.phone || "", email: patient.email || "", gender: patient.gender || "", dateOfBirth: patient.dateOfBirth || "" });
+                      setIsNewUser(false);
+                    } else {
+                      setBuyForm({ name: "", phone: "", email: "", gender: "", dateOfBirth: "" });
+                      setIsNewUser(true);
+                    }
+                  }}
+                  sx={{
+                      bgcolor: "#006694",
+                      borderRadius: 5,
+                      py: 1.5,
+                      px: 5,
+                      fontWeight: 700,
+                      fontSize: "1.1rem",
+                      "&:hover": { bgcolor: "#005580" },
+                  }}
+                >
+                  Buy Now - <span className="font-numbers">₹{plan.price?.toLocaleString("en-IN")}</span>
+                </Button>
+              ) : (
+                <Typography variant="body2" sx={{ color: "text.secondary", border: "1px solid #e0e0e0", borderRadius: 3, py: 1.5, px: 3, display: "inline-block" }}>
+                  Online purchase is temporarily unavailable. Please visit the clinic to purchase this plan.
+                </Typography>
+              )}
             </Box>
           </Grid>
         </Grid>

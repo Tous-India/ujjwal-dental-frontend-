@@ -26,6 +26,7 @@ import {
 } from "../../api/patient/treatments.api";
 import { getMyMembership } from "../../api/patient/memberships.api";
 import { useAuthStore } from "../../store/auth.store";
+import { ONLINE_PAYMENTS_ENABLED } from "../../utils/paymentFlags";
 
 const NAVY = "#0d1b4a";
 const ACCENT = "#f57c00";
@@ -276,27 +277,29 @@ const BookTreatment = () => {
 
                 {/* Actions */}
                 <div className="mt-auto flex flex-col gap-2">
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    disableElevation
-                    disabled={isBusy}
-                    onClick={() => handlePayOnline(treatment)}
-                    sx={{
-                      bgcolor: ACCENT,
-                      textTransform: "none",
-                      fontWeight: 600,
-                      borderRadius: 1.5,
-                      py: 1,
-                      "&:hover": { bgcolor: ACCENT_DARK },
-                    }}
-                  >
-                    {isBusy && busy.action === "online" ? (
-                      <CircularProgress size={20} sx={{ color: "white" }} />
-                    ) : (
-                      `Pay online — ${formatCurrency(discounted)}`
-                    )}
-                  </Button>
+                  {ONLINE_PAYMENTS_ENABLED && (
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      disableElevation
+                      disabled={isBusy}
+                      onClick={() => handlePayOnline(treatment)}
+                      sx={{
+                        bgcolor: ACCENT,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        borderRadius: 1.5,
+                        py: 1,
+                        "&:hover": { bgcolor: ACCENT_DARK },
+                      }}
+                    >
+                      {isBusy && busy.action === "online" ? (
+                        <CircularProgress size={20} sx={{ color: "white" }} />
+                      ) : (
+                        `Pay online — ${formatCurrency(discounted)}`
+                      )}
+                    </Button>
+                  )}
                   <Button
                     fullWidth
                     variant="outlined"

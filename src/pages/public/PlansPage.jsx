@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import { useAuthStore } from "../../store/auth.store";
 import api from "../../api/axios";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
+import { ONLINE_PAYMENTS_ENABLED } from "../../utils/paymentFlags";
 
 const fieldCls =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-[15px] text-gray-800 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-orange-200";
@@ -349,14 +350,23 @@ const PlansPage = () => {
                       ))}
                     </ul>
 
-                    {/* Buy Now */}
-                    <button
-                      type="button"
-                      onClick={() => handleBuyClick(plan)}
-                      className="mt-6 block w-full text-center border-2 border-accent text-accent bg-transparent hover:bg-accent hover:text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer"
-                    >
-                      Buy Now
-                    </button>
+                    {/* Buy Now -- online purchase requires Razorpay; when
+                        disabled, purchases aren't available online (no
+                        server-side payment verification exists to safely
+                        create an "unpaid" membership record instead). */}
+                    {ONLINE_PAYMENTS_ENABLED ? (
+                      <button
+                        type="button"
+                        onClick={() => handleBuyClick(plan)}
+                        className="mt-6 block w-full text-center border-2 border-accent text-accent bg-transparent hover:bg-accent hover:text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer"
+                      >
+                        Buy Now
+                      </button>
+                    ) : (
+                      <div className="mt-6 text-center text-[13px] text-gray-500 border border-gray-200 rounded-xl py-3 px-2">
+                        Online purchase is temporarily unavailable. Please visit the clinic to purchase this plan.
+                      </div>
+                    )}
                   </div>
                 );
               })}

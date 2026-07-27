@@ -34,8 +34,10 @@ import {
   verifyPayment,
   bookAppointmentWithPayment,
   bookAppointmentFree,
+  bookAppointmentPayAtClinic,
   getAvailableSlots,
 } from "../../api/patient/appointments.api";
+import { ONLINE_PAYMENTS_ENABLED } from "../../utils/paymentFlags";
 import {
   MAX_DATE,
   dateGuards,
@@ -329,6 +331,41 @@ const BookAppointment = () => {
           ? "Your membership appears to have expired. Please refresh and book with payment."
           : msg,
       );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Pay-at-clinic fallback -- used instead of Razorpay when online payments
+  // are disabled site-wide (ONLINE_PAYMENTS_ENABLED false). Booking still
+  // completes; fee is simply left unpaid, same as an admin walk-in booking
+  // with no fee collected at booking time.
+  const handlePayAtClinic = async () => {
+    setIsProcessing(true);
+    try {
+      const reason = appointmentReasons.find((r) => r.value === formData.reason);
+      const selectedClinic = clinics.find((c) => c._id === formData.clinic);
+      const response = await bookAppointmentPayAtClinic({
+        name: formData.name,
+        phone: formData.phone,
+        clinic: formData.clinic,
+        date: formData.date,
+        timeSlot: formData.time,
+        reason: reason?.label || formData.reason,
+        type: reason?.type || "regular",
+        bookingType,
+        source: "website",
+      });
+      setSuccess(true);
+      setBookedAppointment({
+        ...response.data,
+        clinicName: selectedClinic?.name,
+        opdFee: getOpdFee(),
+        isFree: false,
+      });
+      setActiveStep(3);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to book appointment. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -1027,30 +1064,55 @@ const BookAppointment = () => {
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 text-blue-800 text-[14px] rounded-lg px-4 py-3 mb-4">
-                    Payment is required to confirm your appointment. You can pay
-                    securely using UPI, Credit/Debit Card, or Net Banking.
-                  </div>
+                  {ONLINE_PAYMENTS_ENABLED ? (
+                    <>
+                      <div className="bg-blue-50 text-blue-800 text-[14px] rounded-lg px-4 py-3 mb-4">
+                        Payment is required to confirm your appointment. You can pay
+                        securely using UPI, Credit/Debit Card, or Net Banking.
+                      </div>
 
-                  {/* Pay Now Button */}
-                  <button
-                    type="button"
-                    onClick={handlePayment}
-                    disabled={isProcessing || feeLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark disabled:opacity-60 text-white rounded-xl py-3.5 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    {isProcessing ? (
-                      <CircularProgress size={20} sx={{ color: "#fff" }} />
-                    ) : (
-                      <PaymentIcon className="text-[20px]!" />
-                    )}
-                    {isProcessing
-                      ? "Processing..."
-                      : `Pay ${formatCurrency(getOpdFee())} & Book`}
-                  </button>
-                  <p className="text-[12px] text-gray-500 mt-2 text-center">
-                    Payments processed by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
-                  </p>
+                      {/* Pay Now Button */}
+                      <button
+                        type="button"
+                        onClick={handlePayment}
+                        disabled={isProcessing || feeLoading}
+                        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark disabled:opacity-60 text-white rounded-xl py-3.5 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        {isProcessing ? (
+                          <CircularProgress size={20} sx={{ color: "#fff" }} />
+                        ) : (
+                          <PaymentIcon className="text-[20px]!" />
+                        )}
+                        {isProcessing
+                          ? "Processing..."
+                          : `Pay ${formatCurrency(getOpdFee())} & Book`}
+                      </button>
+                      <p className="text-[12px] text-gray-500 mt-2 text-center">
+                        Payments processed by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-blue-50 text-blue-800 text-[14px] rounded-lg px-4 py-3 mb-4">
+                        Online payment is temporarily unavailable. Confirm your
+                        appointment now and pay {formatCurrency(getOpdFee())} at the clinic.
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handlePayAtClinic}
+                        disabled={isProcessing || feeLoading}
+                        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark disabled:opacity-60 text-white rounded-xl py-3.5 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        {isProcessing ? (
+                          <CircularProgress size={20} sx={{ color: "#fff" }} />
+                        ) : (
+                          <CheckCircleIcon className="text-[20px]!" />
+                        )}
+                        {isProcessing ? "Booking..." : "Confirm Booking — Pay at Clinic"}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 

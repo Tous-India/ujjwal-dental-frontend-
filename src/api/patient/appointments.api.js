@@ -98,3 +98,15 @@ export const bookAppointmentWithPayment = (data) =>
  */
 export const bookAppointmentFree = (data) =>
   api.post("/appointments/book-free", data).then((res) => res.data);
+
+/**
+ * Book an OPD appointment WITHOUT collecting payment online -- fee stays
+ * unpaid, patient pays at the clinic. Fallback path used when online
+ * payments are disabled site-wide (see utils/paymentFlags.js). Reuses the
+ * same public POST /appointments endpoint the admin panel's walk-in booking
+ * uses, just with opdFeePaid left false (its default).
+ * @param {Object} data - { name, phone, clinic, date, timeSlot, reason, type, appointmentType }
+ * @returns {Promise}
+ */
+export const bookAppointmentPayAtClinic = (data) =>
+  api.post("/appointments", data).then((res) => res.data);
