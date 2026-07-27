@@ -634,7 +634,6 @@ const filterOptions = [
     label: "Status",
     options: [
       { value: "scheduled,in_progress", label: "Active (Scheduled + In Progress)" },
-      { value: "all", label: "All" },
       { value: "completed", label: "Completed" },
       { value: "scheduled", label: "Scheduled" },
       { value: "confirmed", label: "Confirmed" },
@@ -654,6 +653,20 @@ const filterOptions = [
   },
 ];
 
+// Treatments-tab-only Status filter -- treatmentStatus semantics (Active =
+// unset/ongoing, Completed = closed under any resolution), never the OPD
+// appointment.status model above. Independent array, independent state.
+const treatmentFilterOptions = [
+  {
+    key: "treatmentStatus",
+    label: "Status",
+    options: [
+      { value: "active", label: "Active" },
+      { value: "completed", label: "Completed" },
+    ],
+  },
+];
+
 const Appointments = () => {
   // Table state
   const [page, setPage] = useState(1);
@@ -664,6 +677,11 @@ const Appointments = () => {
   // OPD visits and cancelled/no-show rows stay hidden until the admin
   // explicitly picks "All" or "Completed" from this same dropdown.
   const [filters, setFilters] = useState({ status: "scheduled,in_progress" });
+  // Treatments tab's Status filter is a fully independent state -- never
+  // shared/coupled with the Appointments tab's `filters` above, per the
+  // earlier cross-contamination regression lesson. Semantics differ too:
+  // treatmentStatus (active/all/completed), not appointment.status.
+  const [treatmentFilters, setTreatmentFilters] = useState({ treatmentStatus: "active" });
   // 0 = Appointments (OPD), 1 = Treatments (treatment + treatment_session).
   // Persisted in the URL (?tab=treatments) so it survives a page reload and
   // is bookmarkable/shareable, matching the useSearchParams pattern already
@@ -837,17 +855,15 @@ const Appointments = () => {
 
   // Fetch appointments with React Query. Treatments tab rows are collapsed
   // to one-per-plan, so the OPD-appointment "status" filter (scheduled/
-  // confirmed/etc, defaulting to "scheduled") doesn't map onto them — a
-  // treatment plan spans many sessions with individually varying statuses.
-  // Drop it entirely on that tab; Active/Completed is instead communicated
-  // via the treatmentStatus-derived Status chip (Part D).
-  const { status: _statusFilter, ...filtersWithoutStatus } = filters;
+  // confirmed/etc) doesn't map onto them. That tab has its OWN independent
+  // treatmentFilters state/dropdown (treatmentStatus semantics) instead --
+  // never merged with the Appointments tab's `filters`.
   const { data, isLoading, refetch } = useAppointments({
     page,
     limit,
     search,
     visitType: activeVisitType,
-    ...(activeTab === 1 ? filtersWithoutStatus : filters),
+    ...(activeTab === 1 ? treatmentFilters : filters),
   });
 
   // Extract data from response
@@ -888,10 +904,11 @@ const Appointments = () => {
    * Handle filter change
    */
   const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value || undefined,
-    }));
+    if (activeTab === 1) {
+      setTreatmentFilters((prev) => ({ ...prev, [key]: value || undefined }));
+    } else {
+      setFilters((prev) => ({ ...prev, [key]: value || undefined }));
+    }
     setPage(1);
   };
 
@@ -901,7 +918,11 @@ const Appointments = () => {
   // filter to a stale pre-grouping default the next time it's viewed.
   const handleReset = () => {
     setSearch("");
-    setFilters(activeTab === 1 ? {} : { status: "scheduled,in_progress" });
+    if (activeTab === 1) {
+      setTreatmentFilters({ treatmentStatus: "active" });
+    } else {
+      setFilters({ status: "scheduled,in_progress" });
+    }
     setDateFilter("");
     setPage(1);
   };
@@ -1243,8 +1264,8 @@ const Appointments = () => {
         loading={isLoading}
         searchPlaceholder="Search patient name or phone..."
         onSearch={handleSearch}
-        filters={activeTab === 1 ? filterOptions.filter((f) => f.key !== "status") : filterOptions}
-        filterValues={filters}
+        filters={activeTab === 1 ? treatmentFilterOptions : filterOptions}
+        filterValues={activeTab === 1 ? treatmentFilters : filters}
         onFilterChange={handleFilterChange}
         pagination={{
           page,
