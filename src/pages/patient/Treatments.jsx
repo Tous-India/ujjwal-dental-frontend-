@@ -160,8 +160,12 @@ const Treatments = () => {
                       const sessionsCompleted = treatment.sessions?.filter(
                         (s) => s.status === "completed"
                       ).length || 0;
+                      // sessionsPlanned (the admin's real input at booking) must win over
+                      // sessions.length (sessions actually booked so far) -- otherwise a
+                      // freshly-booked treatment with sessionsPlanned=3 but only the initial
+                      // booking session so far incorrectly shows "1" as if that were the total.
                       const totalSessions =
-                        treatment.treatmentType?.sessionsRequired || treatment.sessions?.length || 1;
+                        treatment.sessionsPlanned || treatment.treatmentType?.sessionsRequired || treatment.sessions?.length || 1;
                       const progress = totalSessions > 0
                         ? Math.round((sessionsCompleted / totalSessions) * 100)
                         : 0;
