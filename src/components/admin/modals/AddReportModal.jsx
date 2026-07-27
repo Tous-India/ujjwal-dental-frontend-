@@ -140,7 +140,7 @@ const FileSlot = ({
         label="Description (optional)"
         value={fileEntry.description}
         onChange={onDescriptionChange}
-        className="mt-2"
+        sx={{ mt: 1.5 }}
         placeholder={`Note for file ${index + 1}`}
       />
     </Paper>
