@@ -40,6 +40,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import SaveIcon from "@mui/icons-material/Save";
 import api from "../../../api/axios";
 import { useAppointments, useAppointmentMutations } from "../../../hooks/admin/useAppointments";
+import { usePayments } from "../../../hooks/admin/usePayments";
 
 const formatDate = (date) => {
   if (!date) return "-";
@@ -84,6 +85,13 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
   const [reopenReason, setReopenReason] = useState("");
   const [reopenError, setReopenError] = useState("");
 
+  const [markingCompleteId, setMarkingCompleteId] = useState(null);
+  const [collectDialogSession, setCollectDialogSession] = useState(null);
+  const [collectAmount, setCollectAmount] = useState("");
+  const [collectMode, setCollectMode] = useState("cash");
+  const [collectLoading, setCollectLoading] = useState(false);
+  const [collectError, setCollectError] = useState("");
+
   const { updateAppointment, reopenTreatment, isReopeningTreatment } = useAppointmentMutations();
 
   // Session timeline — reuses the existing appointments list endpoint (search
@@ -91,13 +99,35 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
   // than adding a new backend `parentAppointment` filter. Filtered client-side
   // down to this treatment's own children.
   const patientPhone = appointment?.patient?.phone;
-  const { data: historyData } = useAppointments(
+  const { data: historyData, refetch: refetchSessions } = useAppointments(
     { visitType: "treatment,treatment_session", search: patientPhone || "", limit: 100 },
     { enabled: open && !!patientPhone }
   );
   const sessionRows = (historyData?.data || [])
     .filter((a) => a._id === appointment?._id || a.parentAppointment === appointment?._id)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Per-session collected amount -- each Payment is linked to the SPECIFIC
+  // appointment it was collected for (payment.appointment), never the
+  // invoice's shared cumulative total (which is identical across every
+  // session on the same treatment and was the source of Bug 1).
+  const patientId = appointment?.patient?._id;
+  const { data: paymentsData, refetch: refetchPayments } = usePayments(
+    { patient: patientId, limit: 200 },
+    { enabled: open && !!patientId }
+  );
+  const collectedBySession = {};
+  (paymentsData?.data || []).forEach((p) => {
+    if (!p.appointment) return;
+    const apptId = typeof p.appointment === "string" ? p.appointment : p.appointment._id;
+    collectedBySession[apptId] = (collectedBySession[apptId] || 0) + (p.amount || 0);
+  });
+
+  const refreshAll = () => {
+    refetchSessions();
+    refetchPayments();
+    onRefetch?.();
+  };
 
   if (!appointment) return null;
 
@@ -116,12 +146,53 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
       {
         onSuccess: () => {
           toast.success("Sessions planned updated.");
-          onRefetch?.();
+          refreshAll();
         },
         onError: (err) => toast.error(err.response?.data?.message || "Failed to update sessions planned"),
         onSettled: () => setSavingSessions(false),
       }
     );
+  };
+
+  const handleMarkSessionComplete = (session) => {
+    setMarkingCompleteId(session._id);
+    updateAppointment(
+      { id: session._id, data: { status: "completed" } },
+      {
+        onSuccess: () => {
+          toast.success("Session marked complete.");
+          refreshAll();
+        },
+        onError: (err) => toast.error(err.response?.data?.message || "Failed to mark session complete"),
+        onSettled: () => setMarkingCompleteId(null),
+      }
+    );
+  };
+
+  const handleCollectPaymentSubmit = async () => {
+    const amt = Number(collectAmount);
+    if (!amt || amt <= 0) {
+      setCollectError("Enter a valid amount.");
+      return;
+    }
+    setCollectLoading(true);
+    setCollectError("");
+    try {
+      await api.post("/payments/admin/collect", {
+        invoiceId: appointment.invoice?._id,
+        amount: amt,
+        mode: collectMode,
+        appointmentId: collectDialogSession._id,
+      });
+      toast.success("Payment collected.");
+      setCollectDialogSession(null);
+      setCollectAmount("");
+      refreshAll();
+    } catch (err) {
+      setCollectError(err?.response?.data?.message || "Failed to collect payment.");
+    } finally {
+      setCollectLoading(false);
+    }
   };
 
   const handleCloseTreatmentSubmit = async () => {
@@ -140,7 +211,7 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
       setCloseDialogOpen(false);
       setCloseReason("");
       setCloseResolution("completed");
-      onRefetch?.();
+      refreshAll();
       onClose();
     } catch (err) {
       setCloseError(err?.response?.data?.message || "Failed to close treatment plan.");
@@ -162,7 +233,7 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
           setReopenDialogOpen(false);
           setReopenReason("");
           setReopenError("");
-          onRefetch?.();
+          refreshAll();
         },
         onError: (err) => setReopenError(err.response?.data?.message || "Failed to reopen treatment"),
       }
@@ -292,22 +363,54 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
 
             <Grid size={{ xs: 12, md: 6 }}>
               <SectionTitle>Session Timeline</SectionTitle>
-              <Box className="bg-gray-50/60 rounded px-3 py-2 mb-3" sx={{ maxHeight: 220, overflowY: "auto" }}>
+              <Box className="bg-gray-50/60 rounded px-3 py-2 mb-3" sx={{ maxHeight: 260, overflowY: "auto" }}>
                 {sessionRows.length === 0 ? (
                   <Typography variant="caption" className="text-gray-500">No sessions booked yet.</Typography>
                 ) : (
-                  sessionRows.map((s) => (
-                    <Box key={s._id} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
-                      <Typography variant="caption" className="font-semibold">
-                        {s.visitType === "treatment" ? "Session 1" : `Session ${s.sessionNumber || "?"}`}
-                      </Typography>
-                      <Typography variant="caption" className="text-gray-600">{formatDate(s.date)}</Typography>
-                      <Typography variant="caption" className="font-numbers">
-                        {s.invoice ? `₹${(s.invoice.amountPaid || 0).toLocaleString("en-IN")}` : "-"}
-                      </Typography>
-                      <Chip label={s.status?.replace("_", " ") || "-"} size="small" variant="outlined" sx={{ fontSize: "10px" }} />
-                    </Box>
-                  ))
+                  sessionRows.map((s) => {
+                    const collected = collectedBySession[s._id] || 0;
+                    const isCompleted = s.status === "completed";
+                    return (
+                      <Box key={s._id} className="py-1.5 border-b border-gray-100 last:border-0">
+                        <Box className="flex justify-between items-center">
+                          <Typography variant="caption" className="font-semibold">
+                            {s.visitType === "treatment" ? "Session 1" : `Session ${s.sessionNumber || "?"}`}
+                          </Typography>
+                          <Typography variant="caption" className="text-gray-600">{formatDate(s.date)}</Typography>
+                          <Typography variant="caption" className="font-numbers">
+                            ₹{collected.toLocaleString("en-IN")}
+                          </Typography>
+                          <Chip label={s.status?.replace("_", " ") || "-"} size="small" variant="outlined" sx={{ fontSize: "10px" }} />
+                        </Box>
+                        <Box className="flex justify-end gap-1 mt-1">
+                          {!isCompleted && (
+                            <Button
+                              size="small"
+                              variant="text"
+                              onClick={() => handleMarkSessionComplete(s)}
+                              disabled={markingCompleteId === s._id}
+                            >
+                              {markingCompleteId === s._id ? "Marking…" : "Mark Complete"}
+                            </Button>
+                          )}
+                          {(appointment.invoice?.balanceDue || 0) > 0 && (
+                            <Button
+                              size="small"
+                              variant="text"
+                              onClick={() => {
+                                setCollectDialogSession(s);
+                                setCollectAmount("");
+                                setCollectMode("cash");
+                                setCollectError("");
+                              }}
+                            >
+                              Collect Payment
+                            </Button>
+                          )}
+                        </Box>
+                      </Box>
+                    );
+                  })
                 )}
               </Box>
 
@@ -484,6 +587,64 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
             disabled={isReopeningTreatment || reopenReason.trim().length < 10}
           >
             {isReopeningTreatment ? "Reopening…" : "Confirm Reopen"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Collect Payment dialog -- post-hoc, per-session collection */}
+      <Dialog
+        open={!!collectDialogSession}
+        onClose={() => { if (!collectLoading) { setCollectDialogSession(null); setCollectError(""); } }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Collect Payment</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Recording a payment for{" "}
+            {collectDialogSession?.visitType === "treatment" ? "Session 1" : `Session ${collectDialogSession?.sessionNumber || "?"}`}
+            . Balance due: ₹{(appointment.invoice?.balanceDue || 0).toLocaleString("en-IN")}
+          </Typography>
+          <TextField
+            label="Amount *"
+            type="number"
+            fullWidth
+            size="small"
+            value={collectAmount}
+            onChange={(e) => { setCollectAmount(e.target.value); if (collectError) setCollectError(""); }}
+            disabled={collectLoading}
+            sx={{ mb: 2 }}
+          />
+          <FormControl fullWidth size="small">
+            <InputLabel>Mode</InputLabel>
+            <Select
+              value={collectMode}
+              label="Mode"
+              onChange={(e) => setCollectMode(e.target.value)}
+              disabled={collectLoading}
+            >
+              <MenuItem value="cash">Cash</MenuItem>
+              <MenuItem value="card">Card</MenuItem>
+              <MenuItem value="upi">UPI</MenuItem>
+            </Select>
+          </FormControl>
+          {collectError && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
+              {collectError}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => { setCollectDialogSession(null); setCollectError(""); }} color="inherit" disabled={collectLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCollectPaymentSubmit}
+            disabled={collectLoading}
+            startIcon={collectLoading ? <CircularProgress size={14} color="inherit" /> : null}
+          >
+            {collectLoading ? "Collecting…" : "Collect Payment"}
           </Button>
         </DialogActions>
       </Dialog>

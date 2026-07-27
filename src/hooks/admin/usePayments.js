@@ -23,11 +23,12 @@ import { getPatientUnpaidInvoices } from "../../api/admin/billing.api";
  * Hook for fetching payments list
  * @param {Object} params - Query parameters (page, limit, search, etc.)
  */
-export const usePayments = (params = {}) => {
+export const usePayments = (params = {}, options = {}) => {
   return useQuery({
     queryKey: ["admin", "payments", params],
     queryFn: () => getPayments(params),
     staleTime: 2 * 60 * 1000,
+    ...options,
   });
 };
 

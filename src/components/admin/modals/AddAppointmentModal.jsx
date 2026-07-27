@@ -647,6 +647,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               invoiceId: capturedInvoiceId,
               amount: capturedAmount,
               mode: capturedMode,
+              // Links this Payment to THIS specific session, so the Treatments
+              // tab's session timeline can show what was collected at this
+              // session rather than the shared invoice's cumulative total.
+              appointmentId: response?.data?.appointmentId,
             });
             toast.success(
               `Session booked${token ? ` — Token #${token}` : ""} + ₹${capturedAmount.toLocaleString("en-IN")} payment recorded`,
