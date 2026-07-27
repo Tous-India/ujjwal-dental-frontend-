@@ -895,9 +895,13 @@ const Appointments = () => {
     setPage(1);
   };
 
+  // Reset is shared across both tabs (single onRefresh prop) -- must restore
+  // each tab's OWN correct default rather than one hardcoded value, otherwise
+  // resetting on either tab silently reverts the Appointments tab's Status
+  // filter to a stale pre-grouping default the next time it's viewed.
   const handleReset = () => {
     setSearch("");
-    setFilters({ status: "scheduled" });
+    setFilters(activeTab === 1 ? {} : { status: "scheduled,in_progress" });
     setDateFilter("");
     setPage(1);
   };
