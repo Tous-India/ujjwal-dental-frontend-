@@ -449,6 +449,17 @@ const InvoicePDF = ({ invoice }) => {
         >
           Ujjwal Dental Clinic and Maxillofacial Surgery Center
         </div>
+        <div
+          style={{
+            fontSize: "9px",
+            fontStyle: "italic",
+            color: "#999999",
+            textAlign: "center",
+            marginTop: "4px",
+          }}
+        >
+          Signature not required. Digitally generated
+        </div>
       </div>
     </div>
   );
