@@ -25,6 +25,7 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { toast } from "react-toastify";
@@ -36,6 +37,8 @@ import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PaymentsIcon from "@mui/icons-material/Payments";
 import LinkIcon from "@mui/icons-material/Link";
 import SaveIcon from "@mui/icons-material/Save";
 import api from "../../../api/axios";
@@ -371,41 +374,47 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                     const collected = collectedBySession[s._id] || 0;
                     const isCompleted = s.status === "completed";
                     return (
-                      <Box key={s._id} className="py-1.5 border-b border-gray-100 last:border-0">
-                        <Box className="flex justify-between items-center">
-                          <Typography variant="caption" className="font-semibold">
-                            {s.visitType === "treatment" ? "Session 1" : `Session ${s.sessionNumber || "?"}`}
-                          </Typography>
-                          <Typography variant="caption" className="text-gray-600">{formatDate(s.date)}</Typography>
-                          <Typography variant="caption" className="font-numbers">
-                            ₹{collected.toLocaleString("en-IN")}
-                          </Typography>
-                          <Chip label={s.status?.replace("_", " ") || "-"} size="small" variant="outlined" sx={{ fontSize: "10px" }} />
-                        </Box>
-                        <Box className="flex justify-end gap-1 mt-1">
+                      <Box key={s._id} className="flex justify-between items-center gap-1 py-1 border-b border-gray-100 last:border-0">
+                        <Typography variant="caption" className="font-semibold">
+                          {s.visitType === "treatment" ? "Session 1" : `Session ${s.sessionNumber || "?"}`}
+                        </Typography>
+                        <Typography variant="caption" className="text-gray-600">{formatDate(s.date)}</Typography>
+                        <Typography variant="caption" className="font-numbers">
+                          ₹{collected.toLocaleString("en-IN")}
+                        </Typography>
+                        <Chip label={s.status?.replace("_", " ") || "-"} size="small" variant="outlined" sx={{ fontSize: "10px" }} />
+                        <Box className="flex items-center gap-0.5">
                           {!isCompleted && (
-                            <Button
-                              size="small"
-                              variant="text"
-                              onClick={() => handleMarkSessionComplete(s)}
-                              disabled={markingCompleteId === s._id}
-                            >
-                              {markingCompleteId === s._id ? "Marking…" : "Mark Complete"}
-                            </Button>
+                            <Tooltip title="Mark Complete">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleMarkSessionComplete(s)}
+                                  disabled={markingCompleteId === s._id}
+                                >
+                                  {markingCompleteId === s._id ? (
+                                    <CircularProgress size={14} />
+                                  ) : (
+                                    <CheckCircleIcon fontSize="small" />
+                                  )}
+                                </IconButton>
+                              </span>
+                            </Tooltip>
                           )}
                           {(appointment.invoice?.balanceDue || 0) > 0 && (
-                            <Button
-                              size="small"
-                              variant="text"
-                              onClick={() => {
-                                setCollectDialogSession(s);
-                                setCollectAmount("");
-                                setCollectMode("cash");
-                                setCollectError("");
-                              }}
-                            >
-                              Collect Payment
-                            </Button>
+                            <Tooltip title="Collect Payment">
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  setCollectDialogSession(s);
+                                  setCollectAmount("");
+                                  setCollectMode("cash");
+                                  setCollectError("");
+                                }}
+                              >
+                                <PaymentsIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
                           )}
                         </Box>
                       </Box>
