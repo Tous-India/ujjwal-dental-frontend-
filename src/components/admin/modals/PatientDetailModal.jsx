@@ -517,7 +517,7 @@ const TreatmentsTab = ({ patientId }) => {
               <TableCell>
                 <Chip size="small" label={trt.status} color={statusColors[trt.status] || "default"} />
               </TableCell>
-              <TableCell>{formatCurrency(trt.totalCost || trt.treatmentType?.price)}</TableCell>
+              <TableCell>{formatCurrency(trt.cost ?? trt.treatmentType?.price ?? 0)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
