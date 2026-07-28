@@ -171,18 +171,21 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
   const activeTreatments = contextData?.data?.activeTreatments || [];
 
   // Recent OPD visits for this patient — powers the optional "Link to a
-  // previous OPD visit" dropdown in treatment mode. Reuses the existing
-  // appointments list endpoint (search by phone, filtered to visitType=opd)
-  // rather than adding a new backend query param.
+  // previous OPD visit" dropdown in treatment mode. Filters by the exact
+  // `patient` ObjectId (backend query param), not a phone-search regex --
+  // an exact match eliminates any risk of a fuzzy/substring match pulling
+  // in another patient's OPD visits. queryKey includes patientId, so the
+  // query correctly refetches/clears whenever the selected patient changes,
+  // never lingering with a previous patient's stale results.
   const isTreatmentMode = formData.visitType === "treatment";
-  const canFetchOpdHistory = isTreatmentMode && !!formData.patient?.phone;
+  const canFetchOpdHistory = isTreatmentMode && !!patientId;
   const { data: opdHistoryData } = useAppointments(
-    { visitType: "opd", search: formData.patient?.phone || "", limit: 25 },
+    { visitType: "opd", patient: patientId || "", limit: 25 },
     { enabled: canFetchOpdHistory }
   );
-  const patientOpdAppointments = (opdHistoryData?.data || []).filter(
-    (a) => a.patient?._id === patientId
-  );
+  const patientOpdAppointments = canFetchOpdHistory
+    ? (opdHistoryData?.data || []).filter((a) => a.patient?._id === patientId)
+    : [];
 
   // Active-membership discount for the selected patient (server re-verifies it).
   const membership = formData.patient?.membership;
@@ -1433,6 +1436,11 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                       }))
                     }
                     disabled={!formData.patient}
+                    noOptionsText={
+                      formData.patient
+                        ? "No OPD visits found for this patient"
+                        : "Select a patient first"
+                    }
                     renderInput={(params) => (
                       <TextField
                         {...params}
