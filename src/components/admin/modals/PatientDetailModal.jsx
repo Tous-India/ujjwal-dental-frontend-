@@ -56,6 +56,7 @@ import ScienceIcon from "@mui/icons-material/Science";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import DownloadIcon from "@mui/icons-material/Download";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import AddIcon from "@mui/icons-material/Add";
@@ -746,6 +747,17 @@ const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
 /**
  * Reports Tab Content
  */
+// Force download from Cloudinary via fl_attachment -- same helper used on
+// the main admin Reports page and the patient portal's equivalent view.
+const handleReportDownload = (url) => {
+  if (!url) return;
+  let downloadUrl = url;
+  if (url.includes("cloudinary.com") && url.includes("/upload/")) {
+    downloadUrl = url.replace("/upload/", "/upload/fl_attachment/");
+  }
+  window.open(downloadUrl, "_blank");
+};
+
 const ReportsTab = ({ patientId }) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -779,19 +791,61 @@ const ReportsTab = ({ patientId }) => {
             <TableCell>Title</TableCell>
             <TableCell>Category</TableCell>
             <TableCell>Uploaded By</TableCell>
+            <TableCell align="center">Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {reports.map((rpt) => (
-            <TableRow key={rpt._id} hover>
-              <TableCell>{formatDate(rpt.createdAt)}</TableCell>
-              <TableCell>{rpt.title || "-"}</TableCell>
-              <TableCell>
-                <Chip size="small" label={rpt.category?.replace("_", " ") || "-"} variant="outlined" />
-              </TableCell>
-              <TableCell>{rpt.uploadedBy?.name || "-"}</TableCell>
-            </TableRow>
-          ))}
+          {reports.map((rpt) => {
+            // Multi-file reports store data in files[] -- the legacy
+            // singular `file` field is a Mongoose-default-populated
+            // placeholder ({ fileType: "application/pdf" }, no url) that's
+            // always truthy but never useful. files[] first, `file` only
+            // as a fallback for reports predating multi-file support.
+            const reportFiles = rpt.files?.length > 0 ? rpt.files : rpt.file?.url ? [rpt.file] : [];
+            return (
+              <TableRow key={rpt._id} hover>
+                <TableCell>{formatDate(rpt.createdAt)}</TableCell>
+                <TableCell>{rpt.title || "-"}</TableCell>
+                <TableCell>
+                  <Chip size="small" label={rpt.category?.replace("_", " ") || "-"} variant="outlined" />
+                </TableCell>
+                <TableCell>{rpt.uploadedBy?.name || "-"}</TableCell>
+                <TableCell align="center">
+                  {reportFiles.length === 0 ? (
+                    <Typography variant="caption" color="text.disabled">-</Typography>
+                  ) : (
+                    <>
+                      <Tooltip title={reportFiles.length > 1 ? `View first of ${reportFiles.length} files` : "View"}>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => {
+                            const url = reportFiles[0].url;
+                            if (url.includes(".pdf")) {
+                              window.open(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`, "_blank");
+                            } else {
+                              window.open(url, "_blank");
+                            }
+                          }}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={reportFiles.length > 1 ? `Download first of ${reportFiles.length} files` : "Download"}>
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => handleReportDownload(reportFiles[0].url)}
+                        >
+                          <DownloadIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableContainer>
