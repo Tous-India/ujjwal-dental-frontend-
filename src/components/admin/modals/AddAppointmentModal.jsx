@@ -263,6 +263,16 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
     } else if (open) {
       setFormData(getInitialFormState());
     }
+    // bookedAppointment (the success-screen data) was previously ONLY
+    // cleared in handleClose -- any reopen path that doesn't go through it
+    // (e.g. Book Next Session / Clone Treatment re-triggering this same
+    // modal instance while a PRIOR booking's success screen was still
+    // showing, since the parent's prefillData/open props change without an
+    // explicit close in between) left the old confirmation displayed while
+    // the new booking's form silently loaded underneath it -- matching the
+    // "confirmation lags by one booking" symptom. Reset it in lockstep with
+    // formData on every open, not just on explicit close.
+    if (open) setBookedAppointment(null);
   }, [open, prefillData, initialVisitType]);
 
   // Fetch slot availability whenever clinic + date are both chosen, so full and
