@@ -1000,37 +1000,24 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            {/* Admin can book at ANY minute -- not restricted to the 30-min
+                slot boundaries patients use. Native time input, not a
+                dropdown; the patient-facing BookAppointment.jsx form is
+                untouched and keeps its 30-min Select. */}
             <TextField
               fullWidth
-              label="Time Slot"
+              type="time"
+              label="Time"
               name="timeSlot"
               value={formData.timeSlot}
               onChange={handleChange}
               error={!!errors.timeSlot}
-              helperText={
-                errors.timeSlot ||
-                (Array.isArray(availableSlots)
-                  ? "Full or past slots are disabled"
-                  : "Select clinic and date first")
-              }
+              helperText={errors.timeSlot || "Any time -- not limited to 30-min slots"}
               required
-              select
               size="small"
-            >
-              <MenuItem value="">Select Time</MenuItem>
-              {timeSlots.map((slot) => {
-                const disabled =
-                  isPastSlotForDate(formData.date, slot) ||
-                  (Array.isArray(availableSlots) &&
-                    !availableSlots.includes(slot));
-                return (
-                  <MenuItem key={slot} value={slot} disabled={disabled}>
-                    {slot}
-                    {disabled ? " — unavailable" : ""}
-                  </MenuItem>
-                );
-              })}
-            </TextField>
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ step: 60 }}
+            />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
