@@ -77,6 +77,7 @@ import FollowUpReminderModal from "./FollowUpReminderModal";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import InvoiceDetailModal from "./InvoiceDetailModal";
 import { toast } from "react-toastify";
+import { downloadFile } from "../../../utils/downloadFile";
 
 /**
  * Tab Panel Component
@@ -747,17 +748,6 @@ const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
 /**
  * Reports Tab Content
  */
-// Force download from Cloudinary via fl_attachment -- same helper used on
-// the main admin Reports page and the patient portal's equivalent view.
-const handleReportDownload = (url) => {
-  if (!url) return;
-  let downloadUrl = url;
-  if (url.includes("cloudinary.com") && url.includes("/upload/")) {
-    downloadUrl = url.replace("/upload/", "/upload/fl_attachment/");
-  }
-  window.open(downloadUrl, "_blank");
-};
-
 const ReportsTab = ({ patientId }) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -835,7 +825,7 @@ const ReportsTab = ({ patientId }) => {
                         <IconButton
                           size="small"
                           color="success"
-                          onClick={() => handleReportDownload(reportFiles[0].url)}
+                          onClick={() => downloadFile(reportFiles[0].url, rpt.title || "report")}
                         >
                           <DownloadIcon fontSize="small" />
                         </IconButton>

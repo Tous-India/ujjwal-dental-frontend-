@@ -24,19 +24,7 @@ import { useReports, useReportMutations } from "../../hooks/admin/useReports";
 import AddReportModal from "../../components/admin/modals/AddReportModal";
 import EditReportModal from "../../components/admin/modals/EditReportModal";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
-
-/**
- * Helper: force download from Cloudinary by adding fl_attachment flag
- */
-const handleDownload = (url) => {
-  if (!url) return;
-  // For Cloudinary image/PDF URLs, use fl_attachment to force download
-  let downloadUrl = url;
-  if (url.includes("cloudinary.com") && url.includes("/upload/")) {
-    downloadUrl = url.replace("/upload/", "/upload/fl_attachment/");
-  }
-  window.open(downloadUrl, "_blank");
-};
+import { downloadFile as handleDownload } from "../../utils/downloadFile";
 
 /**
  * Table columns

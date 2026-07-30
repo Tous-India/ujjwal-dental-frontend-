@@ -24,6 +24,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ImageIcon from "@mui/icons-material/Image";
 import { useMyReports } from "../../hooks/patient/useMyReports";
+import { downloadFile as handleDownload } from "../../utils/downloadFile";
 
 const categoryConfig = {
   xray: { label: "X-Ray", color: "info" },
@@ -58,19 +59,6 @@ const getFileIcon = (fileType) => {
   return <DescriptionIcon className="text-gray-500" />;
 };
 
-const handleDownload = (url) => {
-  if (!url) return;
-  // Don't add fl_attachment to signed URLs (breaks signature)
-  if (url.includes("s--") || url.includes("?_a=")) {
-    window.open(url, "_blank");
-    return;
-  }
-  let downloadUrl = url;
-  if (url.includes("cloudinary.com") && url.includes("/upload/")) {
-    downloadUrl = url.replace("/upload/", "/upload/fl_attachment/");
-  }
-  window.open(downloadUrl, "_blank");
-};
 
 /**
  * Patient Reports Page
