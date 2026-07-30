@@ -156,78 +156,117 @@ const Reports = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {reports.map((report) => (
-                    <TableRow key={report._id} hover>
-                      <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                          {getFileIcon(report.file?.fileType)}
-                          <Box>
-                            <Typography variant="body2" fontWeight="medium">
-                              {report.title}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {report.reportNumber}
-                            </Typography>
+                  {reports.map((report) => {
+                    // Multi-file reports store data in files[] (never the
+                    // legacy singular `file` field, which multi-file uploads
+                    // leave unset) -- reading report.file directly for a
+                    // multi-file report was always undefined, leaving View
+                    // blank and Download a no-op. Fall back to the old
+                    // shape for reports created before multi-file support.
+                    const reportFiles =
+                      report.files?.length > 0
+                        ? report.files
+                        : report.file
+                        ? [report.file]
+                        : [];
+                    const primaryFile = reportFiles[0];
+
+                    const openFile = async (fileIndex) => {
+                      try {
+                        const { downloadReport } = await import("../../api/patient/reports.api");
+                        const res = await downloadReport(report._id, fileIndex);
+                        const url = res?.data?.downloadUrl || reportFiles[fileIndex]?.url;
+                        if (url?.includes(".pdf")) {
+                          window.open(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`, "_blank");
+                        } else {
+                          window.open(url, "_blank");
+                        }
+                      } catch {
+                        const url = reportFiles[fileIndex]?.url;
+                        if (url) window.open(url, "_blank");
+                      }
+                    };
+
+                    const downloadFile = async (fileIndex) => {
+                      try {
+                        const { downloadReport } = await import("../../api/patient/reports.api");
+                        const res = await downloadReport(report._id, fileIndex);
+                        const url = res?.data?.downloadUrl || reportFiles[fileIndex]?.url;
+                        handleDownload(url, report.title || "report");
+                      } catch {
+                        handleDownload(reportFiles[fileIndex]?.url, report.title || "report");
+                      }
+                    };
+
+                    return (
+                      <TableRow key={report._id} hover>
+                        <TableCell>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                            {getFileIcon(primaryFile?.fileType)}
+                            <Box>
+                              <Typography variant="body2" fontWeight="medium">
+                                {report.title}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {report.reportNumber}
+                                {reportFiles.length > 1 ? ` · ${reportFiles.length} files` : ""}
+                              </Typography>
+                            </Box>
                           </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={categoryConfig[report.category]?.label || report.category}
-                          size="small"
-                          color={categoryConfig[report.category]?.color || "default"}
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>{formatDate(report.reportDate)}</TableCell>
-                      <TableCell>{formatFileSize(report.file?.fileSize)}</TableCell>
-                      <TableCell align="center">
-                        <Tooltip title="View">
-                          <IconButton
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={categoryConfig[report.category]?.label || report.category}
                             size="small"
-                            color="primary"
-                            onClick={async () => {
-                              try {
-                                const res = await import("../../api/patient/reports.api").then(m => m.downloadReport(report._id));
-                                const url = res?.data?.downloadUrl || report.file?.url;
-                                if (url?.includes(".pdf")) {
-                                  window.open(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`, "_blank");
-                                } else {
-                                  window.open(url, "_blank");
-                                }
-                              } catch {
-                                const url = report.file?.url;
-                                if (url?.includes(".pdf")) {
-                                  window.open(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`, "_blank");
-                                } else {
-                                  window.open(url, "_blank");
-                                }
-                              }
-                            }}
-                          >
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Download">
-                          <IconButton
-                            size="small"
-                            color="success"
-                            onClick={async () => {
-                              try {
-                                const res = await import("../../api/patient/reports.api").then(m => m.downloadReport(report._id));
-                                const url = res?.data?.downloadUrl || report.file?.url;
-                                handleDownload(url, (report.title || "report"));
-                              } catch {
-                                handleDownload(report.file?.url, (report.title || "report"));
-                              }
-                            }}
-                          >
-                            <DownloadIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            color={categoryConfig[report.category]?.color || "default"}
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell>{formatDate(report.reportDate)}</TableCell>
+                        <TableCell>{formatFileSize(primaryFile?.fileSize)}</TableCell>
+                        <TableCell align="center">
+                          {reportFiles.length === 0 ? (
+                            <Typography variant="caption" color="text.disabled">
+                              No file
+                            </Typography>
+                          ) : reportFiles.length === 1 ? (
+                            <>
+                              <Tooltip title="View">
+                                <IconButton size="small" color="primary" onClick={() => openFile(0)}>
+                                  <VisibilityIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Download">
+                                <IconButton size="small" color="success" onClick={() => downloadFile(0)}>
+                                  <DownloadIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "center" }}>
+                              {reportFiles.map((f, i) => (
+                                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 16 }}>
+                                    {i + 1}.
+                                  </Typography>
+                                  <Tooltip title={`View file ${i + 1}`}>
+                                    <IconButton size="small" color="primary" onClick={() => openFile(i)}>
+                                      <VisibilityIcon fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title={`Download file ${i + 1}`}>
+                                    <IconButton size="small" color="success" onClick={() => downloadFile(i)}>
+                                      <DownloadIcon fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>

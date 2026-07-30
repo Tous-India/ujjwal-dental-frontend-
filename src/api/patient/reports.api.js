@@ -23,9 +23,13 @@ export const getReport = (id) =>
   api.get(`/reports/${id}`).then((res) => res.data);
 
 /**
- * Download report (get download URL)
+ * Download report (get download URL). `fileIndex` selects which file when a
+ * report has multiple (files[] array) -- defaults to the first.
  * @param {string} id - Report ID
+ * @param {number} [fileIndex]
  * @returns {Promise}
  */
-export const downloadReport = (id) =>
-  api.get(`/reports/${id}/download`).then((res) => res.data);
+export const downloadReport = (id, fileIndex) =>
+  api
+    .get(`/reports/${id}/download`, { params: fileIndex != null ? { fileIndex } : {} })
+    .then((res) => res.data);
