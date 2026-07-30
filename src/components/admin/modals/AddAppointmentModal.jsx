@@ -157,7 +157,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
 
   // FIX 1: Add patient inline state
   const [showAddPatient, setShowAddPatient] = useState(false);
-  const [newPatient, setNewPatient] = useState({ name: "", phone: "", email: "", age: "", gender: "" });
+  const [newPatient, setNewPatient] = useState({ name: "", phone: "", email: "", dateOfBirth: "", gender: "" });
   const [addingPatient, setAddingPatient] = useState(false);
 
   // FIX 3: Payment method state
@@ -684,7 +684,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
       setPatientOptions([]);
       setErrors({});
       setShowAddPatient(false);
-      setNewPatient({ name: "", phone: "", email: "", age: "", gender: "" });
+      setNewPatient({ name: "", phone: "", email: "", dateOfBirth: "", gender: "" });
       setPaymentMethod("cash");
       setFeeCollected(false);
       setBookedAppointment(null);
@@ -1112,13 +1112,14 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                     onChange={(e) => setNewPatient((p) => ({ ...p, email: e.target.value }))}
                   />
                   <TextField
-                    label="Age"
-                    type="number"
+                    label="Date of Birth"
+                    type="date"
                     size="small"
-                    sx={{ flex: "0 0 90px", minWidth: "90px" }}
-                    value={newPatient.age}
-                    onChange={(e) => setNewPatient((p) => ({ ...p, age: e.target.value }))}
-                    inputProps={{ min: 0, max: 120 }}
+                    sx={{ flex: "0 0 150px", minWidth: "150px" }}
+                    value={newPatient.dateOfBirth}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, dateOfBirth: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{ max: todayStr(), ...dateGuards }}
                   />
                   <TextField
                     select
@@ -1139,22 +1140,17 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                     onClick={async () => {
                       setAddingPatient(true);
                       try {
-                        // Patient model stores dateOfBirth, not a raw age --
-                        // approximate from the entered age (Jan 1 of birth year).
-                        const dateOfBirth = newPatient.age
-                          ? `${new Date().getFullYear() - Number(newPatient.age)}-01-01`
-                          : undefined;
                         const result = await createPatient({
                           name: newPatient.name,
                           phone: newPatient.phone,
                           email: newPatient.email || undefined,
                           gender: newPatient.gender || undefined,
-                          dateOfBirth,
+                          dateOfBirth: newPatient.dateOfBirth || undefined,
                         });
                         const created = result.data?.patient || result.patient || result;
                         setFormData((prev) => ({ ...prev, patient: created }));
                         setShowAddPatient(false);
-                        setNewPatient({ name: "", phone: "", email: "", age: "", gender: "" });
+                        setNewPatient({ name: "", phone: "", email: "", dateOfBirth: "", gender: "" });
                         toast.success(`Patient ${created.name} added`);
                       } catch (err) {
                         console.error("Add patient error:", err);
@@ -1171,7 +1167,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                     variant="outlined"
                     onClick={() => {
                       setShowAddPatient(false);
-                      setNewPatient({ name: "", phone: "", email: "", age: "", gender: "" });
+                      setNewPatient({ name: "", phone: "", email: "", dateOfBirth: "", gender: "" });
                     }}
                     sx={{ textTransform: "none", fontSize: "12px", whiteSpace: "nowrap", flexShrink: 0 }}
                   >
