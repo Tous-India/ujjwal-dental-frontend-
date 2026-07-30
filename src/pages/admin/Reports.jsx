@@ -119,39 +119,64 @@ const columns = (onEdit, onDelete, onViewPatient) => [
   {
     field: "file",
     headerName: "File",
-    minWidth: 80,
-    render: (value, row) =>
-      value?.url ? (
+    minWidth: 90,
+    // Multi-file reports store data in files[] -- the legacy singular
+    // `file` field is a Mongoose-default-populated placeholder object
+    // ({ fileType: "application/pdf" }) with no url, always truthy but
+    // never useful. Read files[] first, fall back to `file` only for
+    // reports genuinely created before multi-file support existed.
+    render: (value, row) => {
+      const reportFiles = row.files?.length > 0 ? row.files : value?.url ? [value] : [];
+      if (reportFiles.length === 0) return "-";
+      if (reportFiles.length > 1) {
+        return (
+          <Tooltip title="Download first file">
+            <Chip
+              size="small"
+              label={`${reportFiles.length} files`}
+              onClick={(e) => {
+                e.stopPropagation();
+                const f = reportFiles[0];
+                const ext = f.fileType?.includes("pdf") ? ".pdf" : "";
+                handleDownload(f.url, (row.title || "report") + ext);
+              }}
+            />
+          </Tooltip>
+        );
+      }
+      const f = reportFiles[0];
+      return (
         <Tooltip title="Download">
           <IconButton
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              const ext = value.fileType?.includes("pdf") ? ".pdf" : "";
-              handleDownload(value.url, (row.title || "report") + ext);
+              const ext = f.fileType?.includes("pdf") ? ".pdf" : "";
+              handleDownload(f.url, (row.title || "report") + ext);
             }}
           >
             <DownloadIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-      ) : (
-        "-"
-      ),
+      );
+    },
   },
   {
     field: "_actions",
     headerName: "Actions",
     minWidth: 120,
-    render: (_, row) => (
+    render: (_, row) => {
+      const reportFiles = row.files?.length > 0 ? row.files : row.file?.url ? [row.file] : [];
+      return (
       <Box className="flex gap-1">
-        {row.file?.url && (
+        {reportFiles.length > 0 && (
           <Tooltip title="View Report">
             <IconButton
               size="small"
               color="primary"
               onClick={(e) => {
                 e.stopPropagation();
-                const fileUrl = row.file.url;
+                const fileUrl = reportFiles[0].url;
                 if (fileUrl.includes(".pdf")) {
                   // Use Google Docs Viewer for PDF preview
                   window.open(`https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`, "_blank");
@@ -189,7 +214,8 @@ const columns = (onEdit, onDelete, onViewPatient) => [
           </IconButton>
         </Tooltip>
       </Box>
-    ),
+      );
+    },
   },
   {
     field: "createdAt",
