@@ -122,6 +122,7 @@ const StatCard = ({ icon: Icon, label, value, color, onClick, isActive, dateLabe
   <Card
     variant="outlined"
     onClick={onClick}
+    className="h-full"
     sx={{
       ...(onClick && {
         cursor: "pointer",
@@ -136,18 +137,18 @@ const StatCard = ({ icon: Icon, label, value, color, onClick, isActive, dateLabe
     }}
   >
     <CardContent className="flex items-center gap-3 py-3">
-      <Box className={`p-2 rounded-lg ${color}`}>
+      <Box className={`p-2 rounded-lg shrink-0 ${color}`}>
         <Icon className="text-white" />
       </Box>
-      <Box>
-        <Typography variant="caption" className="text-gray-500">
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Typography variant="caption" className="text-gray-500" noWrap sx={{ display: "block" }}>
           {label}
         </Typography>
-        <Typography variant="h6" className="font-numbers font-bold leading-tight">
+        <Typography variant="h6" className="font-numbers font-bold leading-tight" noWrap sx={{ display: "block" }}>
           {value}
         </Typography>
         {dateLabel && (
-          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "11px", display: "block", lineHeight: 1.4 }}>
+          <Typography variant="caption" noWrap sx={{ color: "text.secondary", fontSize: "11px", display: "block", lineHeight: 1.4 }}>
             {dateLabel}
           </Typography>
         )}
