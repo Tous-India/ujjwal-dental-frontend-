@@ -56,7 +56,6 @@ import ScienceIcon from "@mui/icons-material/Science";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import DownloadIcon from "@mui/icons-material/Download";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import AddIcon from "@mui/icons-material/Add";
@@ -77,7 +76,7 @@ import FollowUpReminderModal from "./FollowUpReminderModal";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import InvoiceDetailModal from "./InvoiceDetailModal";
 import { toast } from "react-toastify";
-import { downloadFile } from "../../../utils/downloadFile";
+import ReportPreviewModal from "../../shared/ReportPreviewModal";
 
 /**
  * Tab Panel Component
@@ -752,6 +751,7 @@ const ReportsTab = ({ patientId }) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [previewReport, setPreviewReport] = useState(null);
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -773,6 +773,7 @@ const ReportsTab = ({ patientId }) => {
   if (!reports.length) return <Typography className="text-gray-400 text-center py-8">No reports found</Typography>;
 
   return (
+    <>
     <TableContainer component={Paper} variant="outlined">
       <Table size="small">
         <TableHead className="bg-gray-50">
@@ -781,7 +782,7 @@ const ReportsTab = ({ patientId }) => {
             <TableCell>Title</TableCell>
             <TableCell>Category</TableCell>
             <TableCell>Uploaded By</TableCell>
-            <TableCell align="center">Actions</TableCell>
+            <TableCell align="center">File</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -791,9 +792,18 @@ const ReportsTab = ({ patientId }) => {
             // placeholder ({ fileType: "application/pdf" }, no url) that's
             // always truthy but never useful. files[] first, `file` only
             // as a fallback for reports predating multi-file support.
+            //
+            // A tiny per-row View/Download icon was hard to tap accurately
+            // on mobile -- tapping ANYWHERE on the row now opens the
+            // full-screen ReportPreviewModal (large Back/Download buttons).
             const reportFiles = rpt.files?.length > 0 ? rpt.files : rpt.file?.url ? [rpt.file] : [];
             return (
-              <TableRow key={rpt._id} hover>
+              <TableRow
+                key={rpt._id}
+                hover
+                onClick={() => setPreviewReport(rpt)}
+                sx={{ cursor: reportFiles.length > 0 ? "pointer" : "default" }}
+              >
                 <TableCell>{formatDate(rpt.createdAt)}</TableCell>
                 <TableCell>{rpt.title || "-"}</TableCell>
                 <TableCell>
@@ -804,33 +814,9 @@ const ReportsTab = ({ patientId }) => {
                   {reportFiles.length === 0 ? (
                     <Typography variant="caption" color="text.disabled">-</Typography>
                   ) : (
-                    <>
-                      <Tooltip title={reportFiles.length > 1 ? `View first of ${reportFiles.length} files` : "View"}>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => {
-                            const url = reportFiles[0].url;
-                            if (url.includes(".pdf")) {
-                              window.open(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`, "_blank");
-                            } else {
-                              window.open(url, "_blank");
-                            }
-                          }}
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={reportFiles.length > 1 ? `Download first of ${reportFiles.length} files` : "Download"}>
-                        <IconButton
-                          size="small"
-                          color="success"
-                          onClick={() => downloadFile(reportFiles[0].url, rpt.title || "report")}
-                        >
-                          <DownloadIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </>
+                    <Tooltip title="Tap row to view">
+                      <VisibilityIcon fontSize="small" color="action" />
+                    </Tooltip>
                   )}
                 </TableCell>
               </TableRow>
@@ -839,6 +825,13 @@ const ReportsTab = ({ patientId }) => {
         </TableBody>
       </Table>
     </TableContainer>
+
+    <ReportPreviewModal
+      open={!!previewReport}
+      onClose={() => setPreviewReport(null)}
+      report={previewReport}
+    />
+    </>
   );
 };
 

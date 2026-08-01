@@ -15,16 +15,13 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DownloadIcon from "@mui/icons-material/Download";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import DataTable from "../../components/common/DataTable";
 import { useReports, useReportMutations } from "../../hooks/admin/useReports";
 import AddReportModal from "../../components/admin/modals/AddReportModal";
 import EditReportModal from "../../components/admin/modals/EditReportModal";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
-import { downloadFile as handleDownload } from "../../utils/downloadFile";
+import ReportPreviewModal from "../../components/shared/ReportPreviewModal";
 
 /**
  * Table columns
@@ -113,71 +110,28 @@ const columns = (onEdit, onDelete, onViewPatient) => [
     // ({ fileType: "application/pdf" }) with no url, always truthy but
     // never useful. Read files[] first, fall back to `file` only for
     // reports genuinely created before multi-file support existed.
+    //
+    // No per-row tap target here anymore -- a tiny Download/View icon was
+    // hard to tap accurately on mobile. Tapping ANYWHERE on the row now
+    // opens the full-screen ReportPreviewModal (large Back/Download
+    // buttons); this cell is just a quick visual indicator of file count.
     render: (value, row) => {
       const reportFiles = row.files?.length > 0 ? row.files : value?.url ? [value] : [];
-      if (reportFiles.length === 0) return "-";
-      if (reportFiles.length > 1) {
-        return (
-          <Tooltip title="Download first file">
-            <Chip
-              size="small"
-              label={`${reportFiles.length} files`}
-              onClick={(e) => {
-                e.stopPropagation();
-                const f = reportFiles[0];
-                const ext = f.fileType?.includes("pdf") ? ".pdf" : "";
-                handleDownload(f.url, (row.title || "report") + ext);
-              }}
-            />
-          </Tooltip>
-        );
-      }
-      const f = reportFiles[0];
+      if (reportFiles.length === 0) return <Typography variant="caption" color="text.disabled">-</Typography>;
       return (
-        <Tooltip title="Download">
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              const ext = f.fileType?.includes("pdf") ? ".pdf" : "";
-              handleDownload(f.url, (row.title || "report") + ext);
-            }}
-          >
-            <DownloadIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <Typography variant="caption" color="text.secondary">
+          {reportFiles.length > 1 ? `${reportFiles.length} files` : "1 file"}
+        </Typography>
       );
     },
   },
   {
     field: "_actions",
     headerName: "Actions",
-    minWidth: 120,
+    minWidth: 90,
     render: (_, row) => {
-      const reportFiles = row.files?.length > 0 ? row.files : row.file?.url ? [row.file] : [];
       return (
       <Box className="flex gap-1">
-        {reportFiles.length > 0 && (
-          <Tooltip title="View Report">
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                const fileUrl = reportFiles[0].url;
-                if (fileUrl.includes(".pdf")) {
-                  // Use Google Docs Viewer for PDF preview
-                  window.open(`https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`, "_blank");
-                } else {
-                  // Images open directly
-                  window.open(fileUrl, "_blank");
-                }
-              }}
-            >
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
         <Tooltip title="Edit">
           <IconButton
             size="small"
@@ -222,6 +176,7 @@ const Reports = () => {
   const [patientModalOpen, setPatientModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [previewReport, setPreviewReport] = useState(null);
 
   const { data, isLoading, refetch } = useReports({
     search,
@@ -273,7 +228,14 @@ const Reports = () => {
         searchPlaceholder="Search by report number, title or patient..."
         onSearch={setSearch}
         onRefresh={refetch}
+        onRowClick={setPreviewReport}
         emptyMessage="No reports found"
+      />
+
+      <ReportPreviewModal
+        open={!!previewReport}
+        onClose={() => setPreviewReport(null)}
+        report={previewReport}
       />
 
       <AddReportModal
