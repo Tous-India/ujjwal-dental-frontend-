@@ -155,9 +155,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
   // Appointment data after successful booking (drives success banner + slip download)
   const [bookedAppointment, setBookedAppointment] = useState(null);
 
-  // FIX 1: Add patient inline state
+  // FIX 1: Add patient popup state
   const [showAddPatient, setShowAddPatient] = useState(false);
-  const [newPatient, setNewPatient] = useState({ name: "", phone: "", email: "", dateOfBirth: "", gender: "" });
+  const [newPatient, setNewPatient] = useState({ name: "", phone: "", email: "", age: "", gender: "" });
   const [addingPatient, setAddingPatient] = useState(false);
 
   // FIX 3: Payment method state
@@ -694,7 +694,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
       setPatientOptions([]);
       setErrors({});
       setShowAddPatient(false);
-      setNewPatient({ name: "", phone: "", email: "", dateOfBirth: "", gender: "" });
+      setNewPatient({ name: "", phone: "", email: "", age: "", gender: "" });
       setPaymentMethod("cash");
       setFeeCollected(false);
       setBookedAppointment(null);
@@ -859,30 +859,30 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                 />
               )}
               noOptionsText={
-                patientSearch.length < 2 ? (
-                  "Type at least 2 characters"
-                ) : (
-                  <Box>
-                    <Typography sx={{ fontSize: "13px", color: "#666", mb: 1 }}>
-                      No patient found
-                    </Typography>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => setShowAddPatient(true)}
-                      sx={{
-                        fontSize: "12px",
-                        textTransform: "none",
-                        color: "#f59e0b",
-                        borderColor: "#f59e0b",
-                      }}
-                    >
-                      + Add New Patient
-                    </Button>
-                  </Box>
-                )
+                patientSearch.length < 2
+                  ? "Type at least 2 characters"
+                  : "No patient found"
               }
             />
+            {/* Always visible/reachable regardless of how many search results
+                are showing -- rendered outside the Autocomplete's dropdown
+                Paper entirely, so it can never get pushed out of view by
+                matching results (previously lived inside noOptionsText,
+                which MUI only renders when there are zero matches). */}
+            <Button
+              size="small"
+              onClick={() => setShowAddPatient(true)}
+              sx={{
+                mt: 0.5,
+                fontSize: "12px",
+                textTransform: "none",
+                color: "#f59e0b",
+                p: 0,
+                minWidth: 0,
+              }}
+            >
+              + Add New Patient
+            </Button>
           </Grid>
           <Grid size={{ xs: 12, sm: 5 }}>
             <Autocomplete
@@ -1080,112 +1080,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               placeholder="e.g., Tooth pain, Cleaning"
             />
           </Grid>
-          )}
-
-          {/* ─── ADD NEW PATIENT (conditional, full width) ─── */}
-          {showAddPatient && (
-            <Grid size={{ xs: 12 }}>
-              <Box
-                sx={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  p: 2,
-                  mt: 1,
-                  backgroundColor: "#fafafa",
-                }}
-              >
-                <Typography sx={{ fontSize: "13px", fontWeight: 600, mb: 1.5, color: "#1a1a1a" }}>
-                  Add New Patient
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-                  <TextField
-                    label="Full Name *"
-                    size="small"
-                    sx={{ flex: 1, minWidth: "140px" }}
-                    value={newPatient.name}
-                    onChange={(e) => setNewPatient((p) => ({ ...p, name: e.target.value }))}
-                  />
-                  <TextField
-                    label="Phone *"
-                    size="small"
-                    sx={{ flex: 1, minWidth: "140px" }}
-                    value={newPatient.phone}
-                    onChange={(e) => setNewPatient((p) => ({ ...p, phone: e.target.value }))}
-                    inputProps={{ maxLength: 10 }}
-                    placeholder="10-digit mobile"
-                  />
-                  <TextField
-                    label="Email"
-                    size="small"
-                    sx={{ flex: 1, minWidth: "140px" }}
-                    value={newPatient.email}
-                    onChange={(e) => setNewPatient((p) => ({ ...p, email: e.target.value }))}
-                  />
-                  <TextField
-                    label="Date of Birth"
-                    type="date"
-                    size="small"
-                    sx={{ flex: "0 0 150px", minWidth: "150px" }}
-                    value={newPatient.dateOfBirth}
-                    onChange={(e) => setNewPatient((p) => ({ ...p, dateOfBirth: e.target.value }))}
-                    InputLabelProps={{ shrink: true }}
-                    inputProps={{ max: todayStr(), ...dateGuards }}
-                  />
-                  <TextField
-                    select
-                    label="Gender"
-                    size="small"
-                    sx={{ flex: "0 0 120px", minWidth: "120px" }}
-                    value={newPatient.gender}
-                    onChange={(e) => setNewPatient((p) => ({ ...p, gender: e.target.value }))}
-                  >
-                    <MenuItem value="male">Male</MenuItem>
-                    <MenuItem value="female">Female</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
-                  </TextField>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    disabled={!newPatient.name || !newPatient.phone || addingPatient}
-                    onClick={async () => {
-                      setAddingPatient(true);
-                      try {
-                        const result = await createPatient({
-                          name: newPatient.name,
-                          phone: newPatient.phone,
-                          email: newPatient.email || undefined,
-                          gender: newPatient.gender || undefined,
-                          dateOfBirth: newPatient.dateOfBirth || undefined,
-                        });
-                        const created = result.data?.patient || result.patient || result;
-                        setFormData((prev) => ({ ...prev, patient: created }));
-                        setShowAddPatient(false);
-                        setNewPatient({ name: "", phone: "", email: "", dateOfBirth: "", gender: "" });
-                        toast.success(`Patient ${created.name} added`);
-                      } catch (err) {
-                        console.error("Add patient error:", err);
-                        toast.error(err.response?.data?.message || "Failed to add patient");
-                      }
-                      setAddingPatient(false);
-                    }}
-                    sx={{ backgroundColor: "#f59e0b", textTransform: "none", fontSize: "12px", whiteSpace: "nowrap", flexShrink: 0 }}
-                  >
-                    {addingPatient ? "Adding..." : "Add & Select"}
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => {
-                      setShowAddPatient(false);
-                      setNewPatient({ name: "", phone: "", email: "", dateOfBirth: "", gender: "" });
-                    }}
-                    sx={{ textTransform: "none", fontSize: "12px", whiteSpace: "nowrap", flexShrink: 0 }}
-                  >
-                    Cancel
-                  </Button>
-                </Box>
-              </Box>
-            </Grid>
           )}
 
           {/* ─── SECTION DIVIDER ─── */}
@@ -1826,6 +1720,123 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
         )}
       </DialogActions>
     </Dialog>
+
+    {/* Add New Patient popup -- opens as a small Dialog instead of expanding
+        inline within the booking form, matching the Reopen Treatment /
+        Void Invoice dialog pattern used elsewhere in admin. */}
+    <Dialog
+      open={showAddPatient}
+      onClose={() => {
+        if (!addingPatient) {
+          setShowAddPatient(false);
+          setNewPatient({ name: "", phone: "", email: "", age: "", gender: "" });
+        }
+      }}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <AddIcon color="warning" fontSize="small" />
+        Add New Patient
+      </DialogTitle>
+      <DialogContent sx={{ pt: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 0.5 }}>
+          <TextField
+            label="Full Name *"
+            size="small"
+            fullWidth
+            value={newPatient.name}
+            onChange={(e) => setNewPatient((p) => ({ ...p, name: e.target.value }))}
+            disabled={addingPatient}
+          />
+          <TextField
+            label="Phone *"
+            size="small"
+            fullWidth
+            value={newPatient.phone}
+            onChange={(e) => setNewPatient((p) => ({ ...p, phone: e.target.value }))}
+            inputProps={{ maxLength: 10 }}
+            placeholder="10-digit mobile"
+            disabled={addingPatient}
+          />
+          <TextField
+            label="Email"
+            size="small"
+            fullWidth
+            value={newPatient.email}
+            onChange={(e) => setNewPatient((p) => ({ ...p, email: e.target.value }))}
+            disabled={addingPatient}
+          />
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              label="Age"
+              type="number"
+              size="small"
+              sx={{ flex: 1 }}
+              value={newPatient.age}
+              onChange={(e) => setNewPatient((p) => ({ ...p, age: e.target.value }))}
+              inputProps={{ min: 0, max: 130 }}
+              disabled={addingPatient}
+            />
+            <TextField
+              select
+              label="Gender"
+              size="small"
+              sx={{ flex: 1 }}
+              value={newPatient.gender}
+              onChange={(e) => setNewPatient((p) => ({ ...p, gender: e.target.value }))}
+              disabled={addingPatient}
+            >
+              <MenuItem value="male">Male</MenuItem>
+              <MenuItem value="female">Female</MenuItem>
+              <MenuItem value="other">Other</MenuItem>
+            </TextField>
+          </Box>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button
+          onClick={() => {
+            setShowAddPatient(false);
+            setNewPatient({ name: "", phone: "", email: "", age: "", gender: "" });
+          }}
+          color="inherit"
+          disabled={addingPatient}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          disabled={!newPatient.name || !newPatient.phone || addingPatient}
+          startIcon={addingPatient ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
+          onClick={async () => {
+            setAddingPatient(true);
+            try {
+              const result = await createPatient({
+                name: newPatient.name,
+                phone: newPatient.phone,
+                email: newPatient.email || undefined,
+                gender: newPatient.gender || undefined,
+                age: newPatient.age ? Number(newPatient.age) : undefined,
+              });
+              const created = result.data?.patient || result.patient || result;
+              setFormData((prev) => ({ ...prev, patient: created }));
+              setShowAddPatient(false);
+              setNewPatient({ name: "", phone: "", email: "", age: "", gender: "" });
+              toast.success(`Patient ${created.name} added`);
+            } catch (err) {
+              console.error("Add patient error:", err);
+              toast.error(err.response?.data?.message || "Failed to add patient");
+            }
+            setAddingPatient(false);
+          }}
+          sx={{ backgroundColor: "#f59e0b", "&:hover": { backgroundColor: "#d97706" } }}
+        >
+          {addingPatient ? "Adding..." : "Add & Select"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+
     <AppointmentSlipPreviewModal
       open={slipPreviewOpen}
       onClose={() => setSlipPreviewOpen(false)}
