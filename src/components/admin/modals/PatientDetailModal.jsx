@@ -417,6 +417,7 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
         <Table size="small">
           <TableHead className="bg-gray-50">
             <TableRow>
+              <TableCell>Appointment #</TableCell>
               <TableCell>Date</TableCell>
               <TableCell>Time</TableCell>
               <TableCell>Clinic</TableCell>
@@ -429,6 +430,7 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
           <TableBody>
             {appointments.map((apt) => (
               <TableRow key={apt._id} hover>
+                <TableCell className="font-numbers">{apt.appointmentNumber || "-"}</TableCell>
                 <TableCell>{formatDate(apt.date)}</TableCell>
                 <TableCell>{apt.timeSlot || "-"}</TableCell>
                 <TableCell>{apt.clinic?.name || "-"}</TableCell>
