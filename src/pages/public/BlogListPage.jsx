@@ -115,9 +115,12 @@ const BlogListPage = () => {
                       )}
                     </Link>
                     <div className="flex flex-col flex-grow p-5">
-                      {blog.tags?.length > 0 && (
+                      {(blog.category || blog.tags?.length > 0) && (
                         <div className="flex flex-wrap gap-1.5 mb-2">
-                          {blog.tags.slice(0, 3).map((tag) => (
+                          {blog.category && (
+                            <Chip size="small" label={blog.category} className="bg-[#e8f4fd] text-[#006694]" />
+                          )}
+                          {blog.tags?.slice(0, 3).map((tag) => (
                             <Chip key={tag} size="small" label={tag} variant="outlined" className="capitalize" />
                           ))}
                         </div>

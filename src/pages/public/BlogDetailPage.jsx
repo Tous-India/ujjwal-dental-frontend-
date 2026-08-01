@@ -5,6 +5,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonIcon from "@mui/icons-material/Person";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { getPublicBlogBySlug, getPublicBlogs } from "../../api/blogs.api";
 import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
 
@@ -153,11 +154,18 @@ const BlogDetailPage = () => {
               <VisibilityIcon sx={{ fontSize: 16 }} />
               {(blog.views || 0).toLocaleString("en-IN")} views
             </span>
+            <span className="flex items-center gap-1.5">
+              <AccessTimeIcon sx={{ fontSize: 16 }} />
+              {blog.readTimeMinutes || 1} min read
+            </span>
           </div>
 
-          {blog.tags?.length > 0 && (
+          {(blog.category || blog.tags?.length > 0) && (
             <div className="flex flex-wrap gap-1.5 mb-6">
-              {blog.tags.map((tag) => (
+              {blog.category && (
+                <Chip size="small" label={blog.category} className="bg-[#e8f4fd] text-[#006694]" />
+              )}
+              {blog.tags?.map((tag) => (
                 <Chip key={tag} size="small" label={tag} variant="outlined" className="capitalize" />
               ))}
             </div>
