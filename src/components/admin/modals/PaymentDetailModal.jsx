@@ -120,6 +120,14 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
 
   const { processRefund, isRefunding, deletePayment, isDeleting, confirmManualRefund, isConfirmingManual } = usePaymentMutations();
   const { reversePayment, isReversing } = useAdminPaymentMutations();
+  // Hooks must run unconditionally on every render -- this was previously
+  // called after the `if (!payment) return null` early return below, so it
+  // only ran once `payment` became truthy, changing the hook count between
+  // renders (React error #310, "Rendered more hooks than during the
+  // previous render"). usePermissions() itself calls useAdminStore (Zustand)
+  // and useQuery (React Query), several hooks at once, so the mismatch was
+  // immediate as soon as the modal opened with `payment` initially unset.
+  const { hasPermission } = usePermissions();
 
   const handleRefundAmountChange = (e) => {
     const val = e.target.value;
@@ -283,7 +291,6 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
   // instead — those are handled by the Reverse flow below.
   const refundEligible = payment.status === "paid" && !payment.settledInvoices?.length;
   const canRefund = refundEligible && !refundWindowExpired;
-  const { hasPermission } = usePermissions();
   const canDeletePermission = hasPermission("payments", "delete");
   const canReverse = !!(payment.settledInvoices?.length) && !payment.reversed && payment.status !== "reversed" && canDeletePermission;
 
