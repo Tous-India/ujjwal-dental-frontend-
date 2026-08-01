@@ -18,11 +18,17 @@ import {
   AccordionSummary,
   AccordionDetails,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
 import ImageIcon from "@mui/icons-material/Image";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { toast } from "react-toastify";
 import RichTextEditor from "../../components/admin/blog/RichTextEditor";
 import { useBlog, useBlogMutations } from "../../hooks/admin/useBlogs";
@@ -36,6 +42,30 @@ const slugify = (title) =>
     .replace(/-+/g, "-")
     .substring(0, 100);
 
+const BLOG_CATEGORIES = ["Oral Hygiene", "Treatments", "Patient Stories", "General"];
+
+const WORDS_PER_MINUTE = 200;
+
+/** Client-side mirror of the server's read-time formula (blog.controller.js
+ * computeReadTime) -- strip HTML tags, count words, divide by 200wpm, round
+ * up. Purely a live UI estimate; the value actually stored comes from the
+ * server on save. */
+const estimateReadTime = (html = "") => {
+  const text = String(html || "").replace(/<[^>]*>/g, " ");
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  return Math.max(1, Math.ceil(words.length / WORDS_PER_MINUTE));
+};
+
+/** Converts an ISO date string to the local "YYYY-MM-DDTHH:mm" value a
+ * datetime-local input expects (accounting for timezone offset). */
+const toLocalInputValue = (isoString) => {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return "";
+  const offsetMs = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+};
+
 const getInitialFormState = () => ({
   title: "",
   slug: "",
@@ -45,6 +75,8 @@ const getInitialFormState = () => ({
   tags: "",
   seoTitle: "",
   seoDescription: "",
+  category: "General",
+  scheduledPublishAt: "",
 });
 
 const BlogEditor = () => {
@@ -67,6 +99,8 @@ const BlogEditor = () => {
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const blogViews = data?.data?.blog?.views || 0;
+
   // Pre-fill form when editing an existing blog
   useEffect(() => {
     const blog = data?.data?.blog;
@@ -80,6 +114,8 @@ const BlogEditor = () => {
         tags: (blog.tags || []).join(", "),
         seoTitle: blog.seoTitle || "",
         seoDescription: blog.seoDescription || "",
+        category: blog.category || "General",
+        scheduledPublishAt: toLocalInputValue(blog.scheduledPublishAt),
       });
       setStatus(blog.status || "draft");
       setSlugTouched(true);
@@ -119,10 +155,13 @@ const BlogEditor = () => {
     }
   };
 
-  const validate = () => {
+  const validate = (targetStatus) => {
     const newErrors = {};
     if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.content.trim()) newErrors.content = "Content is required";
+    if (targetStatus === "scheduled" && !formData.scheduledPublishAt) {
+      newErrors.scheduledPublishAt = "Scheduled date/time is required";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -139,11 +178,21 @@ const BlogEditor = () => {
       .filter(Boolean),
     seoTitle: formData.seoTitle,
     seoDescription: formData.seoDescription,
+    category: formData.category,
+    scheduledPublishAt:
+      targetStatus === "scheduled" && formData.scheduledPublishAt
+        ? new Date(formData.scheduledPublishAt).toISOString()
+        : null,
     status: targetStatus,
   });
 
   const handleSave = async (targetStatus) => {
-    if (!validate()) return;
+    if (!validate(targetStatus)) {
+      if (targetStatus === "scheduled" && !formData.scheduledPublishAt) {
+        toast.error("Please select a scheduled date/time");
+      }
+      return;
+    }
 
     const payload = buildPayload(targetStatus);
 
@@ -153,9 +202,13 @@ const BlogEditor = () => {
       } else {
         await createBlogAsync(payload);
       }
-      toast.success(
-        targetStatus === "published" ? "Blog published successfully" : "Blog saved as draft",
-      );
+      const successMessage =
+        targetStatus === "published"
+          ? "Blog published successfully"
+          : targetStatus === "scheduled"
+            ? "Blog scheduled successfully"
+            : "Blog saved as draft";
+      toast.success(successMessage);
       navigate("/admin/blogs");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to save blog");
@@ -190,9 +243,22 @@ const BlogEditor = () => {
             </Typography>
             <Chip
               size="small"
-              label={status === "published" ? "Published" : "Draft"}
-              color={status === "published" ? "success" : "default"}
+              label={
+                status === "published" ? "Published" : status === "scheduled" ? "Scheduled" : "Draft"
+              }
+              color={
+                status === "published" ? "success" : status === "scheduled" ? "warning" : "default"
+              }
             />
+            {isEditMode && (
+              <Chip
+                size="small"
+                variant="outlined"
+                icon={<VisibilityIcon fontSize="small" />}
+                label={`${blogViews.toLocaleString("en-IN")} views`}
+                className="text-gray-600"
+              />
+            )}
           </Box>
         </Box>
       </Box>
@@ -240,9 +306,15 @@ const BlogEditor = () => {
           </Paper>
 
           <Paper variant="outlined" className="p-4 rounded-xl">
-            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-2">
-              Content {errors.content && <span className="text-red-600 font-normal">— {errors.content}</span>}
-            </Typography>
+            <Box className="flex items-center justify-between mb-2">
+              <Typography variant="subtitle2" className="font-semibold text-gray-700">
+                Content {errors.content && <span className="text-red-600 font-normal">— {errors.content}</span>}
+              </Typography>
+              <Box className="flex items-center gap-1 text-gray-500">
+                <AccessTimeIcon sx={{ fontSize: 15 }} />
+                <Typography variant="caption">~{estimateReadTime(formData.content)} min read</Typography>
+              </Box>
+            </Box>
             <RichTextEditor
               content={formData.content}
               onChange={(html) => {
@@ -306,7 +378,54 @@ const BlogEditor = () => {
               onChange={handleChange("tags")}
               size="small"
               helperText="Comma-separated, e.g. dental, sonipat, tips"
+              className="mb-4"
             />
+            <FormControl fullWidth size="small">
+              <InputLabel>Category</InputLabel>
+              <Select
+                label="Category"
+                value={formData.category}
+                onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
+              >
+                {BLOG_CATEGORIES.map((cat) => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Paper>
+
+          <Paper variant="outlined" className="p-4 rounded-xl">
+            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3">
+              Publishing
+            </Typography>
+            <FormControl fullWidth size="small" className="mb-4">
+              <InputLabel>Status</InputLabel>
+              <Select label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <MenuItem value="draft">Draft</MenuItem>
+                <MenuItem value="published">Published</MenuItem>
+                <MenuItem value="scheduled">Scheduled</MenuItem>
+              </Select>
+            </FormControl>
+            {status === "scheduled" && (
+              <TextField
+                fullWidth
+                type="datetime-local"
+                label="Publish On"
+                size="small"
+                value={formData.scheduledPublishAt}
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, scheduledPublishAt: e.target.value }));
+                  if (errors.scheduledPublishAt) {
+                    setErrors((prev) => ({ ...prev, scheduledPublishAt: "" }));
+                  }
+                }}
+                error={!!errors.scheduledPublishAt}
+                helperText={errors.scheduledPublishAt || "Post goes live automatically once this time passes"}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            )}
           </Paper>
 
           <Accordion variant="outlined" className="rounded-xl!">
@@ -323,7 +442,12 @@ const BlogEditor = () => {
                 onChange={handleChange("seoTitle")}
                 size="small"
                 inputProps={{ maxLength: 70 }}
-                helperText={`${formData.seoTitle.length}/70`}
+                helperText={`${formData.seoTitle.length}/60 characters${formData.seoTitle.length > 60 ? " — longer than recommended, may get truncated in search results" : ""}`}
+                slotProps={{
+                  formHelperText: {
+                    sx: { color: formData.seoTitle.length > 60 ? "#d32f2f" : "text.secondary" },
+                  },
+                }}
                 className="mb-4"
               />
               <TextField
@@ -334,7 +458,12 @@ const BlogEditor = () => {
                 value={formData.seoDescription}
                 onChange={handleChange("seoDescription")}
                 inputProps={{ maxLength: 170 }}
-                helperText={`${formData.seoDescription.length}/170`}
+                helperText={`${formData.seoDescription.length}/160 characters${formData.seoDescription.length > 160 ? " — longer than recommended, may get truncated in search results" : formData.seoDescription.length > 0 && formData.seoDescription.length < 150 ? " — aim for 150-160" : ""}`}
+                slotProps={{
+                  formHelperText: {
+                    sx: { color: formData.seoDescription.length > 160 ? "#d32f2f" : "text.secondary" },
+                  },
+                }}
               />
             </AccordionDetails>
           </Accordion>
@@ -355,15 +484,27 @@ const BlogEditor = () => {
         >
           Save as Draft
         </Button>
-        <Button
-          variant="contained"
-          onClick={() => handleSave("published")}
-          disabled={isSaving}
-          className="bg-accent hover:bg-accent-dark"
-          startIcon={isSaving ? <CircularProgress size={16} /> : null}
-        >
-          Publish
-        </Button>
+        {status === "scheduled" ? (
+          <Button
+            variant="contained"
+            onClick={() => handleSave("scheduled")}
+            disabled={isSaving}
+            className="bg-accent hover:bg-accent-dark"
+            startIcon={isSaving ? <CircularProgress size={16} /> : null}
+          >
+            Schedule
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            onClick={() => handleSave("published")}
+            disabled={isSaving}
+            className="bg-accent hover:bg-accent-dark"
+            startIcon={isSaving ? <CircularProgress size={16} /> : null}
+          >
+            Publish
+          </Button>
+        )}
       </Box>
     </Box>
   );
