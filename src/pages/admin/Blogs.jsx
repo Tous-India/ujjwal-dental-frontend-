@@ -27,6 +27,17 @@ const filterOptions = [
     options: [
       { value: "draft", label: "Draft" },
       { value: "published", label: "Published" },
+      { value: "scheduled", label: "Scheduled" },
+    ],
+  },
+  {
+    key: "category",
+    label: "Category",
+    options: [
+      { value: "Oral Hygiene", label: "Oral Hygiene" },
+      { value: "Treatments", label: "Treatments" },
+      { value: "Patient Stories", label: "Patient Stories" },
+      { value: "General", label: "General" },
     ],
   },
 ];
@@ -124,20 +135,52 @@ const Blogs = () => {
     {
       field: "status",
       headerName: "Status",
-      minWidth: 120,
-      render: (value) => (
-        <Chip
-          size="small"
-          label={value === "published" ? "Published" : "Draft"}
-          color={value === "published" ? "success" : "default"}
-        />
-      ),
+      minWidth: 150,
+      render: (value, row) => {
+        if (value === "scheduled") {
+          return (
+            <Box>
+              <Chip size="small" label="Scheduled" color="warning" />
+              {row.scheduledPublishAt && (
+                <Typography variant="caption" className="block text-gray-500 mt-0.5">
+                  {new Date(row.scheduledPublishAt).toLocaleString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Typography>
+              )}
+            </Box>
+          );
+        }
+        return (
+          <Chip
+            size="small"
+            label={value === "published" ? "Published" : "Draft"}
+            color={value === "published" ? "success" : "default"}
+          />
+        );
+      },
+    },
+    {
+      field: "category",
+      headerName: "Category",
+      minWidth: 130,
+      render: (value) => value || "General",
     },
     {
       field: "views",
       headerName: "Views",
       minWidth: 90,
-      render: (value) => <span className="font-numbers">{value || 0}</span>,
+      render: (value) => <span className="font-numbers">{(value || 0).toLocaleString("en-IN")}</span>,
+    },
+    {
+      field: "readTimeMinutes",
+      headerName: "Read Time",
+      minWidth: 100,
+      render: (value) => `~${value || 1} min`,
     },
     {
       field: "author",
