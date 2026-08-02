@@ -77,6 +77,7 @@ import { getBillingStats, getInvoices } from "../../../api/admin/billing.api";
 import { getPayments } from "../../../api/admin/payments.api";
 import EditAppointmentModal from "./EditAppointmentModal";
 import AppointmentDetailModal from "./AppointmentDetailModal";
+import TreatmentPlanDetailModal from "./TreatmentPlanDetailModal";
 import AssignMembershipModal from "./AssignMembershipModal";
 import ResetPasswordDialog from "./ResetPasswordDialog";
 import FollowUpReminderModal from "./FollowUpReminderModal";
@@ -721,28 +722,34 @@ const TreatmentsTab = ({ patientId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewAppointment, setViewAppointment] = useState(null);
+  const [viewTreatment, setViewTreatment] = useState(null);
   const [viewLoadingId, setViewLoadingId] = useState(null);
 
-  useEffect(() => {
-    const fetchTreatments = async () => {
-      try {
-        setLoading(true);
-        const res = await getPatientTreatments(patientId, { limit: 50 });
-        setTreatments(res.data || []);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load treatments");
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (patientId) fetchTreatments();
+  const fetchTreatments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await getPatientTreatments(patientId, { limit: 50 });
+      setTreatments(res.data || []);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load treatments");
+    } finally {
+      setLoading(false);
+    }
   }, [patientId]);
 
+  useEffect(() => {
+    if (patientId) fetchTreatments();
+  }, [patientId, fetchTreatments]);
+
   // Treatment #/Linked OPD Visit columns are populated from this endpoint's
-  // own trimmed shape (id + number only) -- fetch the real, fully-populated
-  // appointment on demand so AppointmentDetailModal (built for the raw
-  // Appointment shape) renders correctly, same as it does from the main
-  // Appointments page.
+  // own trimmed shape (id + number only, no `patient`) -- fetch the real,
+  // fully-populated appointment on demand via GET /appointments/:id
+  // (getAppointmentById) so the detail modal (built for the raw Appointment
+  // shape, reading appointment.patient?.name/.phone) renders correctly, same
+  // as it does from the main Appointments page. This route previously fell
+  // through to the phone-lookup route (no /:id route was ever wired), which
+  // returned "Patient not found" for any appointment ObjectId -- fixed at
+  // the backend routing layer.
   const openAppointmentDetail = async (appointmentId) => {
     if (!appointmentId) return;
     setViewLoadingId(appointmentId);
@@ -751,6 +758,23 @@ const TreatmentsTab = ({ patientId }) => {
       setViewAppointment(res.data?.appointment || res.data);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to load appointment details");
+    } finally {
+      setViewLoadingId(null);
+    }
+  };
+
+  // Treatment # opens the richer Treatment Plan detail view (sessions,
+  // billing, Edit Treatment) instead of the plain OPD-style
+  // AppointmentDetailModal -- same fetch-on-click fix as above, just routed
+  // to the treatment-specific modal.
+  const openTreatmentDetail = async (appointmentId) => {
+    if (!appointmentId) return;
+    setViewLoadingId(appointmentId);
+    try {
+      const res = await getAppointment(appointmentId);
+      setViewTreatment(res.data?.appointment || res.data);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to load treatment details");
     } finally {
       setViewLoadingId(null);
     }
@@ -780,7 +804,7 @@ const TreatmentsTab = ({ patientId }) => {
             <TableRow key={trt._id} hover>
               <TableCell
                 className="font-numbers"
-                onClick={() => openAppointmentDetail(trt._id)}
+                onClick={() => openTreatmentDetail(trt._id)}
                 sx={{
                   color: "#4f46e5",
                   cursor: "pointer",
@@ -827,6 +851,16 @@ const TreatmentsTab = ({ patientId }) => {
       open={!!viewAppointment}
       onClose={() => setViewAppointment(null)}
       appointment={viewAppointment}
+    />
+
+    <TreatmentPlanDetailModal
+      open={!!viewTreatment}
+      onClose={() => setViewTreatment(null)}
+      appointment={viewTreatment}
+      onRefetch={() => {
+        fetchTreatments();
+        if (viewTreatment?._id) openTreatmentDetail(viewTreatment._id);
+      }}
     />
     </>
   );

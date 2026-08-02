@@ -72,3 +72,11 @@ export const rescheduleAppointment = (id, data) =>
  */
 export const reopenTreatment = (id, reason) =>
   api.post(`/appointments/${id}/reopen-treatment`, { reason }).then((res) => res.data);
+
+/**
+ * Edit a treatment plan's name/line items/discount -- available throughout
+ * the active lifecycle (locked once treatmentStatus is set, enforced
+ * server-side too).
+ */
+export const updateTreatmentItems = (id, data) =>
+  api.patch(`/appointments/${id}/treatment-items`, data).then((res) => res.data);

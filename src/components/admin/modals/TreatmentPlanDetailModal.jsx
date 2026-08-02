@@ -6,7 +6,7 @@
  * untouched) and from TreatmentDetailModal (treatment-catalog type detail,
  * a different feature entirely — name collision avoided on purpose).
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -41,9 +41,21 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import LinkIcon from "@mui/icons-material/Link";
 import SaveIcon from "@mui/icons-material/Save";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
 import api from "../../../api/axios";
 import { useAppointments, useAppointmentMutations } from "../../../hooks/admin/useAppointments";
 import { usePayments } from "../../../hooks/admin/usePayments";
+
+// Same underlying itemType enum as AddAppointmentModal's treatment booking
+// flow -- kept in sync intentionally (same billing categories server-side).
+const treatmentItemTypeOptions = [
+  { value: "treatment", label: "Treatment" },
+  { value: "surgery", label: "Surgery" },
+  { value: "test", label: "Test" },
+  { value: "medicine", label: "Medicine" },
+  { value: "other", label: "Other" },
+];
 
 const formatDate = (date) => {
   if (!date) return "-";
@@ -95,6 +107,28 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
   const [collectLoading, setCollectLoading] = useState(false);
   const [collectError, setCollectError] = useState("");
 
+  // Edit Treatment -- name/line items/discount, available throughout the
+  // active lifecycle (locked once treatmentStatus is set, see alreadyClosed
+  // gate below). Reuses AddAppointmentModal's treatment-items UI pattern.
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTreatmentName, setEditTreatmentName] = useState("");
+  const [editItems, setEditItems] = useState([{ description: "", unitPrice: "", itemType: "treatment" }]);
+  const [editDiscountPercent, setEditDiscountPercent] = useState(0);
+  const [editItemsError, setEditItemsError] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState("");
+  // Server response after a successful edit -- the `appointment` prop is
+  // owned by the parent page/modal and isn't guaranteed to be re-fetched
+  // immediately (e.g. Appointments.jsx's `selectedTreatment` is a point-in-
+  // time snapshot from the row click, not re-derived from its list refetch),
+  // so the freshly-saved treatmentName/invoice figures are held here and
+  // preferred for display until a new appointment is opened.
+  const [editedSnapshot, setEditedSnapshot] = useState(null);
+
+  useEffect(() => {
+    setEditedSnapshot(null);
+  }, [appointment?._id, open]);
+
   const { updateAppointment, reopenTreatment, isReopeningTreatment } = useAppointmentMutations();
 
   // Session timeline — reuses the existing appointments list endpoint (search
@@ -136,6 +170,92 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
 
   const alreadyClosed = !!appointment.treatmentStatus;
   const patientName = appointment.patient?.name || "Unknown Patient";
+  // Prefer the just-saved snapshot over the (possibly stale) prop so Edit
+  // Treatment's new total/items/name reflect immediately without requiring
+  // the parent page to re-fetch and re-pass a fresh `appointment` prop.
+  const displayTreatmentName = editedSnapshot?.treatmentName ?? appointment.treatmentName;
+  const displayInvoice = editedSnapshot?.invoice ?? appointment.invoice;
+
+  const openEditDialog = () => {
+    const sourceItems =
+      displayInvoice?.items?.length > 0
+        ? displayInvoice.items.map((it) => ({
+            description: it.description || "",
+            unitPrice: it.unitPrice ?? it.amount ?? 0,
+            itemType: it.itemType || "treatment",
+          }))
+        : [
+            {
+              description: displayTreatmentName || "Treatment",
+              unitPrice: displayInvoice?.grandTotal ?? appointment.fee ?? 0,
+              itemType: "treatment",
+            },
+          ];
+    setEditItems(sourceItems);
+    setEditTreatmentName(displayTreatmentName || "");
+    setEditDiscountPercent(displayInvoice?.discount?.percentage || 0);
+    setEditItemsError("");
+    setEditError("");
+    setEditDialogOpen(true);
+  };
+
+  const addEditItem = () =>
+    setEditItems((prev) => [...prev, { description: "", unitPrice: "", itemType: "treatment" }]);
+
+  const removeEditItem = (index) => {
+    if (editItems.length <= 1) {
+      toast.error("At least one item is required");
+      return;
+    }
+    setEditItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateEditItem = (index, field, value) =>
+    setEditItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+
+  // Mirrors AddAppointmentModal's treatmentTotal formula exactly (subtotal =
+  // sum of unitPrice, discountAmount = round(subtotal * pct / 100), total =
+  // max(0, subtotal - discountAmount)) -- the backend recomputes the same way.
+  const editSubtotal = editItems.reduce((sum, item) => sum + (Number(item.unitPrice) || 0), 0);
+  const editDiscountAmount = Math.round((editSubtotal * (Number(editDiscountPercent) || 0)) / 100);
+  const editTotal = Math.max(0, editSubtotal - editDiscountAmount);
+
+  const handleEditSubmit = async () => {
+    const hasInvalidItem = editItems.some(
+      (item) => !item.description?.trim() || !(Number(item.unitPrice) > 0)
+    );
+    if (hasInvalidItem) {
+      setEditItemsError("Each item needs a description and a fee greater than ₹0");
+      return;
+    }
+    setEditItemsError("");
+    setEditError("");
+    setEditLoading(true);
+    try {
+      const res = await api.patch(`/appointments/${appointment._id}/treatment-items`, {
+        treatmentName: editTreatmentName.trim(),
+        items: editItems.map((item) => ({
+          description: item.description.trim(),
+          unitPrice: Number(item.unitPrice) || 0,
+          itemType: item.itemType || "treatment",
+        })),
+        discountPercent: Number(editDiscountPercent) || 0,
+      });
+      const body = res.data?.data || {};
+      setEditedSnapshot({ treatmentName: body.appointment?.treatmentName, invoice: body.appointment?.invoice });
+      if (body.warning) {
+        toast.warning(body.warning);
+      } else {
+        toast.success("Treatment updated.");
+      }
+      setEditDialogOpen(false);
+      refreshAll();
+    } catch (err) {
+      setEditError(err?.response?.data?.message || "Failed to update treatment.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   const handleSaveSessionsPlanned = () => {
     const n = Number(sessionsPlannedInput);
@@ -254,7 +374,7 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
               </Avatar>
               <Box>
                 <Typography variant="h6" component="span" className="font-bold leading-tight">
-                  {appointment.treatmentName || "Treatment Plan"}
+                  {displayTreatmentName || "Treatment Plan"}
                 </Typography>
                 <Box className="flex items-center gap-2 mt-0.5">
                   <Chip
@@ -294,11 +414,23 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                 </Box>
               </Box>
 
-              <SectionTitle>Billing</SectionTitle>
+              <Box className="flex items-center justify-between mb-1.5">
+                <SectionTitle>Billing</SectionTitle>
+                {!alreadyClosed && (
+                  <Button
+                    size="small"
+                    startIcon={<EditIcon fontSize="small" />}
+                    onClick={openEditDialog}
+                    sx={{ textTransform: "none", fontSize: "11px", minWidth: 0, py: 0, mb: 1 }}
+                  >
+                    Edit Treatment
+                  </Button>
+                )}
+              </Box>
               <Box className="bg-gray-50/60 rounded px-3 py-2 mb-3">
-                {appointment.invoice?.items?.length > 0 && (
+                {displayInvoice?.items?.length > 0 && (
                   <Box className="mb-2">
-                    {appointment.invoice.items.map((item, i) => (
+                    {displayInvoice.items.map((item, i) => (
                       <Box key={i} className="flex justify-between py-0.5">
                         <Typography variant="caption" className="text-gray-600">
                           {item.description}{item.quantity > 1 ? ` × ${item.quantity}` : ""}
@@ -308,13 +440,13 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                         </Typography>
                       </Box>
                     ))}
-                    {(appointment.invoice.discount?.percentage > 0 || appointment.invoice.discount?.amount > 0) && (
+                    {(displayInvoice.discount?.percentage > 0 || displayInvoice.discount?.amount > 0) && (
                       <Box className="flex justify-between py-0.5">
                         <Typography variant="caption" className="text-gray-600">Discount</Typography>
                         <Typography variant="caption" className="font-numbers text-red-600">
-                          {appointment.invoice.discount.percentage > 0
-                            ? `${appointment.invoice.discount.percentage}%`
-                            : `₹${appointment.invoice.discount.amount}`}
+                          {displayInvoice.discount.percentage > 0
+                            ? `${displayInvoice.discount.percentage}%`
+                            : `₹${displayInvoice.discount.amount}`}
                         </Typography>
                       </Box>
                     )}
@@ -324,19 +456,19 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                 <Box className="flex justify-between py-0.5">
                   <Typography variant="caption" className="text-gray-600">Total Fee</Typography>
                   <Typography variant="caption" className="font-numbers font-semibold">
-                    ₹{(appointment.invoice?.grandTotal ?? appointment.fee ?? 0).toLocaleString("en-IN")}
+                    ₹{(displayInvoice?.grandTotal ?? appointment.fee ?? 0).toLocaleString("en-IN")}
                   </Typography>
                 </Box>
                 <Box className="flex justify-between py-0.5">
                   <Typography variant="caption" className="text-gray-600">Amount Paid</Typography>
                   <Typography variant="caption" className="font-numbers font-semibold text-green-700">
-                    ₹{(appointment.invoice?.amountPaid ?? 0).toLocaleString("en-IN")}
+                    ₹{(displayInvoice?.amountPaid ?? 0).toLocaleString("en-IN")}
                   </Typography>
                 </Box>
                 <Box className="flex justify-between py-0.5">
                   <Typography variant="caption" className="text-gray-600">Balance Due</Typography>
                   <Typography variant="caption" className="font-numbers font-semibold text-red-600">
-                    ₹{(appointment.invoice?.balanceDue ?? 0).toLocaleString("en-IN")}
+                    ₹{(displayInvoice?.balanceDue ?? 0).toLocaleString("en-IN")}
                   </Typography>
                 </Box>
               </Box>
@@ -401,7 +533,7 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                               </span>
                             </Tooltip>
                           )}
-                          {(appointment.invoice?.balanceDue || 0) > 0 && (
+                          {(displayInvoice?.balanceDue || 0) > 0 && (
                             <Tooltip title="Collect Payment">
                               <IconButton
                                 size="small"
@@ -612,7 +744,7 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Recording a payment for{" "}
             {collectDialogSession?.visitType === "treatment" ? "Session 1" : `Session ${collectDialogSession?.sessionNumber || "?"}`}
-            . Balance due: ₹{(appointment.invoice?.balanceDue || 0).toLocaleString("en-IN")}
+            . Balance due: ₹{(displayInvoice?.balanceDue || 0).toLocaleString("en-IN")}
           </Typography>
           <TextField
             label="Amount *"
@@ -654,6 +786,171 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
             startIcon={collectLoading ? <CircularProgress size={14} color="inherit" /> : null}
           >
             {collectLoading ? "Collecting…" : "Collect Payment"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Treatment dialog -- name/line items/discount, available throughout
+          the active lifecycle (any sessions delivered), locked once closed.
+          Reuses AddAppointmentModal's treatment-items UI pattern. */}
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => {
+          if (!editLoading) {
+            setEditDialogOpen(false);
+            setEditError("");
+            setEditItemsError("");
+          }
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <EditIcon color="primary" fontSize="small" />
+          Edit Treatment
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <TextField
+            label="Treatment Name"
+            fullWidth
+            size="small"
+            value={editTreatmentName}
+            onChange={(e) => setEditTreatmentName(e.target.value)}
+            disabled={editLoading}
+            sx={{ mb: 2 }}
+          />
+
+          <Box className="flex items-center justify-between mb-1.5">
+            <Typography variant="caption" className="font-semibold text-gray-700">
+              Fee Items
+            </Typography>
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={addEditItem}
+              variant="outlined"
+              disabled={editLoading}
+              sx={{ textTransform: "none", fontSize: "12px", height: 28 }}
+            >
+              Add Item
+            </Button>
+          </Box>
+
+          {editItems.map((item, index) => (
+            <Box key={index} sx={{ border: "1px solid #e5e7eb", borderRadius: "6px", p: 1.25, mb: 1 }}>
+              <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+                <TextField
+                  select
+                  label="Category"
+                  value={item.itemType || "treatment"}
+                  onChange={(e) => updateEditItem(index, "itemType", e.target.value)}
+                  size="small"
+                  disabled={editLoading}
+                  sx={{ flex: "0 0 auto", minWidth: 120 }}
+                >
+                  {treatmentItemTypeOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  label="Description"
+                  value={item.description}
+                  onChange={(e) => updateEditItem(index, "description", e.target.value)}
+                  size="small"
+                  placeholder="e.g., Root Canal"
+                  disabled={editLoading}
+                  sx={{ flex: "1 1 200px", minWidth: 160 }}
+                />
+                <TextField
+                  label="Amount (₹)"
+                  type="number"
+                  value={item.unitPrice}
+                  onChange={(e) => updateEditItem(index, "unitPrice", e.target.value)}
+                  size="small"
+                  inputProps={{ min: 0, step: 50 }}
+                  disabled={editLoading}
+                  sx={{ flex: "0 0 auto", minWidth: 130 }}
+                />
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => removeEditItem(index)}
+                  disabled={editLoading || editItems.length <= 1}
+                  sx={{ p: 0.5 }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          ))}
+          {editItemsError && (
+            <Typography variant="caption" className="text-red-600" sx={{ display: "block", mb: 1 }}>
+              {editItemsError}
+            </Typography>
+          )}
+
+          <TextField
+            label="Discount %"
+            type="number"
+            size="small"
+            value={editDiscountPercent}
+            onChange={(e) => setEditDiscountPercent(e.target.value)}
+            disabled={editLoading}
+            inputProps={{ min: 0, max: 100 }}
+            sx={{ mb: 1.5, width: 140 }}
+          />
+
+          <Box sx={{ mt: 0.5, p: 1.5, borderRadius: "6px", bgcolor: "#f9fafb" }}>
+            <Box className="flex justify-between items-center">
+              <Typography variant="caption" className="text-gray-600">Subtotal</Typography>
+              <span className="font-numbers text-[13px]">₹{editSubtotal.toLocaleString("en-IN")}</span>
+            </Box>
+            {Number(editDiscountPercent) > 0 && (
+              <Box className="flex justify-between items-center mt-0.5">
+                <Typography variant="caption" className="text-gray-600">
+                  Discount ({Number(editDiscountPercent)}%)
+                </Typography>
+                <span className="font-numbers text-[13px] text-red-600">
+                  -₹{editDiscountAmount.toLocaleString("en-IN")}
+                </span>
+              </Box>
+            )}
+            <Divider className="my-1" />
+            <Box className="flex justify-between items-center">
+              <Typography variant="caption" className="font-semibold text-gray-800">New Total</Typography>
+              <span className="font-numbers font-semibold text-[13px]">₹{editTotal.toLocaleString("en-IN")}</span>
+            </Box>
+            {(displayInvoice?.amountPaid || 0) > editTotal && (
+              <Typography variant="caption" className="text-orange-600" sx={{ display: "block", mt: 0.75 }}>
+                Warning: ₹{(displayInvoice?.amountPaid || 0).toLocaleString("en-IN")} already collected is more
+                than this new total -- saving is still allowed, but please review.
+              </Typography>
+            )}
+          </Box>
+
+          {editError && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
+              {editError}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => { setEditDialogOpen(false); setEditError(""); setEditItemsError(""); }}
+            color="inherit"
+            disabled={editLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleEditSubmit}
+            disabled={editLoading}
+            startIcon={editLoading ? <CircularProgress size={14} color="inherit" /> : <SaveIcon fontSize="small" />}
+          >
+            {editLoading ? "Saving…" : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>
