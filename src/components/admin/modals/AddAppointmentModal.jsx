@@ -746,8 +746,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
       <DialogContent
         sx={{
           px: 2,
-          pt: 1.5,
-          pb: 1.5,
+          pt: 1.25,
+          pb: 1.25,
           "& .MuiFormHelperText-root": {
             fontSize: "0.7rem",
             lineHeight: 1.3,
@@ -832,73 +832,86 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
         {/* mt on the container guarantees a gap below the purple header
             (MUI zeroes DialogContent padding-top right after DialogTitle). */}
         {!bookedAppointment && (
-        <Grid container spacing={1.5} sx={{ mt: 1 }}>
+        <Grid container spacing={1.25} sx={{ mt: 0.75 }}>
 
           {/* ─── ROW 1: Patient + Clinic ─── */}
           <Grid size={{ xs: 12, sm: 7 }}>
-            <Autocomplete
-              options={patientOptions}
-              getOptionLabel={(option) => `${option.name} (${option.phone})`}
-              value={formData.patient}
-              onChange={(_, value) =>
-                setFormData((prev) => ({ ...prev, patient: value }))
-              }
-              onInputChange={(_, value) => {
-                setPatientSearch(value);
-                handlePatientSearch(value);
-              }}
-              loading={searchLoading}
-              renderOption={(props, option) => {
-                const { key, ...optionProps } = props;
-                return (
-                  <li key={key} {...optionProps}>
-                    <Box sx={{ display: "flex", flexDirection: "column", py: 0.25 }}>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#1a1a1a" }}>
-                        {option.name}
-                      </Typography>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0d1b4a" }}>
-                        📞 {option.phone}
-                      </Typography>
-                    </Box>
-                  </li>
-                );
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Search Patient"
-                  placeholder="Search by name or phone number"
-                  error={!!errors.patient}
-                  helperText={errors.patient}
-                  required
-                  size="small"
+            <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+              <Box sx={{ flex: "1 1 75%", maxWidth: "75%" }}>
+                <Autocomplete
+                  options={patientOptions}
+                  getOptionLabel={(option) => `${option.name} (${option.phone})`}
+                  value={formData.patient}
+                  onChange={(_, value) =>
+                    setFormData((prev) => ({ ...prev, patient: value }))
+                  }
+                  onInputChange={(_, value) => {
+                    setPatientSearch(value);
+                    handlePatientSearch(value);
+                  }}
+                  loading={searchLoading}
+                  renderOption={(props, option) => {
+                    const { key, ...optionProps } = props;
+                    return (
+                      <li key={key} {...optionProps}>
+                        <Box sx={{ display: "flex", flexDirection: "column", py: 0.25 }}>
+                          <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#1a1a1a" }}>
+                            {option.name}
+                          </Typography>
+                          <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0d1b4a" }}>
+                            📞 {option.phone}
+                          </Typography>
+                        </Box>
+                      </li>
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Search Patient"
+                      placeholder="Search by name or phone number"
+                      error={!!errors.patient}
+                      helperText={errors.patient}
+                      required
+                      size="small"
+                    />
+                  )}
+                  noOptionsText={
+                    patientSearch.length < 2
+                      ? "Type at least 2 characters"
+                      : "No patient found"
+                  }
                 />
-              )}
-              noOptionsText={
-                patientSearch.length < 2
-                  ? "Type at least 2 characters"
-                  : "No patient found"
-              }
-            />
-            {/* Always visible/reachable regardless of how many search results
-                are showing -- rendered outside the Autocomplete's dropdown
-                Paper entirely, so it can never get pushed out of view by
-                matching results (previously lived inside noOptionsText,
-                which MUI only renders when there are zero matches). */}
-            <Button
-              size="small"
-              onClick={() => setShowAddPatient(true)}
-              sx={{
-                mt: 0.5,
-                fontSize: "12px",
-                textTransform: "none",
-                color: "#f59e0b",
-                p: 0,
-                minWidth: 0,
-              }}
-            >
-              + Add New Patient
-            </Button>
+              </Box>
+              {/* Always visible/reachable regardless of how many search results
+                  are showing -- rendered outside the Autocomplete's dropdown
+                  Paper entirely (a sibling Box, not a descendant of the
+                  Autocomplete), so it can never get pushed out of view by
+                  matching results (previously lived inside noOptionsText,
+                  which MUI only renders when there are zero matches). Now
+                  positioned beside Search Patient (~25% width) instead of on
+                  its own line below -- same orange-outline convention used
+                  for "Preview & Download Slip" / "Book Session" elsewhere in
+                  this modal (#f59e0b border+text, #d97706/#fffbeb hover). */}
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setShowAddPatient(true)}
+                sx={{
+                  flex: "0 0 25%",
+                  maxWidth: "25%",
+                  height: 40,
+                  fontSize: "11px",
+                  textTransform: "none",
+                  borderColor: "#f59e0b",
+                  color: "#f59e0b",
+                  px: 0.5,
+                  "&:hover": { borderColor: "#d97706", backgroundColor: "#fffbeb" },
+                }}
+              >
+                + Add Patient
+              </Button>
+            </Box>
           </Grid>
           <Grid size={{ xs: 12, sm: 5 }}>
             <Autocomplete
@@ -1057,6 +1070,21 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               }}
               select
               size="small"
+              // "Emergency" (the longest option) was touching/overlapping the
+              // select box's border -- this modal's DialogContent sx above
+              // only overrides top/bottom padding on .MuiSelect-select, so
+              // horizontal clearance still fell back to MUI's default, which
+              // gets squeezed at this field's narrow md=3 column width. Give
+              // it an explicit right-padding floor (clearing the dropdown
+              // arrow) and a minWidth floor so it never compresses below the
+              // "Emergency" label's rendered width.
+              sx={{
+                minWidth: 150,
+                "& .MuiSelect-select": {
+                  pr: "34px !important",
+                  whiteSpace: "nowrap",
+                },
+              }}
             >
               {typeOptions.map((opt) => (
                 <MenuItem key={opt.value} value={opt.value}>
@@ -1129,18 +1157,20 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
             </Grid>
           )}
 
-          {/* ─── ROW 4: Visit Config (bordered group) ─── */}
-          <Grid size={{ xs: 12 }}>
+          {/* ─── ROW 4a: Visit Type + Fee/Method summary -- combined into one
+              row (Fix 3). Previously Visit Type sat alone in its own
+              full-width row, then the Fee/Method Paper sat in a separate row
+              below it; merging them reclaims the vertical space Visit Type
+              used to occupy on its own, since the Fee summary Paper is
+              already the taller of the two. ─── */}
+          <Grid size={{ xs: 12, sm: 5, md: 4 }}>
             <Box
               sx={{
                 border: "1px solid #e5e7eb",
                 borderRadius: 2,
-                p: 1.5,
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 2,
-                alignItems: "flex-start",
+                p: 1.25,
                 bgcolor: "#fafafa",
+                height: "100%",
               }}
             >
               {/* Visit Type */}
@@ -1217,7 +1247,189 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                   </RadioGroup>
                 </FormControl>
               )}
+            </Box>
+          </Grid>
 
+          {/* Fee / Payment Method summary -- now shares ROW 4a with Visit
+              Type above instead of stacking in its own row (Fix 3). Content
+              is unchanged from the old standalone "ROW 5", just relocated. */}
+          {!isSessionMode && (
+          <Grid size={{ xs: 12, sm: 7, md: 8 }}>
+            <Paper variant="outlined" className="p-3 bg-gray-50">
+              <Box className="flex justify-between items-center py-1">
+                <Typography variant="caption" className="text-gray-600">
+                  {formData.visitType === "treatment"
+                    ? formData.treatmentName.trim() || "Treatment fee"
+                    : "Appointment / Consultation fee"}
+                </Typography>
+                {discountPercent > 0 && !formData.isFree ? (
+                  <Box className="flex items-center gap-2">
+                    <span className="font-numbers text-gray-400 line-through text-[13px]">
+                      {formatCurrency(baseFee)}
+                    </span>
+                    <span className="font-numbers font-semibold text-accent">
+                      {formatCurrency(discountedFee)}
+                    </span>
+                  </Box>
+                ) : (
+                  <span className="font-numbers font-semibold">
+                    {formData.isFree ? "Free" : formatCurrency(baseFee)}
+                  </span>
+                )}
+              </Box>
+              {discountPercent > 0 && !formData.isFree && (
+                <Box className="flex justify-between items-center py-1">
+                  <Typography variant="caption" className="text-gray-500">
+                    Membership discount
+                  </Typography>
+                  <Chip size="small" color="warning" label={`${discountPercent}% off`} sx={{ height: 18, fontWeight: 700 }} />
+                </Box>
+              )}
+              <Divider className="my-2.5" />
+              <Box className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-0.5 mt-2">
+                {formData.visitType === "treatment" && !formData.isFree && (
+                  <Box className="flex items-center gap-1">
+                    <TextField
+                      label="Discount %"
+                      type="number"
+                      value={formData.treatmentDiscountPercent}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, treatmentDiscountPercent: e.target.value }))
+                      }
+                      size="small"
+                      inputProps={{ min: 0, max: 100 }}
+                      sx={{ width: 110, "& .MuiInputBase-root": { height: 30 } }}
+                    />
+                  </Box>
+                )}
+                <Box className="flex items-center gap-1">
+                  <Typography variant="caption" className="text-gray-500">Method:</Typography>
+                  {formData.isFree ? (
+                    <Chip size="small" variant="outlined" label="Free" sx={{ height: 20 }} />
+                  ) : (
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        variant={paymentMethod === "cash" ? "contained" : "outlined"}
+                        size="small"
+                        onClick={() => setPaymentMethod("cash")}
+                        sx={{
+                          textTransform: "none", fontSize: "11px", height: 22, minWidth: 0, px: 1.5,
+                          ...(paymentMethod === "cash"
+                            ? { backgroundColor: "#1e3a5f", color: "#fff", "&:hover": { backgroundColor: "#162d4a" } }
+                            : { borderColor: "#1e3a5f", color: "#1e3a5f" }),
+                        }}
+                      >
+                        Cash
+                      </Button>
+                      <Button
+                        variant={paymentMethod === "online" ? "contained" : "outlined"}
+                        size="small"
+                        onClick={() => setPaymentMethod("online")}
+                        sx={{
+                          textTransform: "none", fontSize: "11px", height: 22, minWidth: 0, px: 1.5,
+                          ...(paymentMethod === "online"
+                            ? { backgroundColor: "#059669", color: "#fff", "&:hover": { backgroundColor: "#047857" } }
+                            : { borderColor: "#059669", color: "#059669" }),
+                        }}
+                      >
+                        Online
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+              {/* Free toggle (below method, above payment collected) */}
+              <Box sx={{ mt: 1 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.isFree}
+                      onChange={(e) => {
+                        const isFree = e.target.checked;
+                        const defaultFee = formData.appointmentType === "emergency"
+                          ? feeSettings.opdFeeEmergency
+                          : feeSettings.opdFeeRegular;
+                        setFormData((prev) => ({
+                          ...prev,
+                          isFree,
+                          opdFee: isFree ? 0 : defaultFee,
+                        }));
+                        if (isFree) { setPaymentMethod("cash"); setFeeCollected(false); }
+                      }}
+                      color="success"
+                      size="small"
+                    />
+                  }
+                  label={<Typography variant="body2" sx={{ fontSize: "0.8rem" }}>Free</Typography>}
+                />
+              </Box>
+
+              {!formData.isFree && (
+                <Box className="flex flex-col gap-1 mt-2">
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={feeCollected}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFeeCollected(checked);
+                          if (checked && formData.visitType === "treatment") {
+                            setFormData((prev) => ({
+                              ...prev,
+                              treatmentPaymentAmount: treatmentTotal,
+                            }));
+                          }
+                        }}
+                        size="small"
+                        sx={{ py: 0.5, color: "#059669", "&.Mui-checked": { color: "#059669" } }}
+                      />
+                    }
+                    label={
+                      <Typography variant="caption" sx={{ color: feeCollected ? "#059669" : "text.secondary", fontWeight: feeCollected ? 600 : 400 }}>
+                        Payment collected
+                      </Typography>
+                    }
+                    sx={{ m: 0 }}
+                  />
+                  {formData.visitType === "treatment" && feeCollected && (
+                    <TextField
+                      label="Amount collected (₹)"
+                      type="number"
+                      value={formData.treatmentPaymentAmount ?? ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, treatmentPaymentAmount: Number(e.target.value) }))
+                      }
+                      size="small"
+                      inputProps={{ min: 0, max: treatmentTotal || 999999 }}
+                      helperText={`Treatment total: ₹${treatmentTotal.toLocaleString("en-IN")}. Enter full or partial advance.`}
+                      sx={{ maxWidth: 220, "& .MuiFormHelperText-root": { visibility: "visible !important" } }}
+                    />
+                  )}
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+          )}
+
+          {/* ─── ROW 4b: Visit-type-specific detail fields (OPD fee override
+              in Appointment mode, or Treatment name/sessions/link in
+              Treatment mode) -- kept as its own full-width row, since these
+              fields (especially Treatment Name + line items) need the extra
+              horizontal room. Only the short Visit Type control above was
+              pulled out to share ROW 4a with the Fee summary. ─── */}
+          <Grid size={{ xs: 12 }}>
+            <Box
+              sx={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 2,
+                p: 1.25,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.5,
+                alignItems: "flex-start",
+                bgcolor: "#fafafa",
+              }}
+            >
               {/* Urgency radio group removed -- consolidated into the
                   Appointment Type dropdown above (Regular/Emergency), which
                   now sets appointmentType directly. */}
@@ -1563,165 +1775,11 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
             </Grid>
           )}
 
-          {/* ─── ROW 5: Fee Summary (hidden in session mode — session has its own payment block) ─── */}
-          {!isSessionMode && (
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Paper variant="outlined" className="p-3 bg-gray-50">
-              <Box className="flex justify-between items-center py-1">
-                <Typography variant="caption" className="text-gray-600">
-                  {formData.visitType === "treatment"
-                    ? formData.treatmentName.trim() || "Treatment fee"
-                    : "Appointment / Consultation fee"}
-                </Typography>
-                {discountPercent > 0 && !formData.isFree ? (
-                  <Box className="flex items-center gap-2">
-                    <span className="font-numbers text-gray-400 line-through text-[13px]">
-                      {formatCurrency(baseFee)}
-                    </span>
-                    <span className="font-numbers font-semibold text-accent">
-                      {formatCurrency(discountedFee)}
-                    </span>
-                  </Box>
-                ) : (
-                  <span className="font-numbers font-semibold">
-                    {formData.isFree ? "Free" : formatCurrency(baseFee)}
-                  </span>
-                )}
-              </Box>
-              {discountPercent > 0 && !formData.isFree && (
-                <Box className="flex justify-between items-center py-1">
-                  <Typography variant="caption" className="text-gray-500">
-                    Membership discount
-                  </Typography>
-                  <Chip size="small" color="warning" label={`${discountPercent}% off`} sx={{ height: 18, fontWeight: 700 }} />
-                </Box>
-              )}
-              <Divider className="my-2.5" />
-              <Box className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-0.5 mt-2">
-                {formData.visitType === "treatment" && !formData.isFree && (
-                  <Box className="flex items-center gap-1">
-                    <TextField
-                      label="Discount %"
-                      type="number"
-                      value={formData.treatmentDiscountPercent}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, treatmentDiscountPercent: e.target.value }))
-                      }
-                      size="small"
-                      inputProps={{ min: 0, max: 100 }}
-                      sx={{ width: 110, "& .MuiInputBase-root": { height: 30 } }}
-                    />
-                  </Box>
-                )}
-                <Box className="flex items-center gap-1">
-                  <Typography variant="caption" className="text-gray-500">Method:</Typography>
-                  {formData.isFree ? (
-                    <Chip size="small" variant="outlined" label="Free" sx={{ height: 20 }} />
-                  ) : (
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <Button
-                        variant={paymentMethod === "cash" ? "contained" : "outlined"}
-                        size="small"
-                        onClick={() => setPaymentMethod("cash")}
-                        sx={{
-                          textTransform: "none", fontSize: "11px", height: 22, minWidth: 0, px: 1.5,
-                          ...(paymentMethod === "cash"
-                            ? { backgroundColor: "#1e3a5f", color: "#fff", "&:hover": { backgroundColor: "#162d4a" } }
-                            : { borderColor: "#1e3a5f", color: "#1e3a5f" }),
-                        }}
-                      >
-                        Cash
-                      </Button>
-                      <Button
-                        variant={paymentMethod === "online" ? "contained" : "outlined"}
-                        size="small"
-                        onClick={() => setPaymentMethod("online")}
-                        sx={{
-                          textTransform: "none", fontSize: "11px", height: 22, minWidth: 0, px: 1.5,
-                          ...(paymentMethod === "online"
-                            ? { backgroundColor: "#059669", color: "#fff", "&:hover": { backgroundColor: "#047857" } }
-                            : { borderColor: "#059669", color: "#059669" }),
-                        }}
-                      >
-                        Online
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-              {/* Free toggle (below method, above payment collected) */}
-              <Box sx={{ mt: 1 }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.isFree}
-                      onChange={(e) => {
-                        const isFree = e.target.checked;
-                        const defaultFee = formData.appointmentType === "emergency"
-                          ? feeSettings.opdFeeEmergency
-                          : feeSettings.opdFeeRegular;
-                        setFormData((prev) => ({
-                          ...prev,
-                          isFree,
-                          opdFee: isFree ? 0 : defaultFee,
-                        }));
-                        if (isFree) { setPaymentMethod("cash"); setFeeCollected(false); }
-                      }}
-                      color="success"
-                      size="small"
-                    />
-                  }
-                  label={<Typography variant="body2" sx={{ fontSize: "0.8rem" }}>Free</Typography>}
-                />
-              </Box>
-
-              {!formData.isFree && (
-                <Box className="flex flex-col gap-1 mt-2">
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={feeCollected}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setFeeCollected(checked);
-                          if (checked && formData.visitType === "treatment") {
-                            setFormData((prev) => ({
-                              ...prev,
-                              treatmentPaymentAmount: treatmentTotal,
-                            }));
-                          }
-                        }}
-                        size="small"
-                        sx={{ py: 0.5, color: "#059669", "&.Mui-checked": { color: "#059669" } }}
-                      />
-                    }
-                    label={
-                      <Typography variant="caption" sx={{ color: feeCollected ? "#059669" : "text.secondary", fontWeight: feeCollected ? 600 : 400 }}>
-                        Payment collected
-                      </Typography>
-                    }
-                    sx={{ m: 0 }}
-                  />
-                  {formData.visitType === "treatment" && feeCollected && (
-                    <TextField
-                      label="Amount collected (₹)"
-                      type="number"
-                      value={formData.treatmentPaymentAmount ?? ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, treatmentPaymentAmount: Number(e.target.value) }))
-                      }
-                      size="small"
-                      inputProps={{ min: 0, max: treatmentTotal || 999999 }}
-                      helperText={`Treatment total: ₹${treatmentTotal.toLocaleString("en-IN")}. Enter full or partial advance.`}
-                      sx={{ maxWidth: 220, "& .MuiFormHelperText-root": { visibility: "visible !important" } }}
-                    />
-                  )}
-                </Box>
-              )}
-            </Paper>
-          </Grid>
-          )}
-          <Grid size={{ xs: 12, md: 4 }}>
+          {/* ─── Notes -- own row now that Fee/Method moved up to share
+              ROW 4a with Visit Type. Height reduced from rows=4 to rows=2
+              (Fix 4), and width trimmed to sm=6 rather than stretching full
+              width, as part of the overall vertical-spacing tightening. ─── */}
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               className="notes-field"
               fullWidth
@@ -1730,7 +1788,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               value={formData.notes}
               onChange={handleChange}
               multiline
-              rows={4}
+              rows={2}
               size="small"
               placeholder="Additional notes..."
             />
