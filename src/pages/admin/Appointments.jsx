@@ -55,6 +55,7 @@ import AddAppointmentModal from "../../components/admin/modals/AddAppointmentMod
 import EditAppointmentModal from "../../components/admin/modals/EditAppointmentModal";
 import CancelAppointmentModal from "../../components/admin/modals/CancelAppointmentModal";
 import RescheduleAppointmentModal from "../../components/admin/modals/RescheduleAppointmentModal";
+import CollectPaymentModal from "../../components/admin/modals/CollectPaymentModal";
 
 /**
  * Status color mapping
@@ -302,7 +303,7 @@ const rowPaymentStatus = (row) => {
 };
 
 // Function to get columns with action handlers
-const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymentStatusChange, updatingPaymentId, onStatusChange, updatingStatusId, onRescheduleRow, canDelete = true, showSessionColumn = true) => [
+const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollectRow, onStatusChange, updatingStatusId, onRescheduleRow, canDelete = true, showSessionColumn = true) => [
   ...columns.filter((c) =>
     c.field !== "paymentStatus" &&
     c.field !== "status" &&
@@ -370,38 +371,46 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
             <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#d97706" }}>
               ₹{amtPaid.toLocaleString("en-IN")} / ₹{grandTotal.toLocaleString("en-IN")}
             </Typography>
-            <Chip size="small" label="Partial" color="warning" variant="outlined" sx={{ fontSize: "10px", height: 18 }} />
+            <Chip size="small" label="Partial" color="warning" variant="outlined" sx={{ fontSize: "10px", height: 18, mb: 0.5 }} />
+            <Button
+              size="small"
+              variant="contained"
+              onClick={(e) => { e.stopPropagation(); onCollectRow(row); }}
+              sx={{ display: "block", fontSize: "10px", py: 0.25, px: 1, minWidth: 0, textTransform: "none" }}
+            >
+              Collect
+            </Button>
           </Box>
         );
       }
 
+      if (current === "paid") {
+        return (
+          <Box>
+            {amtPaid > 0 && grandTotal > 0 && (
+              <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "#059669", mb: 0.25 }}>
+                ₹{Math.min(amtPaid, grandTotal).toLocaleString("en-IN")}
+              </Typography>
+            )}
+            <Chip size="small" label="Paid" color="success" variant="outlined" />
+          </Box>
+        );
+      }
+
+      // unpaid — real payment collection via the same Collect Payment flow
+      // Billing uses (creates a real Payment.create(), supports partial
+      // amounts). Replaces the old raw Paid/Unpaid dropdown, which could
+      // only flip the WHOLE balance paid in one shot and duplicated a
+      // second payment-collection path alongside the proven one in Billing.
       return (
-        <Box>
-          {amtPaid > 0 && grandTotal > 0 && (
-            <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "#059669", mb: 0.25 }}>
-              ₹{Math.min(amtPaid, grandTotal).toLocaleString("en-IN")}
-            </Typography>
-          )}
-          <Select
-            value={current}
-            size="small"
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              e.stopPropagation();
-              onPaymentStatusChange(row, e.target.value);
-            }}
-            disabled={updatingPaymentId === row._id}
-            sx={{
-              height: 24,
-              fontSize: "11px",
-              "& .MuiSelect-select": { py: 0.25, px: 0.75 },
-              "& fieldset": { borderColor: "#e5e7eb" },
-            }}
-          >
-            <MenuItem value="paid" dense>Paid</MenuItem>
-            <MenuItem value="unpaid" dense>Unpaid</MenuItem>
-          </Select>
-        </Box>
+        <Button
+          size="small"
+          variant="contained"
+          onClick={(e) => { e.stopPropagation(); onCollectRow(row); }}
+          sx={{ fontSize: "11px", py: 0.25, px: 1, minWidth: 0, textTransform: "none" }}
+        >
+          Collect
+        </Button>
       );
     },
   },
@@ -412,6 +421,7 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
     render: (_, row) => {
       const canCancel = !["cancelled", "completed", "no_show"].includes(row?.status);
       const canReschedule = ["scheduled", "confirmed"].includes(row?.status);
+      const canEditOrDelete = row?.status !== "completed";
       return (
         <Box className="flex items-center gap-1">
           <IconButton
@@ -425,17 +435,19 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
           >
             <DownloadIcon fontSize="small" />
           </IconButton>
-          <IconButton
-            size="small"
-            title="Edit Appointment"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditRow(row);
-            }}
-            sx={{ color: "#6366f1" }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
+          {canEditOrDelete && (
+            <IconButton
+              size="small"
+              title="Edit Appointment"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditRow(row);
+              }}
+              sx={{ color: "#6366f1" }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          )}
           {canReschedule && (
             <IconButton
               size="small"
@@ -462,7 +474,7 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onPaymen
               <EventBusyIcon fontSize="small" />
             </IconButton>
           )}
-          {canDelete && (
+          {canDelete && canEditOrDelete && (
             <IconButton
               size="small"
               color="error"
@@ -756,26 +768,13 @@ const Appointments = () => {
   const { deleteAppointment, isDeleting: isDeletingAppointment, updateAppointment: updateApptMutation } = useAppointmentMutations();
   const { hasPermission } = usePermissions();
 
-  // Payment status dropdown — update appointment + sync invoice via backend
-  const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
   const [dateFilter, setDateFilter] = useState("");
 
-  const handlePaymentStatusChange = (row, newStatus) => {
-    setUpdatingPaymentId(row._id);
-    updateApptMutation(
-      { id: row._id, data: { paymentStatus: newStatus } },
-      {
-        onSuccess: () => {
-          toast.success(`Payment status updated to ${newStatus}`);
-          refetch();
-        },
-        onError: (err) =>
-          toast.error(err.response?.data?.message || "Failed to update payment status"),
-        onSettled: () => setUpdatingPaymentId(null),
-      }
-    );
-  };
+  // Collect Payment — same modal/endpoint Billing uses (real Payment.create(),
+  // supports partial amounts), reached via the Payment column's Collect button.
+  const [collectOpen, setCollectOpen] = useState(false);
+  const [collectRow, setCollectRow] = useState(null);
 
   const handleStatusChange = (row, newStatus) => {
     setUpdatingStatusId(row._id);
@@ -1223,8 +1222,7 @@ const Appointments = () => {
                 (row) => { setSelectedAppointment(row); setCancelModalOpen(true); },
                 (row) => { setSlipAppointment(row); setSlipPreviewOpen(true); },
                 (row) => { setSelectedAppointment(row); setEditModalOpen(true); },
-                handlePaymentStatusChange,
-                updatingPaymentId,
+                (row) => { setCollectRow(row); setCollectOpen(true); },
                 handleStatusChange,
                 updatingStatusId,
                 (row) => { setSelectedAppointment(row); setRescheduleModalOpen(true); },
@@ -1345,6 +1343,20 @@ const Appointments = () => {
         onClose={() => setRescheduleModalOpen(false)}
         appointment={selectedAppointment}
         onSuccess={() => { setRescheduleModalOpen(false); refetch(); }}
+      />
+
+      {/* Collect Payment Modal — same component/endpoint as Billing */}
+      <CollectPaymentModal
+        open={collectOpen}
+        onClose={() => { setCollectOpen(false); setCollectRow(null); }}
+        invoice={collectRow?.invoice}
+        patient={collectRow?.patient}
+        onSuccess={(msg) => {
+          setCollectOpen(false);
+          setCollectRow(null);
+          refetch();
+          if (msg) toast.success(msg);
+        }}
       />
 
       {/* Appointment Slip Preview Modal */}
