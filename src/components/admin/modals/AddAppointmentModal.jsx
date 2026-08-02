@@ -52,6 +52,8 @@ import {
   isPastSlotForDate,
 } from "../../../utils/dateInput";
 import { generateTimeSlots } from "../../../utils/timeSlots";
+import StyledTextField from "../shared/StyledTextField";
+import { TREATMENT_NAME_OPTIONS, TREATMENT_NAME_OTHER, treatmentNameToChoice } from "../../../constants/treatmentNames";
 
 // Admin (this modal only) may backdate a walk-in entry up to this many days.
 // The shared dateInput.js util stays today-forward for every other picker,
@@ -154,6 +156,11 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
   const [, setFeeLoading] = useState(false);
   // null = not fetched yet (no clinic+date); otherwise array of open "HH:MM" slots
   const [availableSlots, setAvailableSlots] = useState(null);
+  // Treatment Name select mode (Items 3+4): null = derive from
+  // formData.treatmentName (a preset match, or "" for the placeholder);
+  // "other" = force custom free-text mode even while formData.treatmentName
+  // is still "" (right after switching, before the admin has typed anything).
+  const [treatmentNameMode, setTreatmentNameMode] = useState(null);
   const { createAppointment, isCreating } = useAppointmentMutations();
   const { collectPayment: collectPaymentMutation } = useAdminPaymentMutations();
 
@@ -278,6 +285,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
     // "confirmation lags by one booking" symptom. Reset it in lockstep with
     // formData on every open, not just on explicit close.
     if (open) setBookedAppointment(null);
+    // Treatment Name select mode always re-derives fresh from whatever
+    // treatmentName the reset/prefill above ends up with.
+    if (open) setTreatmentNameMode(null);
   }, [open, prefillData, initialVisitType]);
 
   // Fetch slot availability whenever clinic + date are both chosen, so full and
@@ -476,6 +486,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
       selectedTreatmentInvoiceId: null,
       selectedTreatmentInvoiceBalance: 0,
     }));
+    setTreatmentNameMode(null);
   };
 
   /**
@@ -1197,6 +1208,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                           ? { treatmentName: "", fee: "", treatmentItems: [{ description: "", unitPrice: "", itemType: "treatment" }], treatmentDiscountPercent: 0 }
                           : {}),
                       }));
+                      if (newVisitType === "opd") setTreatmentNameMode(null);
                     }}
                     sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.8rem" }, "& .MuiFormControlLabel-root": { mr: 1 } }}
                   >
@@ -1253,39 +1265,79 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
 
               {/* Treatment name + Sessions planned (only when treatment selected, not in session mode) */}
               {!isSessionMode && formData.visitType === "treatment" && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: "1 1 100%" }}>
-                  <Box sx={{ flex: "1 1 70%", maxWidth: { md: "70%" } }}>
-                    <TextField
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, flex: "1 1 100%" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                    <Box sx={{ flex: "1 1 70%", maxWidth: { md: "70%" } }}>
+                      <StyledTextField
+                        select
+                        fullWidth
+                        label="Treatment Name"
+                        value={
+                          treatmentNameMode === "other"
+                            ? TREATMENT_NAME_OTHER
+                            : treatmentNameToChoice(formData.treatmentName)
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === TREATMENT_NAME_OTHER) {
+                            setTreatmentNameMode("other");
+                            if (TREATMENT_NAME_OPTIONS.includes(formData.treatmentName)) {
+                              setFormData((prev) => ({ ...prev, treatmentName: "" }));
+                            }
+                          } else {
+                            setTreatmentNameMode(null);
+                            setFormData((prev) => ({ ...prev, treatmentName: value }));
+                          }
+                          if (errors.treatmentName) setErrors((prev) => ({ ...prev, treatmentName: "" }));
+                        }}
+                        required
+                        size="small"
+                        error={!!errors.treatmentName}
+                        helperText={errors.treatmentName}
+                      >
+                        <MenuItem value="" disabled>
+                          Select a treatment
+                        </MenuItem>
+                        {TREATMENT_NAME_OPTIONS.map((name) => (
+                          <MenuItem key={name} value={name}>
+                            {name}
+                          </MenuItem>
+                        ))}
+                        <MenuItem value={TREATMENT_NAME_OTHER}>Other (custom name)</MenuItem>
+                      </StyledTextField>
+                    </Box>
+                    <Box sx={{ flex: "0 0 auto", minWidth: 190 }}>
+                      <TextField
+                        fullWidth
+                        label="Sessions planned"
+                        type="number"
+                        value={formData.sessionsPlanned || ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            sessionsPlanned: e.target.value ? Number(e.target.value) : null,
+                          }))
+                        }
+                        size="small"
+                        inputProps={{ min: 1, max: 50 }}
+                        placeholder="e.g. 4"
+                      />
+                    </Box>
+                  </Box>
+                  {(treatmentNameMode === "other" ||
+                    (!!formData.treatmentName && !TREATMENT_NAME_OPTIONS.includes(formData.treatmentName))) && (
+                    <StyledTextField
                       fullWidth
-                      label="Treatment Name"
+                      label="Custom Treatment Name"
                       name="treatmentName"
                       value={formData.treatmentName}
                       onChange={handleChange}
                       required
                       size="small"
-                      error={!!errors.treatmentName}
-                      helperText={errors.treatmentName}
                       placeholder="e.g., Root Canal (Session 1 of 4)"
-                      sx={{ "& .MuiInputBase-input": { display: "flex", alignItems: "center" } }}
+                      sx={{ maxWidth: { md: "70%" } }}
                     />
-                  </Box>
-                  <Box sx={{ flex: "0 0 auto", minWidth: 190 }}>
-                    <TextField
-                      fullWidth
-                      label="Sessions planned"
-                      type="number"
-                      value={formData.sessionsPlanned || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          sessionsPlanned: e.target.value ? Number(e.target.value) : null,
-                        }))
-                      }
-                      size="small"
-                      inputProps={{ min: 1, max: 50 }}
-                      placeholder="e.g. 4"
-                    />
-                  </Box>
+                  )}
                 </Box>
               )}
 
