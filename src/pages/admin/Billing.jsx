@@ -29,6 +29,10 @@ import {
   DialogActions,
   CircularProgress,
   Divider,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -41,18 +45,24 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import PrintIcon from "@mui/icons-material/Print";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { useQueryClient } from "@tanstack/react-query";
 import InvoicePreviewModal from "../../components/InvoicePreviewModal";
 import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
 import { useInvoices, useBillingStats } from "../../hooks/admin/useBilling";
+import { getBillingExportUrl } from "../../api/admin/billing.api";
 import { usePatient } from "../../hooks/admin/usePatients";
 import CreateInvoiceModal from "../../components/admin/modals/CreateInvoiceModal";
 import InvoiceDetailModal from "../../components/admin/modals/InvoiceDetailModal";
 import CollectPaymentModal from "../../components/admin/modals/CollectPaymentModal";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
 import api from "../../api/axios";
+import { useAdminStore } from "../../store/admin.store";
+import { downloadFile } from "../../utils/downloadFile";
 
 // Shared date formatter — matches DataTable's built-in type="date" format
 const fmtDate = (val) =>
@@ -159,6 +169,7 @@ const StatCard = ({ icon: Icon, label, value, color, onClick, isActive, dateLabe
 
 const Billing = () => {
   const queryClient = useQueryClient();
+  const adminToken = useAdminStore((state) => state.token);
 
   // ── Pagination / search / filter state ──────────────────────────────────
   const [page, setPage] = useState(1);
@@ -167,6 +178,7 @@ const Billing = () => {
   const [filters, setFilters] = useState({});
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
 
   // ── Active stat-card filter state ────────────────────────────────────────
   // Tracks which stat card is currently driving the table filter so we can
@@ -233,6 +245,33 @@ const Billing = () => {
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSearch = (value) => { setSearch(value); setPage(1); };
+
+  /**
+   * Export the CURRENTLY filtered invoice list as a PDF statement -- carries
+   * over the same search text + active filters + date range shown on
+   * screen, so the export matches what the admin is looking at. Same
+   * pattern as Patients.jsx's handleExport.
+   */
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    const exportParams = {
+      search,
+      ...filters,
+      ...(fromDate && { from: fromDate }),
+      ...(toDate && { to: toDate }),
+    };
+    const url = getBillingExportUrl(exportParams);
+    const today = new Date().toISOString().slice(0, 10);
+
+    try {
+      await downloadFile(url, `billing-statement-${today}.pdf`, {
+        headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
+        credentials: "include",
+      });
+    } catch {
+      setSnackbar({ open: true, message: "Failed to export billing statement as PDF", severity: "error" });
+    }
+  };
 
   const handleFilterChange = (key, value) => {
     // Manual dropdown use deactivates any stat-card-driven filter so the
@@ -576,14 +615,32 @@ const Billing = () => {
             Create and manage patient invoices
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateModalOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-700"
-        >
-          Create Invoice
-        </Button>
+        <Box className="flex items-center gap-2">
+          <Button
+            variant="outlined"
+            startIcon={<FileDownloadIcon />}
+            endIcon={<ArrowDropDownIcon />}
+            onClick={(e) => setExportAnchorEl(e.currentTarget)}
+          >
+            Export
+          </Button>
+          <Menu anchorEl={exportAnchorEl} open={Boolean(exportAnchorEl)} onClose={() => setExportAnchorEl(null)}>
+            <MenuItem onClick={handleExportPdf}>
+              <ListItemIcon>
+                <PictureAsPdfIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Export as PDF</ListItemText>
+            </MenuItem>
+          </Menu>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setCreateModalOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            Create Invoice
+          </Button>
+        </Box>
       </Box>
 
       {/* Stats Cards */}

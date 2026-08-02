@@ -110,6 +110,24 @@ export const getOverdueInvoices = () =>
   api.get("/billing/overdue").then((res) => res.data);
 
 /**
+ * Build the URL for exporting the currently-filtered invoice list as a PDF
+ * statement. Same pattern as patients.api.js's getPatientsExportUrl.
+ * @param {Object} params - Active filters (search, status, paymentStatus, voided, clinic, from, to, itemType)
+ * @returns {string}
+ */
+export const getBillingExportUrl = (params = {}) => {
+  const query = new URLSearchParams();
+  query.set("format", "pdf");
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      query.set(key, value);
+    }
+  });
+  const baseURL = api.defaults.baseURL || "";
+  return `${baseURL}/billing/export?${query.toString()}`;
+};
+
+/**
  * Get patient's pending invoices
  * @param {string} patientId - Patient ID
  */
