@@ -930,22 +930,16 @@ const TestsTab = ({ patientId }) => {
  * Shows one row per Payment transaction (not per invoice).
  * Read-only — actions (Record Payment, Refund) are on the Billing page.
  */
-const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
-  const [data, setData] = useState({ payments: [], invoiceStats: null });
+const PaymentsTab = ({ patientId, refreshKey }) => {
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [payRes, statsRes] = await Promise.all([
-        getPayments({ patient: patientId, limit: 50 }),
-        getBillingStats({ patient: patientId }),
-      ]);
-      setData({
-        payments: payRes.data || [],
-        invoiceStats: statsRes.data?.stats || null,
-      });
+      const payRes = await getPayments({ patient: patientId, limit: 50 });
+      setPayments(payRes.data || []);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load payment history");
     } finally {
@@ -959,8 +953,6 @@ const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
 
   if (loading) return <Box className="text-center py-8"><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
-
-  const { payments, invoiceStats } = data;
 
   const paymentMethodLabel = (method) => {
     const map = {
@@ -996,45 +988,6 @@ const PaymentsTab = ({ patientId, refreshKey, onTabSwitch }) => {
 
   return (
     <>
-      {/* Invoice-based billing summary — same source as Billing page */}
-      {invoiceStats && (
-        <Box className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <Box
-            className="bg-purple-50 rounded-lg p-4 text-center cursor-pointer hover:bg-purple-100 transition-colors"
-            onClick={() => onTabSwitch?.(7)}
-          >
-            <Typography variant="h6" className="font-numbers font-bold text-purple-600">
-              {formatCurrency(invoiceStats.totalAmount)}
-            </Typography>
-            <Typography variant="caption" className="text-gray-600">Total Amount</Typography>
-          </Box>
-          <Box className="bg-green-50 rounded-lg p-4 text-center">
-            <Typography variant="h6" className="font-numbers font-bold text-green-600">
-              {formatCurrency(invoiceStats.totalPaid)}
-            </Typography>
-            <Typography variant="caption" className="text-gray-600">Total Paid</Typography>
-          </Box>
-          <Box
-            className="bg-red-50 rounded-lg p-4 text-center cursor-pointer hover:bg-red-100 transition-colors"
-            onClick={() => onTabSwitch?.(7, "unpaid")}
-          >
-            <Typography variant="h6" className="font-numbers font-bold text-red-600">
-              {formatCurrency(invoiceStats.totalDue)}
-            </Typography>
-            <Typography variant="caption" className="text-gray-600">Balance Due</Typography>
-          </Box>
-          <Box
-            className="bg-blue-50 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-100 transition-colors"
-            onClick={() => onTabSwitch?.(7)}
-          >
-            <Typography variant="h6" className="font-numbers font-bold text-blue-600">
-              {invoiceStats.totalInvoices || 0}
-            </Typography>
-            <Typography variant="caption" className="text-gray-600">Invoices</Typography>
-          </Box>
-        </Box>
-      )}
-
       {!sorted.length ? (
         <Typography className="text-gray-400 text-center py-8">
           No payments recorded for this patient yet.
@@ -1177,8 +1130,9 @@ const ReportsTab = ({ patientId }) => {
 /**
  * Invoices Tab Content
  */
-const InvoicesTab = ({ patientId, paymentStatusFilter, onClearFilter }) => {
+const InvoicesTab = ({ patientId, paymentStatusFilter, onSetFilter, onClearFilter }) => {
   const [invoices, setInvoices] = useState([]);
+  const [invoiceStats, setInvoiceStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -1190,8 +1144,12 @@ const InvoicesTab = ({ patientId, paymentStatusFilter, onClearFilter }) => {
         setLoading(true);
         const params = { patient: patientId, limit: 50 };
         if (paymentStatusFilter) params.paymentStatus = paymentStatusFilter;
-        const res = await getInvoices(params);
-        setInvoices(res.data || []);
+        const [invRes, statsRes] = await Promise.all([
+          getInvoices(params),
+          getBillingStats({ patient: patientId }),
+        ]);
+        setInvoices(invRes.data || []);
+        setInvoiceStats(statsRes.data?.stats || null);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load invoices");
       } finally {
@@ -1206,6 +1164,41 @@ const InvoicesTab = ({ patientId, paymentStatusFilter, onClearFilter }) => {
 
   return (
     <>
+      {/* Invoice-based billing summary — same source/computation as the
+          Billing page, just relocated here from Payment History (these are
+          invoice-level metrics). */}
+      {invoiceStats && (
+        <Box className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <Box className="bg-purple-50 rounded-lg p-4 text-center">
+            <Typography variant="h6" className="font-numbers font-bold text-purple-600">
+              {formatCurrency(invoiceStats.totalAmount)}
+            </Typography>
+            <Typography variant="caption" className="text-gray-600">Total Amount</Typography>
+          </Box>
+          <Box className="bg-green-50 rounded-lg p-4 text-center">
+            <Typography variant="h6" className="font-numbers font-bold text-green-600">
+              {formatCurrency(invoiceStats.totalPaid)}
+            </Typography>
+            <Typography variant="caption" className="text-gray-600">Total Paid</Typography>
+          </Box>
+          <Box
+            className="bg-red-50 rounded-lg p-4 text-center cursor-pointer hover:bg-red-100 transition-colors"
+            onClick={() => onSetFilter?.("unpaid")}
+          >
+            <Typography variant="h6" className="font-numbers font-bold text-red-600">
+              {formatCurrency(invoiceStats.totalDue)}
+            </Typography>
+            <Typography variant="caption" className="text-gray-600">Balance Due</Typography>
+          </Box>
+          <Box className="bg-blue-50 rounded-lg p-4 text-center">
+            <Typography variant="h6" className="font-numbers font-bold text-blue-600">
+              {invoiceStats.totalInvoices || 0}
+            </Typography>
+            <Typography variant="caption" className="text-gray-600">Invoices</Typography>
+          </Box>
+        </Box>
+      )}
+
       {paymentStatusFilter && (
         <Box className="flex items-center gap-2 mb-3">
           <Chip
@@ -1465,7 +1458,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         <Tabs
           value={activeTab}
           onChange={(_, val) => {
-            if (val === 7) setInvoiceStatusFilter("");
+            if (val === 4) setInvoiceStatusFilter("");
             setActiveTab(val);
           }}
           variant="scrollable"
@@ -1479,10 +1472,10 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           <Tab label="Appointments" />
           <Tab label="Treatments" />
           <Tab label="Tests" />
+          <Tab label="Invoices" />
           <Tab label="Payment History" />
           <Tab label="Reports" />
           <Tab label="Lab" />
-          <Tab label="Invoices" />
         </Tabs>
       </Box>
 
@@ -1514,27 +1507,21 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           <TestsTab patientId={patient._id} />
         </TabPanel>
         <TabPanel value={activeTab} index={4}>
-          <PaymentsTab
-            patientId={patient._id}
-            refreshKey={refreshKey}
-            onTabSwitch={(tabIndex, filter = "") => {
-              setInvoiceStatusFilter(filter);
-              setActiveTab(tabIndex);
-            }}
-          />
-        </TabPanel>
-        <TabPanel value={activeTab} index={5}>
-          <ReportsTab patientId={patient._id} />
-        </TabPanel>
-        <TabPanel value={activeTab} index={6}>
-          <LabOrdersTab patientId={patient._id} />
-        </TabPanel>
-        <TabPanel value={activeTab} index={7}>
           <InvoicesTab
             patientId={patient._id}
             paymentStatusFilter={invoiceStatusFilter}
+            onSetFilter={setInvoiceStatusFilter}
             onClearFilter={() => setInvoiceStatusFilter("")}
           />
+        </TabPanel>
+        <TabPanel value={activeTab} index={5}>
+          <PaymentsTab patientId={patient._id} refreshKey={refreshKey} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={6}>
+          <ReportsTab patientId={patient._id} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={7}>
+          <LabOrdersTab patientId={patient._id} />
         </TabPanel>
 
       </DialogContent>
