@@ -66,9 +66,14 @@ const isBeyondBackdateWindow = (value) => !!value && value < minBackdateStr();
 /**
  * Appointment type options
  */
+// Consolidated with the old separate "Urgency" radio group -- selecting
+// "Emergency" here also drives appointmentType (the field the emergency
+// slot-capacity check, 2 regular/3 emergency per day, actually reads).
+// `type`'s enum already supports "emergency" on the backend, so both
+// fields stay in sync with zero backend changes needed.
 const typeOptions = [
   { value: "regular", label: "Regular" },
-  { value: "follow_up", label: "Follow-up" },
+  { value: "emergency", label: "Emergency" },
 ];
 
 /**
@@ -1035,7 +1040,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               label="Appointment Type"
               name="type"
               value={formData.type}
-              onChange={handleChange}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData((prev) => ({ ...prev, type: value, appointmentType: value }));
+              }}
               select
               size="small"
             >
@@ -1198,27 +1206,9 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                 </FormControl>
               )}
 
-              {/* Urgency — OPD only (treatment has no urgency concept) */}
-              {!isSessionMode && formData.visitType === "opd" && <FormControl>
-                <FormLabel className="text-xs font-semibold text-gray-700" sx={{ "&.Mui-focused": { color: "inherit" } }}>
-                  Urgency
-                </FormLabel>
-                <RadioGroup
-                  row
-                  value={formData.appointmentType}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, appointmentType: e.target.value }))
-                  }
-                  sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.8rem" }, "& .MuiFormControlLabel-root": { mr: 1 } }}
-                >
-                  <FormControlLabel value="regular" control={<Radio size="small" />} label="Regular" />
-                  <FormControlLabel
-                    value="emergency"
-                    control={<Radio size="small" sx={{ "&.Mui-checked": { color: "#dc2626" } }} />}
-                    label="Emergency"
-                  />
-                </RadioGroup>
-              </FormControl>}
+              {/* Urgency radio group removed -- consolidated into the
+                  Appointment Type dropdown above (Regular/Emergency), which
+                  now sets appointmentType directly. */}
 
               {/* OPD Fee — hidden in session mode */}
               {!isSessionMode && formData.visitType === "opd" && (
