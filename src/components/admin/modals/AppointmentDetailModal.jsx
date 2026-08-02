@@ -475,8 +475,10 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
               Mark No Show
             </Button>
           )}
-          {/* Delete Permanently — always available for admin */}
-          {onDelete && (
+          {/* Delete Permanently — gated same as Edit: not for completed/
+              cancelled/no_show records, which need explicit reason-tracked
+              actions (Reopen etc.) rather than silent edit/delete. */}
+          {onDelete && !["cancelled", "completed", "no_show"].includes(status) && (
             <Button
               variant="outlined"
               color="error"

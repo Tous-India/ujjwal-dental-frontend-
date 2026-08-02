@@ -590,6 +590,7 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [viewAppointment, setViewAppointment] = useState(null);
+  const [viewLoadingId, setViewLoadingId] = useState(null);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -606,6 +607,26 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
   useEffect(() => {
     if (patientId) fetchAppointments();
   }, [patientId, refreshKey, fetchAppointments]);
+
+  // This tab's own list endpoint (getPatientAppointments) never populates
+  // `patient` -- it's already scoped to one known patient, so the list
+  // response leaves it as a bare ObjectId. Passing that straight into
+  // AppointmentDetailModal showed "Unknown Patient"/blank phone. Fetching
+  // the real, fully-populated appointment on click (same pattern already
+  // used for the Treatments tab's Treatment #/Linked OPD Visit columns, and
+  // the same data source the main Appointments page's detail view uses)
+  // guarantees full parity instead of patching just the one missing field.
+  const openAppointmentDetail = async (appointmentId) => {
+    setViewLoadingId(appointmentId);
+    try {
+      const res = await getAppointment(appointmentId);
+      setViewAppointment(res.data?.appointment || res.data);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to load appointment details");
+    } finally {
+      setViewLoadingId(null);
+    }
+  };
 
   const handleEditClick = (appointment) => {
     setViewAppointment(null);
@@ -642,14 +663,14 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
               <TableRow key={apt._id} hover>
                 <TableCell
                   className="font-numbers"
-                  onClick={() => setViewAppointment(apt)}
+                  onClick={() => openAppointmentDetail(apt._id)}
                   sx={{
                     color: "#4f46e5",
                     cursor: "pointer",
                     "&:hover": { textDecoration: "underline" },
                   }}
                 >
-                  {apt.appointmentNumber || "-"}
+                  {viewLoadingId === apt._id ? <CircularProgress size={12} /> : apt.appointmentNumber || "-"}
                 </TableCell>
                 <TableCell>{formatDate(apt.date)}</TableCell>
                 <TableCell>{apt.timeSlot || "-"}</TableCell>
