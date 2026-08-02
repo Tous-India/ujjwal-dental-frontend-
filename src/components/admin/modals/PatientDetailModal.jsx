@@ -608,6 +608,7 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
   }, [patientId, refreshKey, fetchAppointments]);
 
   const handleEditClick = (appointment) => {
+    setViewAppointment(null);
     setSelectedAppointment(appointment);
     setEditModalOpen(true);
   };
@@ -634,15 +635,19 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
               <TableCell>Type</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Reason</TableCell>
-              <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {appointments.map((apt) => (
               <TableRow key={apt._id} hover>
                 <TableCell
-                  className="font-numbers text-indigo-600 hover:underline cursor-pointer"
+                  className="font-numbers"
                   onClick={() => setViewAppointment(apt)}
+                  sx={{
+                    color: "#4f46e5",
+                    cursor: "pointer",
+                    "&:hover": { textDecoration: "underline" },
+                  }}
                 >
                   {apt.appointmentNumber || "-"}
                 </TableCell>
@@ -656,17 +661,6 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
                   <Chip size="small" label={apt.status} color={statusColors[apt.status] || "default"} />
                 </TableCell>
                 <TableCell>{apt.reason || "-"}</TableCell>
-                <TableCell align="center">
-                  <Tooltip title="Edit Appointment">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEditClick(apt)}
-                      className="text-blue-600 hover:bg-blue-50"
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -684,11 +678,15 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
         onSuccess={handleEditSuccess}
       />
 
-      {/* Appointment # click -- opens the same detail view used elsewhere in admin */}
+      {/* Appointment # click -- opens the same detail view used elsewhere in
+          admin. Its own "Edit" button (onEdit) opens the same edit form the
+          removed Actions-column pencil icon used to -- same capability,
+          reached via the detail view instead of a separate row action. */}
       <AppointmentDetailModal
         open={!!viewAppointment}
         onClose={() => setViewAppointment(null)}
         appointment={viewAppointment}
+        onEdit={handleEditClick}
       />
     </>
   );
@@ -760,8 +758,13 @@ const TreatmentsTab = ({ patientId }) => {
           {treatments.map((trt) => (
             <TableRow key={trt._id} hover>
               <TableCell
-                className="font-numbers text-indigo-600 hover:underline cursor-pointer"
+                className="font-numbers"
                 onClick={() => openAppointmentDetail(trt._id)}
+                sx={{
+                  color: "#4f46e5",
+                  cursor: "pointer",
+                  "&:hover": { textDecoration: "underline" },
+                }}
               >
                 {viewLoadingId === trt._id ? (
                   <CircularProgress size={12} />
@@ -770,13 +773,14 @@ const TreatmentsTab = ({ patientId }) => {
                 )}
               </TableCell>
               <TableCell
-                className={
-                  trt.originatingOpdAppointment
-                    ? "font-numbers text-indigo-600 hover:underline cursor-pointer"
-                    : "text-gray-400"
-                }
+                className="font-numbers"
                 onClick={() =>
                   trt.originatingOpdAppointment && openAppointmentDetail(trt.originatingOpdAppointment._id)
+                }
+                sx={
+                  trt.originatingOpdAppointment
+                    ? { color: "#4f46e5", cursor: "pointer", "&:hover": { textDecoration: "underline" } }
+                    : { color: "text.disabled" }
                 }
               >
                 {viewLoadingId === trt.originatingOpdAppointment?._id ? (
