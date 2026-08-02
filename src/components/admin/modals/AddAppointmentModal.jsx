@@ -890,12 +890,16 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                   matching results (previously lived inside noOptionsText,
                   which MUI only renders when there are zero matches). Now
                   positioned beside Search Patient (~25% width) instead of on
-                  its own line below -- same orange-outline convention used
-                  for "Preview & Download Slip" / "Book Session" elsewhere in
-                  this modal (#f59e0b border+text, #d97706/#fffbeb hover). */}
+                  its own line below. Round 2: switched from outlined to a
+                  FILLED orange button (#f59e0b bg / white text) to match the
+                  same solid-orange convention used by "Book Session #" below
+                  in this modal -- NOTE: the "Book Appointment" submit button
+                  in the footer is actually indigo (bg-indigo-600, matches the
+                  header), not orange, so #f59e0b was kept as the intended
+                  "standard orange" rather than matched to that button. */}
               <Button
                 size="small"
-                variant="outlined"
+                variant="contained"
                 onClick={() => setShowAddPatient(true)}
                 sx={{
                   flex: "0 0 25%",
@@ -903,10 +907,11 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                   height: 40,
                   fontSize: "11px",
                   textTransform: "none",
-                  borderColor: "#f59e0b",
-                  color: "#f59e0b",
+                  backgroundColor: "#f59e0b",
+                  color: "#fff",
                   px: 0.5,
-                  "&:hover": { borderColor: "#d97706", backgroundColor: "#fffbeb" },
+                  boxShadow: "none",
+                  "&:hover": { backgroundColor: "#d97706", boxShadow: "none" },
                 }}
               >
                 + Add Patient
@@ -1247,6 +1252,89 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                   </RadioGroup>
                 </FormControl>
               )}
+
+              {/* Round 2 Fix 2: OPD Fee override -- moved here, stacked
+                  directly below the Visit Type radios, instead of living in
+                  its own separate full-width row further down. Investigated
+                  first: this is a genuine EDITABLE OVERRIDE input (bound to
+                  formData.opdFee via name="opdFee" + the shared handleChange
+                  setter, with a "Reset to default" affordance when it
+                  diverges from the feeSettings-derived default) -- it is NOT
+                  a duplicate of the Fee Summary Paper beside it. That Paper
+                  is a READ-ONLY computed display: its `baseFee` is derived
+                  FROM this same formData.opdFee value (see baseFee/
+                  discountedFee above), then has the membership discount
+                  applied on top for display. One is the source input, the
+                  other is a downstream read-only total -- distinct purposes,
+                  not redundant. */}
+              {!isSessionMode && formData.visitType === "opd" && (
+                <Box sx={{ mt: 1.25 }}>
+                  <TextField
+                    fullWidth
+                    label={
+                      formData.isFree
+                        ? "Appointment Fee — Free (Membership)"
+                        : `Appointment Fee (₹) — ${formData.appointmentType === "emergency" ? "Emergency" : "Regular"}`
+                    }
+                    name="opdFee"
+                    type="number"
+                    value={formData.opdFee}
+                    onChange={handleChange}
+                    size="small"
+                    disabled={formData.isFree}
+                    inputProps={{ min: 0 }}
+                  />
+                  {formData.isFree ? (
+                    <Typography
+                      variant="caption"
+                      sx={{ display: "block", color: "#059669", fontSize: "0.65rem", mt: 0.25 }}
+                    >
+                      Membership benefit — cannot be overridden
+                    </Typography>
+                  ) : (
+                    opdFeeDiffersFromDefault && (
+                      <Button
+                        size="small"
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, opdFee: derivedOpdDefault }))
+                        }
+                        startIcon={<RestartAltIcon sx={{ fontSize: 14 }} />}
+                        sx={{ textTransform: "none", fontSize: "0.65rem", mt: 0.25, p: 0, minWidth: 0 }}
+                      >
+                        Reset to default
+                      </Button>
+                    )
+                  )}
+                  {formData.appointmentType === "emergency" && (
+                    <Typography variant="caption" className="text-red-600 font-medium" sx={{ fontSize: "0.7rem", display: "block", mt: 0.25 }}>
+                      Emergency Appointment fee applied (₹{feeSettings.opdFeeEmergency}).
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
+              {/* Round 2 Fix 3: Notes -- moved here too, so it stacks
+                  compactly right below the fee box (or directly below the
+                  radios in treatment/session mode, which has no fee box) in
+                  this same left column, instead of occupying its own
+                  separate full-width row. Still rows=2 (unchanged from
+                  round 1 -- was NOT reverted to a taller field). Shown for
+                  every visit mode (opd/treatment/session), matching its old
+                  unconditional placement. */}
+              <Box sx={{ mt: 1.25 }}>
+                <TextField
+                  className="notes-field"
+                  fullWidth
+                  label="Notes"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  multiline
+                  rows={2}
+                  size="small"
+                  placeholder="Additional notes..."
+                />
+              </Box>
             </Box>
           </Grid>
 
@@ -1411,12 +1499,17 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
           </Grid>
           )}
 
-          {/* ─── ROW 4b: Visit-type-specific detail fields (OPD fee override
-              in Appointment mode, or Treatment name/sessions/link in
-              Treatment mode) -- kept as its own full-width row, since these
-              fields (especially Treatment Name + line items) need the extra
-              horizontal room. Only the short Visit Type control above was
-              pulled out to share ROW 4a with the Fee summary. ─── */}
+          {/* ─── ROW 4b: Treatment-mode-only detail fields (Treatment
+              name/sessions/OPD-link) -- kept as its own full-width row,
+              since these fields (especially Treatment Name + line items)
+              need the extra horizontal room. Round 2: the OPD Fee override
+              that used to live here was moved up into the Visit Type column
+              (Fix 2), and this whole Grid item is now gated on treatment
+              mode only -- previously it always rendered (as an empty
+              bordered/padded box with zero children) in Appointment/session
+              mode once the fee box moved out, which would have wasted a row
+              of vertical space for nothing. ─── */}
+          {!isSessionMode && formData.visitType === "treatment" && (
           <Grid size={{ xs: 12 }}>
             <Box
               sx={{
@@ -1434,50 +1527,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                   Appointment Type dropdown above (Regular/Emergency), which
                   now sets appointmentType directly. */}
 
-              {/* OPD Fee — hidden in session mode */}
-              {!isSessionMode && formData.visitType === "opd" && (
-                <Box sx={{ flex: "0 0 auto", minWidth: 180 }}>
-                  <TextField
-                    label={
-                      formData.isFree
-                        ? "Appointment Fee — Free (Membership)"
-                        : `Appointment Fee (₹) — ${formData.appointmentType === "emergency" ? "Emergency" : "Regular"}`
-                    }
-                    name="opdFee"
-                    type="number"
-                    value={formData.opdFee}
-                    onChange={handleChange}
-                    size="small"
-                    disabled={formData.isFree}
-                    inputProps={{ min: 0 }}
-                  />
-                  {formData.isFree ? (
-                    <Typography
-                      variant="caption"
-                      sx={{ display: "block", color: "#059669", fontSize: "0.65rem", mt: 0.25 }}
-                    >
-                      Membership benefit — cannot be overridden
-                    </Typography>
-                  ) : (
-                    opdFeeDiffersFromDefault && (
-                      <Button
-                        size="small"
-                        onClick={() =>
-                          setFormData((prev) => ({ ...prev, opdFee: derivedOpdDefault }))
-                        }
-                        startIcon={<RestartAltIcon sx={{ fontSize: 14 }} />}
-                        sx={{ textTransform: "none", fontSize: "0.65rem", mt: 0.25, p: 0, minWidth: 0 }}
-                      >
-                        Reset to default
-                      </Button>
-                    )
-                  )}
-                </Box>
-              )}
-
-              {/* Treatment name + Sessions planned (only when treatment selected, not in session mode) */}
-              {!isSessionMode && formData.visitType === "treatment" && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, flex: "1 1 100%" }}>
+              {/* Treatment name + Sessions planned */}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, flex: "1 1 100%" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                     <Box sx={{ flex: "1 1 70%", maxWidth: { md: "70%" } }}>
                       <StyledTextField
@@ -1551,10 +1602,8 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                     />
                   )}
                 </Box>
-              )}
 
-              {!isSessionMode && formData.visitType === "treatment" && (
-                <Box sx={{ flex: "1 1 100%" }}>
+              <Box sx={{ flex: "1 1 100%" }}>
                   <Autocomplete
                     options={patientOpdAppointments}
                     value={
@@ -1593,21 +1642,16 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                       />
                     )}
                   />
-                </Box>
-              )}
+              </Box>
 
             </Box>
-            {formData.appointmentType === "emergency" && formData.visitType === "opd" && (
-              <Typography variant="caption" className="text-red-600 font-medium" sx={{ fontSize: "0.7rem", display: "block", mt: 0.5 }}>
-                Emergency Appointment fee applied (₹{feeSettings.opdFeeEmergency}).
-              </Typography>
-            )}
-            {formData.appointmentType === "emergency" && formData.visitType === "treatment" && (
+            {formData.appointmentType === "emergency" && (
               <Typography variant="caption" className="text-gray-500" sx={{ fontSize: "0.7rem", display: "block", mt: 0.5 }}>
                 Flagged emergency — treatment fee unchanged.
               </Typography>
             )}
           </Grid>
+          )}
 
           {/* ─── TREATMENT LINE ITEMS + DISCOUNT (parent treatment path only) ─── */}
           {!isSessionMode && formData.visitType === "treatment" && (
@@ -1775,24 +1819,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
             </Grid>
           )}
 
-          {/* ─── Notes -- own row now that Fee/Method moved up to share
-              ROW 4a with Visit Type. Height reduced from rows=4 to rows=2
-              (Fix 4), and width trimmed to sm=6 rather than stretching full
-              width, as part of the overall vertical-spacing tightening. ─── */}
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <TextField
-              className="notes-field"
-              fullWidth
-              label="Notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              multiline
-              rows={2}
-              size="small"
-              placeholder="Additional notes..."
-            />
-          </Grid>
         </Grid>
         )}
       </DialogContent>
