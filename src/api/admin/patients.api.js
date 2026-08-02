@@ -146,3 +146,24 @@ export const getPatientTests = (id, params = {}) =>
 
 export const getPatientActiveContext = (patientId) =>
   api.get(`/patients/${patientId}/active-context`).then((res) => res.data);
+
+/**
+ * Build the absolute export URL for the Patients list (CSV or PDF),
+ * carrying over the same filters (search/isActive/membership) currently
+ * applied on screen. Used with downloadFile() rather than a direct
+ * axios.get, since the response is a raw file stream, not JSON.
+ * @param {"csv"|"pdf"} format
+ * @param {Object} params - Active filters (search, isActive, membership, ...)
+ * @returns {string}
+ */
+export const getPatientsExportUrl = (format, params = {}) => {
+  const query = new URLSearchParams();
+  query.set("format", format);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      query.set(key, value);
+    }
+  });
+  const baseURL = api.defaults.baseURL || "";
+  return `${baseURL}/patients/export?${query.toString()}`;
+};

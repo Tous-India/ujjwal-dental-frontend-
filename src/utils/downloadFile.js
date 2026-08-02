@@ -13,11 +13,17 @@
  * viewer has its own Share/Save button -- the standard iOS-friendly
  * fallback) if the fetch/blob approach fails for any reason (CORS,
  * network, etc).
+ *
+ * @param {string} url - File URL to fetch.
+ * @param {string} filename - Suggested filename for the saved file.
+ * @param {RequestInit} [options] - Optional extra fetch options (e.g. `headers`
+ *   with an Authorization bearer token for authenticated API endpoints like
+ *   report/patient exports, as opposed to public Cloudinary URLs).
  */
-export async function downloadFile(url, filename = "download") {
+export async function downloadFile(url, filename = "download", options = {}) {
   if (!url) return;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, options);
     if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);

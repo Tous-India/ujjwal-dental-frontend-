@@ -9,14 +9,20 @@
  * - Add, Edit, Delete (soft) patient via modals
  */
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, Avatar, Chip } from "@mui/material";
+import { Box, Typography, Button, Avatar, Chip, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import DescriptionIcon from "@mui/icons-material/Description";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { toast } from "react-toastify";
 import { useSearchParams } from "react-router-dom";
 import DataTable from "../../components/common/DataTable";
 import { usePatients, usePatientMutations } from "../../hooks/admin/usePatients";
 import { usePermissions } from "../../hooks/admin/usePermissions";
-import { getPatient } from "../../api/admin/patients.api";
+import { getPatient, getPatientsExportUrl } from "../../api/admin/patients.api";
+import { useAdminStore } from "../../store/admin.store";
+import { downloadFile } from "../../utils/downloadFile";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
 import AddPatientModal from "../../components/admin/modals/AddPatientModal";
 import EditPatientModal from "../../components/admin/modals/EditPatientModal";
@@ -147,6 +153,11 @@ const Patients = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  // Export menu state
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const exportMenuOpen = Boolean(exportAnchorEl);
+  const adminToken = useAdminStore((state) => state.token);
 
   // Fetch patients with React Query
   const { data, isLoading, refetch } = usePatients({
@@ -307,6 +318,34 @@ const Patients = () => {
     setPage(1);
   };
 
+  /**
+   * Export menu open/close
+   */
+  const handleExportMenuOpen = (event) => setExportAnchorEl(event.currentTarget);
+  const handleExportMenuClose = () => setExportAnchorEl(null);
+
+  /**
+   * Export the CURRENTLY filtered patient list as CSV or PDF. Carries over
+   * the same search text + active filters shown on screen, so the export
+   * matches what the admin is looking at.
+   */
+  const handleExport = async (format) => {
+    handleExportMenuClose();
+    const exportParams = { search, ...filters };
+    const url = getPatientsExportUrl(format, exportParams);
+    const today = new Date().toISOString().slice(0, 10);
+    const filename = `patients-export-${today}.${format}`;
+
+    try {
+      await downloadFile(url, filename, {
+        headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
+        credentials: "include",
+      });
+    } catch {
+      toast.error(`Failed to export patients as ${format.toUpperCase()}`);
+    }
+  };
+
   return (
     <Box sx={{ minHeight: "100vh" }}>
       {/* Page Header */}
@@ -319,14 +358,38 @@ const Patients = () => {
             Manage all registered patients
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          className="bg-blue-600 hover:bg-blue-700"
-          onClick={handleAddClick}
-        >
-          Add Patient
-        </Button>
+        <Box className="flex items-center gap-2">
+          <Button
+            variant="outlined"
+            startIcon={<FileDownloadIcon />}
+            endIcon={<ArrowDropDownIcon />}
+            onClick={handleExportMenuOpen}
+          >
+            Export
+          </Button>
+          <Menu anchorEl={exportAnchorEl} open={exportMenuOpen} onClose={handleExportMenuClose}>
+            <MenuItem onClick={() => handleExport("csv")}>
+              <ListItemIcon>
+                <DescriptionIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Export as CSV</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={() => handleExport("pdf")}>
+              <ListItemIcon>
+                <PictureAsPdfIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Export as PDF</ListItemText>
+            </MenuItem>
+          </Menu>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={handleAddClick}
+          >
+            Add Patient
+          </Button>
+        </Box>
       </Box>
 
       {/* Data Table */}
