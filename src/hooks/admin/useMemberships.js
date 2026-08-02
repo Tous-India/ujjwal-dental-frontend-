@@ -17,6 +17,8 @@ import {
   assignMembership,
   renewMembership,
   cancelMembership,
+  pauseMembership,
+  resumeMembership,
 } from "../../api/admin/memberships.api";
 
 /**
@@ -133,7 +135,23 @@ export const useMembershipMutations = () => {
   });
 
   const cancel = useMutation({
-    mutationFn: cancelMembership,
+    mutationFn: ({ patientId, reason }) => cancelMembership(patientId, reason),
+    onSuccess: () => {
+      invalidatePlans();
+      queryClient.invalidateQueries({ queryKey: ["admin", "patients"] });
+    },
+  });
+
+  const pause = useMutation({
+    mutationFn: ({ patientId, reason }) => pauseMembership(patientId, reason),
+    onSuccess: () => {
+      invalidatePlans();
+      queryClient.invalidateQueries({ queryKey: ["admin", "patients"] });
+    },
+  });
+
+  const resume = useMutation({
+    mutationFn: ({ patientId, reason }) => resumeMembership(patientId, reason),
     onSuccess: () => {
       invalidatePlans();
       queryClient.invalidateQueries({ queryKey: ["admin", "patients"] });
@@ -148,6 +166,8 @@ export const useMembershipMutations = () => {
     assignMembership: assign.mutate,
     renewMembership: renew.mutate,
     cancelMembership: cancel.mutate,
+    pauseMembership: pause.mutate,
+    resumeMembership: resume.mutate,
     isCreating: createPlan.isPending,
     isUpdating: updatePlan.isPending,
     isDeleting: deletePlan.isPending,
@@ -155,6 +175,8 @@ export const useMembershipMutations = () => {
     isAssigning: assign.isPending,
     isRenewing: renew.isPending,
     isCancellingMembership: cancel.isPending,
+    isPausingMembership: pause.isPending,
+    isResumingMembership: resume.isPending,
   };
 };
 

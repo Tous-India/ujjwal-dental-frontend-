@@ -116,9 +116,28 @@ export const renewMembership = (patientId) =>
   api.post(`/memberships/renew/${patientId}`).then((res) => res.data);
 
 /**
- * Cancel patient's membership
+ * Cancel patient's membership (terminal -- reason required)
  * @param {string} patientId - Patient ID
+ * @param {string} reason
  * @returns {Promise}
  */
-export const cancelMembership = (patientId) =>
-  api.post(`/memberships/cancel/${patientId}`).then((res) => res.data);
+export const cancelMembership = (patientId, reason) =>
+  api.post(`/memberships/cancel/${patientId}`, { reason }).then((res) => res.data);
+
+/**
+ * Pause patient's membership (temporary, resumable -- reason required)
+ * @param {string} patientId - Patient ID
+ * @param {string} reason
+ * @returns {Promise}
+ */
+export const pauseMembership = (patientId, reason) =>
+  api.post(`/memberships/pause/${patientId}`, { reason }).then((res) => res.data);
+
+/**
+ * Resume a paused membership (reason optional)
+ * @param {string} patientId - Patient ID
+ * @param {string} [reason]
+ * @returns {Promise}
+ */
+export const resumeMembership = (patientId, reason) =>
+  api.post(`/memberships/resume/${patientId}`, { reason }).then((res) => res.data);

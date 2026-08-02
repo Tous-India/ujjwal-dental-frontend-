@@ -36,6 +36,7 @@ import {
   CircularProgress,
   Alert,
   Tooltip,
+  TextField,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import CloseIcon from "@mui/icons-material/Close";
@@ -59,6 +60,10 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import AddIcon from "@mui/icons-material/Add";
+import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import CancelIcon from "@mui/icons-material/Cancel";
+import { useMembershipMutations } from "../../../hooks/admin/useMemberships";
 import {
   getPatientAppointments,
   getPatientTreatments,
@@ -67,9 +72,11 @@ import {
   deletePatient,
 } from "../../../api/admin/patients.api";
 import { getLabOrders } from "../../../api/admin/labOrders.api";
+import { getAppointment } from "../../../api/admin/appointments.api";
 import { getBillingStats, getInvoices } from "../../../api/admin/billing.api";
 import { getPayments } from "../../../api/admin/payments.api";
 import EditAppointmentModal from "./EditAppointmentModal";
+import AppointmentDetailModal from "./AppointmentDetailModal";
 import AssignMembershipModal from "./AssignMembershipModal";
 import ResetPasswordDialog from "./ResetPasswordDialog";
 import FollowUpReminderModal from "./FollowUpReminderModal";
@@ -157,7 +164,7 @@ const statusColors = {
 /**
  * Overview Tab Content
  */
-const OverviewTab = ({ patient, onAssignMembership }) => {
+const OverviewTab = ({ patient, onAssignMembership, onRefresh }) => {
   const {
     phone,
     email,
@@ -174,6 +181,89 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
     notes,
   } = patient;
 
+  // Pause/Cancel/Resume -- admin-only actions on the current membership,
+  // matching the Void Invoice / Reopen Treatment reason-dialog pattern.
+  const [membershipAction, setMembershipAction] = useState(null); // "pause" | "cancel" | "resume" | null
+  const [membershipActionReason, setMembershipActionReason] = useState("");
+  const {
+    pauseMembership,
+    resumeMembership,
+    cancelMembership,
+    isPausingMembership,
+    isResumingMembership,
+    isCancellingMembership,
+  } = useMembershipMutations();
+
+  const membershipActionBusy = isPausingMembership || isResumingMembership || isCancellingMembership;
+  const reasonRequired = membershipAction === "pause" || membershipAction === "cancel";
+  const reasonValid = !reasonRequired || membershipActionReason.trim().length >= 10;
+
+  const closeMembershipActionDialog = () => {
+    setMembershipAction(null);
+    setMembershipActionReason("");
+  };
+
+  const submitMembershipAction = () => {
+    const onSuccess = () => {
+      toast.success(
+        membershipAction === "pause"
+          ? "Membership paused"
+          : membershipAction === "resume"
+          ? "Membership resumed"
+          : "Membership cancelled"
+      );
+      closeMembershipActionDialog();
+      onRefresh?.();
+    };
+    const onError = (err) => {
+      toast.error(err?.response?.data?.message || "Action failed");
+    };
+
+    if (membershipAction === "pause") {
+      pauseMembership({ patientId: patient._id, reason: membershipActionReason.trim() }, { onSuccess, onError });
+    } else if (membershipAction === "resume") {
+      resumeMembership({ patientId: patient._id, reason: membershipActionReason.trim() || undefined }, { onSuccess, onError });
+    } else if (membershipAction === "cancel") {
+      cancelMembership({ patientId: patient._id, reason: membershipActionReason.trim() }, { onSuccess, onError });
+    }
+  };
+
+  const membershipActionCopy = {
+    pause: {
+      title: "Pause Membership",
+      icon: <PauseCircleOutlineIcon color="warning" fontSize="small" />,
+      helper: "Temporarily suspends membership benefits (e.g. free/discounted OPD fees). Can be resumed later. A reason of at least 10 characters is required for the audit trail.",
+      color: "warning",
+      confirmLabel: "Confirm Pause",
+    },
+    resume: {
+      title: "Resume Membership",
+      icon: <PlayCircleOutlineIcon color="success" fontSize="small" />,
+      helper: "Restores membership benefits immediately. Validity dates are not auto-extended for the paused period.",
+      color: "success",
+      confirmLabel: "Confirm Resume",
+    },
+    cancel: {
+      title: "Cancel Membership",
+      icon: <CancelIcon color="error" fontSize="small" />,
+      helper: "Permanently ends this membership -- unlike Pause, it cannot be resumed. This does NOT process a refund; use the payment's Refund action separately if money needs to go back. A reason of at least 10 characters is required for the audit trail.",
+      color: "error",
+      confirmLabel: "Confirm Cancel",
+    },
+  };
+  const activeActionCopy = membershipAction ? membershipActionCopy[membershipAction] : null;
+
+  const membershipStatusColors = {
+    active: "success",
+    paused: "warning",
+    cancelled: "error",
+    expired: "default",
+  };
+
+  const lastStatusHistoryEntry = membership?.statusHistory?.length
+    ? membership.statusHistory[membership.statusHistory.length - 1]
+    : null;
+
   const paymentMethodLabels = {
     cash: "Cash",
     card: "Card",
@@ -183,6 +273,7 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
   };
 
   return (
+    <>
     <Grid container spacing={2}>
       {/* Left Column */}
       <Grid size={{ xs: 12, md: 6 }}>
@@ -324,7 +415,8 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
                 <Chip
                   label={membership.status}
                   size="small"
-                  color={membership.status === "active" ? "success" : "default"}
+                  className="capitalize"
+                  color={membershipStatusColors[membership.status] || "default"}
                 />
               </Box>
               {membership.discountPercent != null && membership.discountPercent > 0 && (
@@ -348,6 +440,68 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
                   Notes: {membership.notes}
                 </Typography>
               )}
+              {(membership.status === "paused" || membership.status === "cancelled") && lastStatusHistoryEntry && (
+                <Box className="mt-1.5 pt-1.5 border-t border-gray-200">
+                  <Typography variant="caption" className="text-gray-500 block">
+                    {membership.status === "paused" ? "Paused" : "Cancelled"} by{" "}
+                    {lastStatusHistoryEntry.performedBy?.name || "admin"} on{" "}
+                    {formatDate(lastStatusHistoryEntry.performedAt)}
+                  </Typography>
+                  {lastStatusHistoryEntry.reason && (
+                    <Typography variant="caption" className="text-gray-500 block">
+                      Reason: {lastStatusHistoryEntry.reason}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+              {membership.status === "active" && (
+                <Box className="flex gap-1.5 mt-2">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<PauseCircleOutlineIcon />}
+                    onClick={() => setMembershipAction("pause")}
+                    sx={{ fontSize: "0.65rem", textTransform: "none" }}
+                  >
+                    Pause
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    startIcon={<CancelIcon />}
+                    onClick={() => setMembershipAction("cancel")}
+                    sx={{ fontSize: "0.65rem", textTransform: "none" }}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
+              )}
+              {membership.status === "paused" && (
+                <Box className="flex gap-1.5 mt-2">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="success"
+                    startIcon={<PlayCircleOutlineIcon />}
+                    onClick={() => setMembershipAction("resume")}
+                    sx={{ fontSize: "0.65rem", textTransform: "none" }}
+                  >
+                    Resume
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    startIcon={<CancelIcon />}
+                    onClick={() => setMembershipAction("cancel")}
+                    sx={{ fontSize: "0.65rem", textTransform: "none" }}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
+              )}
             </>
           ) : (
             <Typography variant="body2" className="text-gray-400">
@@ -368,6 +522,61 @@ const OverviewTab = ({ patient, onAssignMembership }) => {
         </Box>
       </Grid>
     </Grid>
+
+    {/* Pause / Resume / Cancel Membership -- reason dialog, admin-only,
+        matching the Void Invoice / Reopen Treatment pattern. */}
+    <Dialog
+      open={!!membershipAction}
+      onClose={() => { if (!membershipActionBusy) closeMembershipActionDialog(); }}
+      maxWidth="sm"
+      fullWidth
+    >
+      {activeActionCopy && (
+        <>
+          <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {activeActionCopy.icon}
+            {activeActionCopy.title}
+          </DialogTitle>
+          <DialogContent sx={{ pt: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {activeActionCopy.helper}
+            </Typography>
+            <TextField
+              label={reasonRequired ? "Reason *" : "Reason (optional)"}
+              multiline
+              rows={3}
+              fullWidth
+              size="small"
+              value={membershipActionReason}
+              onChange={(e) => setMembershipActionReason(e.target.value)}
+              disabled={membershipActionBusy}
+              placeholder="Briefly explain why…"
+              error={!reasonValid && membershipActionReason.length > 0}
+              helperText={
+                reasonRequired
+                  ? `${membershipActionReason.trim().length}/10 minimum`
+                  : "Optional for Resume"
+              }
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={closeMembershipActionDialog} color="inherit" disabled={membershipActionBusy}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color={activeActionCopy.color}
+              startIcon={membershipActionBusy ? <CircularProgress size={14} color="inherit" /> : activeActionCopy.icon}
+              onClick={submitMembershipAction}
+              disabled={membershipActionBusy || !reasonValid}
+            >
+              {membershipActionBusy ? "Working…" : activeActionCopy.confirmLabel}
+            </Button>
+          </DialogActions>
+        </>
+      )}
+    </Dialog>
+    </>
   );
 };
 
@@ -380,6 +589,7 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
   const [error, setError] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [viewAppointment, setViewAppointment] = useState(null);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -430,7 +640,12 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
           <TableBody>
             {appointments.map((apt) => (
               <TableRow key={apt._id} hover>
-                <TableCell className="font-numbers">{apt.appointmentNumber || "-"}</TableCell>
+                <TableCell
+                  className="font-numbers text-indigo-600 hover:underline cursor-pointer"
+                  onClick={() => setViewAppointment(apt)}
+                >
+                  {apt.appointmentNumber || "-"}
+                </TableCell>
                 <TableCell>{formatDate(apt.date)}</TableCell>
                 <TableCell>{apt.timeSlot || "-"}</TableCell>
                 <TableCell>{apt.clinic?.name || "-"}</TableCell>
@@ -468,6 +683,13 @@ const AppointmentsTab = ({ patientId, patient, refreshKey, onRefresh }) => {
         appointment={selectedAppointment}
         onSuccess={handleEditSuccess}
       />
+
+      {/* Appointment # click -- opens the same detail view used elsewhere in admin */}
+      <AppointmentDetailModal
+        open={!!viewAppointment}
+        onClose={() => setViewAppointment(null)}
+        appointment={viewAppointment}
+      />
     </>
   );
 };
@@ -479,6 +701,8 @@ const TreatmentsTab = ({ patientId }) => {
   const [treatments, setTreatments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewAppointment, setViewAppointment] = useState(null);
+  const [viewLoadingId, setViewLoadingId] = useState(null);
 
   useEffect(() => {
     const fetchTreatments = async () => {
@@ -495,15 +719,36 @@ const TreatmentsTab = ({ patientId }) => {
     if (patientId) fetchTreatments();
   }, [patientId]);
 
+  // Treatment #/Linked OPD Visit columns are populated from this endpoint's
+  // own trimmed shape (id + number only) -- fetch the real, fully-populated
+  // appointment on demand so AppointmentDetailModal (built for the raw
+  // Appointment shape) renders correctly, same as it does from the main
+  // Appointments page.
+  const openAppointmentDetail = async (appointmentId) => {
+    if (!appointmentId) return;
+    setViewLoadingId(appointmentId);
+    try {
+      const res = await getAppointment(appointmentId);
+      setViewAppointment(res.data?.appointment || res.data);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to load appointment details");
+    } finally {
+      setViewLoadingId(null);
+    }
+  };
+
   if (loading) return <Box className="text-center py-8"><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!treatments.length) return <Typography className="text-gray-400 text-center py-8">No treatments found</Typography>;
 
   return (
+    <>
     <TableContainer component={Paper} variant="outlined">
       <Table size="small">
         <TableHead className="bg-gray-50">
           <TableRow>
+            <TableCell>Treatment #</TableCell>
+            <TableCell>Linked OPD Visit</TableCell>
             <TableCell>Date</TableCell>
             <TableCell>Treatment</TableCell>
             <TableCell>Clinic</TableCell>
@@ -514,6 +759,32 @@ const TreatmentsTab = ({ patientId }) => {
         <TableBody>
           {treatments.map((trt) => (
             <TableRow key={trt._id} hover>
+              <TableCell
+                className="font-numbers text-indigo-600 hover:underline cursor-pointer"
+                onClick={() => openAppointmentDetail(trt._id)}
+              >
+                {viewLoadingId === trt._id ? (
+                  <CircularProgress size={12} />
+                ) : (
+                  trt.appointmentNumber || "-"
+                )}
+              </TableCell>
+              <TableCell
+                className={
+                  trt.originatingOpdAppointment
+                    ? "font-numbers text-indigo-600 hover:underline cursor-pointer"
+                    : "text-gray-400"
+                }
+                onClick={() =>
+                  trt.originatingOpdAppointment && openAppointmentDetail(trt.originatingOpdAppointment._id)
+                }
+              >
+                {viewLoadingId === trt.originatingOpdAppointment?._id ? (
+                  <CircularProgress size={12} />
+                ) : (
+                  trt.originatingOpdAppointment?.appointmentNumber || "—"
+                )}
+              </TableCell>
               <TableCell>{formatDate(trt.createdAt)}</TableCell>
               <TableCell>{trt.treatmentType?.name || trt.name || "-"}</TableCell>
               <TableCell>{trt.clinic?.name || "-"}</TableCell>
@@ -526,6 +797,13 @@ const TreatmentsTab = ({ patientId }) => {
         </TableBody>
       </Table>
     </TableContainer>
+
+    <AppointmentDetailModal
+      open={!!viewAppointment}
+      onClose={() => setViewAppointment(null)}
+      appointment={viewAppointment}
+    />
+    </>
   );
 };
 
@@ -1159,6 +1437,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           <OverviewTab
             patient={patient}
             onAssignMembership={() => setAssignMembershipOpen(true)}
+            onRefresh={handleRefresh}
           />
         </TabPanel>
         <TabPanel value={activeTab} index={1}>
