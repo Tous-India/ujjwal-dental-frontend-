@@ -178,7 +178,6 @@ const OverviewTab = ({ patient, onAssignMembership, onRefresh }) => {
     medicalHistory,
     emergencyContact,
     membership,
-    membershipHistory,
     notes,
   } = patient;
 
@@ -254,12 +253,7 @@ const OverviewTab = ({ patient, onAssignMembership, onRefresh }) => {
   };
   const activeActionCopy = membershipAction ? membershipActionCopy[membershipAction] : null;
 
-  const membershipStatusColors = {
-    active: "success",
-    paused: "warning",
-    cancelled: "error",
-    expired: "default",
-  };
+  // membershipStatusColors is now module-level (shared with MembershipTab).
 
   const lastStatusHistoryEntry = membership?.statusHistory?.length
     ? membership.statusHistory[membership.statusHistory.length - 1]
@@ -578,6 +572,100 @@ const OverviewTab = ({ patient, onAssignMembership, onRefresh }) => {
       )}
     </Dialog>
     </>
+  );
+};
+
+/**
+ * Membership Tab Content -- current + past memberships.
+ *
+ * Pure display: patient.membership (current) and patient.membershipHistory
+ * (archived on every reassign/renew, confirmed via a real record) already
+ * carry everything needed -- no schema change, no new fetch. Reuses the
+ * exact status-color/statusHistory-summary logic from Overview's membership
+ * card for visual consistency; Pause/Cancel/Resume actions stay on Overview
+ * only (this tab is read-only history, not a second place to manage them).
+ */
+const membershipStatusColors = {
+  active: "success",
+  paused: "warning",
+  cancelled: "error",
+  expired: "default",
+};
+
+const MembershipHistoryCard = ({ entry, isCurrent }) => {
+  const lastAction = entry.statusHistory?.length ? entry.statusHistory[entry.statusHistory.length - 1] : null;
+  return (
+    <Box
+      className={isCurrent ? "rounded-lg p-3 border-2 border-indigo-200 bg-indigo-50" : "rounded-lg p-3 border border-gray-200 bg-gray-50"}
+    >
+      <Box className="flex items-center justify-between mb-1">
+        <Typography variant="body2" className="font-semibold">
+          {entry.planName || "—"}
+        </Typography>
+        <Chip
+          label={entry.status}
+          size="small"
+          className="capitalize"
+          color={membershipStatusColors[entry.status] || "default"}
+        />
+      </Box>
+      {entry.discountPercent != null && entry.discountPercent > 0 && (
+        <Typography variant="caption" className="text-gray-500 block">
+          Discount: {entry.discountPercent}%
+        </Typography>
+      )}
+      <Typography variant="caption" className="text-gray-500 block">
+        Valid: {formatDate(entry.startDate)} - {formatDate(entry.expiryDate)}
+      </Typography>
+      {entry.amountPaid != null && (
+        <Typography variant="caption" className="text-gray-500 block">
+          Amount paid: {formatCurrency(entry.amountPaid)}
+        </Typography>
+      )}
+      {lastAction && (
+        <Typography variant="caption" className="text-gray-500 block mt-0.5">
+          {lastAction.action === "cancelled" ? "Cancelled" : lastAction.action === "paused" ? "Paused" : "Resumed"} by{" "}
+          {lastAction.performedBy?.name || "admin"} on {formatDate(lastAction.performedAt)}
+          {lastAction.reason ? ` — ${lastAction.reason}` : ""}
+        </Typography>
+      )}
+    </Box>
+  );
+};
+
+const MembershipTab = ({ patient, onAssignMembership }) => {
+  const { membership, membershipHistory } = patient;
+  const pastMemberships = membershipHistory?.length
+    ? [...membershipHistory].sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+    : [];
+
+  if (!membership?.status && !pastMemberships.length) {
+    return (
+      <Box className="text-center py-8">
+        <Typography className="text-gray-400 mb-3">No membership history</Typography>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={onAssignMembership}>
+          Assign Membership
+        </Button>
+      </Box>
+    );
+  }
+
+  return (
+    <Box className="space-y-3">
+      {membership?.status && <MembershipHistoryCard entry={membership} isCurrent />}
+      {pastMemberships.length > 0 && (
+        <Box>
+          <Typography variant="caption" className="font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">
+            Past Memberships
+          </Typography>
+          <Box className="space-y-2">
+            {pastMemberships.map((entry, idx) => (
+              <MembershipHistoryCard key={idx} entry={entry} />
+            ))}
+          </Box>
+        </Box>
+      )}
+    </Box>
   );
 };
 
@@ -1458,7 +1546,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
         <Tabs
           value={activeTab}
           onChange={(_, val) => {
-            if (val === 4) setInvoiceStatusFilter("");
+            if (val === 5) setInvoiceStatusFilter("");
             setActiveTab(val);
           }}
           variant="scrollable"
@@ -1469,6 +1557,7 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           }}
         >
           <Tab label="Overview" />
+          <Tab label="Membership" />
           <Tab label="Appointments" />
           <Tab label="Treatments" />
           <Tab label="Tests" />
@@ -1493,6 +1582,12 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
           />
         </TabPanel>
         <TabPanel value={activeTab} index={1}>
+          <MembershipTab
+            patient={patient}
+            onAssignMembership={() => setAssignMembershipOpen(true)}
+          />
+        </TabPanel>
+        <TabPanel value={activeTab} index={2}>
           <AppointmentsTab
             patientId={patient._id}
             patient={patient}
@@ -1500,13 +1595,13 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
             onRefresh={handleRefresh}
           />
         </TabPanel>
-        <TabPanel value={activeTab} index={2}>
+        <TabPanel value={activeTab} index={3}>
           <TreatmentsTab patientId={patient._id} />
         </TabPanel>
-        <TabPanel value={activeTab} index={3}>
+        <TabPanel value={activeTab} index={4}>
           <TestsTab patientId={patient._id} />
         </TabPanel>
-        <TabPanel value={activeTab} index={4}>
+        <TabPanel value={activeTab} index={5}>
           <InvoicesTab
             patientId={patient._id}
             paymentStatusFilter={invoiceStatusFilter}
@@ -1514,13 +1609,13 @@ const PatientDetailModal = ({ open, onClose, patient, onEdit, onDelete, onReacti
             onClearFilter={() => setInvoiceStatusFilter("")}
           />
         </TabPanel>
-        <TabPanel value={activeTab} index={5}>
+        <TabPanel value={activeTab} index={6}>
           <PaymentsTab patientId={patient._id} refreshKey={refreshKey} />
         </TabPanel>
-        <TabPanel value={activeTab} index={6}>
+        <TabPanel value={activeTab} index={7}>
           <ReportsTab patientId={patient._id} />
         </TabPanel>
-        <TabPanel value={activeTab} index={7}>
+        <TabPanel value={activeTab} index={8}>
           <LabOrdersTab patientId={patient._id} />
         </TabPanel>
 
