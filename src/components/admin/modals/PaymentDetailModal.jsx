@@ -3,7 +3,7 @@
  *
  * Displays complete payment information with refund option.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -106,7 +106,7 @@ const paymentTypeLabels = {
 
 const REFUND_WINDOW_DAYS = 365;
 
-const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
+const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete, initialRefundAmount }) => {
   const [showRefundForm, setShowRefundForm] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
@@ -159,6 +159,20 @@ const PaymentDetailModal = ({ open, onClose, payment, onRefund, onDelete }) => {
       setRefundAmountWarning("");
     }
   };
+
+  // Item 6 connector: when a caller (Edit Treatment's overpaid banner) opens
+  // this modal already knowing the exact amount to refund, jump straight
+  // into a pre-filled refund form (running it through the same validation as
+  // manual input) instead of making the admin re-derive and re-type the same
+  // number. Purely additive -- every other caller omits this prop and
+  // behaves exactly as before.
+  useEffect(() => {
+    if (open && payment && initialRefundAmount > 0) {
+      setShowRefundForm(true);
+      handleRefundAmountChange({ target: { value: String(initialRefundAmount) } });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, payment?._id, initialRefundAmount]);
 
   const handleRefund = () => {
     if (!refundReason.trim()) {

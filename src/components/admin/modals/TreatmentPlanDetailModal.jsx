@@ -46,6 +46,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import api from "../../../api/axios";
 import { useAppointments, useAppointmentMutations } from "../../../hooks/admin/useAppointments";
 import { usePayments } from "../../../hooks/admin/usePayments";
+import { useAdminStore } from "../../../store/admin.store";
+import StyledTextField from "../shared/StyledTextField";
+import RescheduleAppointmentModal from "./RescheduleAppointmentModal";
+import PaymentDetailModal from "./PaymentDetailModal";
+import { TREATMENT_NAME_OPTIONS, TREATMENT_NAME_OTHER, treatmentNameToChoice } from "../../../constants/treatmentNames";
 
 // Same underlying itemType enum as AddAppointmentModal's treatment booking
 // flow -- kept in sync intentionally (same billing categories server-side).
@@ -112,11 +117,26 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
   // gate below). Reuses AddAppointmentModal's treatment-items UI pattern.
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTreatmentName, setEditTreatmentName] = useState("");
+  // Tracks the Treatment Name select's mode independently of editTreatmentName
+  // itself: null = derive from editTreatmentName (a preset match, or "" for
+  // the placeholder), "other" = force custom free-text mode even while the
+  // user hasn't typed anything into it yet (editTreatmentName may be "" for
+  // a moment right after switching to Other).
+  const [editTreatmentNameMode, setEditTreatmentNameMode] = useState(null);
   const [editItems, setEditItems] = useState([{ description: "", unitPrice: "", itemType: "treatment" }]);
   const [editDiscountPercent, setEditDiscountPercent] = useState(0);
   const [editItemsError, setEditItemsError] = useState("");
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
+
+  // Session reschedule (Item 5) -- reuses RescheduleAppointmentModal as-is.
+  const [rescheduleSession, setRescheduleSession] = useState(null);
+  const adminRole = useAdminStore((s) => s.admin?.role);
+  const canRescheduleSessions = adminRole === "admin" || adminRole === "clinic_manager";
+
+  // Item 6 connector -- "Refund the difference" prefill target, set when the
+  // admin clicks the overpaid banner's refund button (see below).
+  const [refundTarget, setRefundTarget] = useState(null);
   // Server response after a successful edit -- the `appointment` prop is
   // owned by the parent page/modal and isn't guaranteed to be re-fetched
   // immediately (e.g. Appointments.jsx's `selectedTreatment` is a point-in-
@@ -176,6 +196,29 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
   const displayTreatmentName = editedSnapshot?.treatmentName ?? appointment.treatmentName;
   const displayInvoice = editedSnapshot?.invoice ?? appointment.invoice;
 
+  // Item 6 -- overpaid state: Edit Treatment can legitimately drop the fee
+  // below what's already been collected (e.g. RCT -> extraction switch).
+  // balanceDue is always floored at 0 (see invoice.model.js), so the surplus
+  // never shows on its own -- computed here so it stays visible as long as
+  // the state persists, not just in the one-time save toast.
+  const overpaidAmount = Math.max(0, (displayInvoice?.amountPaid || 0) - (displayInvoice?.grandTotal || 0));
+
+  // Best payment to pre-fill the Refund flow with: paid, tied to THIS
+  // invoice, and recorded via the singular `invoice` field (Refund Payment
+  // only supports that shape -- payments collected via the per-session
+  // "Collect Payment" flow use settledInvoices[] instead and are void-only,
+  // see PaymentDetailModal's refundEligible check). Prefer one that can
+  // cover the full overpaid amount; otherwise the largest eligible one.
+  const invoiceId = displayInvoice?._id;
+  const refundEligiblePayments = (paymentsData?.data || []).filter((p) => {
+    const pInvoiceId = typeof p.invoice === "string" ? p.invoice : p.invoice?._id;
+    return pInvoiceId && pInvoiceId === invoiceId && p.status === "paid" && !p.settledInvoices?.length;
+  });
+  const refundCandidate =
+    refundEligiblePayments.find((p) => p.amount >= overpaidAmount) ||
+    [...refundEligiblePayments].sort((a, b) => b.amount - a.amount)[0] ||
+    null;
+
   const openEditDialog = () => {
     const sourceItems =
       displayInvoice?.items?.length > 0
@@ -193,10 +236,30 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
           ];
     setEditItems(sourceItems);
     setEditTreatmentName(displayTreatmentName || "");
+    setEditTreatmentNameMode(null);
     setEditDiscountPercent(displayInvoice?.discount?.percentage || 0);
     setEditItemsError("");
     setEditError("");
     setEditDialogOpen(true);
+  };
+
+  // Select value for the Treatment Name dropdown: an explicit "other" mode
+  // wins (mid-switch, before any custom text is typed); otherwise derive from
+  // the current name (a preset match, or the Other sentinel for a legacy/
+  // custom name, or "" when empty).
+  const editTreatmentNameChoice =
+    editTreatmentNameMode === "other" ? TREATMENT_NAME_OTHER : treatmentNameToChoice(editTreatmentName);
+
+  const handleEditTreatmentNameSelect = (value) => {
+    if (value === TREATMENT_NAME_OTHER) {
+      setEditTreatmentNameMode("other");
+      // Only clear the name if it was a preset (switching presets -> Other
+      // shouldn't discard a real custom name the admin may still want).
+      if (TREATMENT_NAME_OPTIONS.includes(editTreatmentName)) setEditTreatmentName("");
+    } else {
+      setEditTreatmentNameMode(null);
+      setEditTreatmentName(value);
+    }
   };
 
   const addEditItem = () =>
@@ -473,6 +536,48 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                 </Box>
               </Box>
 
+              {/* Item 6 -- persistent overpaid banner (Edit Treatment's own
+                  warning is a one-time toast at save time; this stays visible
+                  for as long as the invoice remains overpaid, e.g. the
+                  RCT -> extraction fee-reduction scenario). Connects straight
+                  into the existing Refund Payment flow when a refund-eligible
+                  payment is found; otherwise explains the real limitation
+                  instead of showing a button that wouldn't work. */}
+              {overpaidAmount > 0 && (
+                <Box
+                  sx={{
+                    border: "1px solid #fde68a",
+                    borderRadius: "6px",
+                    bgcolor: "#fffbeb",
+                    px: 1.5,
+                    py: 1,
+                    mb: 3,
+                  }}
+                >
+                  <Typography variant="caption" sx={{ color: "#92400e", fontWeight: 600, display: "block" }}>
+                    Overpaid by ₹{overpaidAmount.toLocaleString("en-IN")} -- amount collected exceeds the
+                    current total fee.
+                  </Typography>
+                  {refundCandidate ? (
+                    <Button
+                      size="small"
+                      color="warning"
+                      variant="outlined"
+                      onClick={() => setRefundTarget({ payment: refundCandidate, amount: overpaidAmount })}
+                      sx={{ textTransform: "none", fontSize: "11px", mt: 0.75 }}
+                    >
+                      Refund the difference (₹{overpaidAmount.toLocaleString("en-IN")})
+                    </Button>
+                  ) : (
+                    <Typography variant="caption" sx={{ color: "#92400e", display: "block", mt: 0.5 }}>
+                      No refundable payment found for this invoice -- payments collected via per-session
+                      "Collect Payment" can only be fully voided (Payment History), not partially refunded.
+                      Process this refund manually if needed.
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
               <SectionTitle>Sessions Planned</SectionTitle>
               <Box className="bg-gray-50/60 rounded px-3 py-2 mb-3 flex items-center gap-2">
                 <TextField
@@ -505,6 +610,8 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                   sessionRows.map((s) => {
                     const collected = collectedBySession[s._id] || 0;
                     const isCompleted = s.status === "completed";
+                    const canReschedule =
+                      canRescheduleSessions && !["cancelled", "completed"].includes(s.status);
                     return (
                       <Box key={s._id} className="flex justify-between items-center gap-1 py-1 border-b border-gray-100 last:border-0">
                         <Typography variant="caption" className="font-semibold">
@@ -545,6 +652,13 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                                 }}
                               >
                                 <PaymentsIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {canReschedule && (
+                            <Tooltip title="Reschedule Session">
+                              <IconButton size="small" onClick={() => setRescheduleSession(s)}>
+                                <EventRepeatIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                           )}
@@ -810,15 +924,39 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
           Edit Treatment
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
-          <TextField
+          <StyledTextField
+            select
             label="Treatment Name"
             fullWidth
             size="small"
-            value={editTreatmentName}
-            onChange={(e) => setEditTreatmentName(e.target.value)}
+            value={editTreatmentNameChoice}
+            onChange={(e) => handleEditTreatmentNameSelect(e.target.value)}
             disabled={editLoading}
-            sx={{ mb: 2 }}
-          />
+            sx={{ mb: editTreatmentNameChoice === TREATMENT_NAME_OTHER ? 1.5 : 2 }}
+          >
+            <MenuItem value="" disabled>
+              Select a treatment
+            </MenuItem>
+            {TREATMENT_NAME_OPTIONS.map((name) => (
+              <MenuItem key={name} value={name}>
+                {name}
+              </MenuItem>
+            ))}
+            <MenuItem value={TREATMENT_NAME_OTHER}>Other (custom name)</MenuItem>
+          </StyledTextField>
+
+          {editTreatmentNameChoice === TREATMENT_NAME_OTHER && (
+            <StyledTextField
+              label="Custom Treatment Name"
+              fullWidth
+              size="small"
+              value={editTreatmentName}
+              onChange={(e) => setEditTreatmentName(e.target.value)}
+              disabled={editLoading}
+              placeholder="e.g., Root Canal (Session 1 of 4)"
+              sx={{ mb: 2 }}
+            />
+          )}
 
           <Box className="flex items-center justify-between mb-1.5">
             <Typography variant="caption" className="font-semibold text-gray-700">
@@ -838,51 +976,62 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
 
           {editItems.map((item, index) => (
             <Box key={index} sx={{ border: "1px solid #e5e7eb", borderRadius: "6px", p: 1.25, mb: 1 }}>
-              <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
-                <TextField
-                  select
-                  label="Category"
-                  value={item.itemType || "treatment"}
-                  onChange={(e) => updateEditItem(index, "itemType", e.target.value)}
-                  size="small"
-                  disabled={editLoading}
-                  sx={{ flex: "0 0 auto", minWidth: 120 }}
-                >
-                  {treatmentItemTypeOptions.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  label="Description"
-                  value={item.description}
-                  onChange={(e) => updateEditItem(index, "description", e.target.value)}
-                  size="small"
-                  placeholder="e.g., Root Canal"
-                  disabled={editLoading}
-                  sx={{ flex: "1 1 200px", minWidth: 160 }}
-                />
-                <TextField
-                  label="Amount (₹)"
-                  type="number"
-                  value={item.unitPrice}
-                  onChange={(e) => updateEditItem(index, "unitPrice", e.target.value)}
-                  size="small"
-                  inputProps={{ min: 0, step: 50 }}
-                  disabled={editLoading}
-                  sx={{ flex: "0 0 auto", minWidth: 130 }}
-                />
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => removeEditItem(index)}
-                  disabled={editLoading || editItems.length <= 1}
-                  sx={{ p: 0.5 }}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Box>
+              <Grid container spacing={1.25} alignItems="center">
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <TextField
+                    select
+                    label="Category"
+                    value={item.itemType || "treatment"}
+                    onChange={(e) => updateEditItem(index, "itemType", e.target.value)}
+                    size="small"
+                    fullWidth
+                    disabled={editLoading}
+                  >
+                    {treatmentItemTypeOptions.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                {/* Description ~65% / Amount ~30% side by side on sm+ (Item 2),
+                    each full-width and stacked on xs -- same Grid breakpoint
+                    pattern AddAppointmentModal uses for its own rows. */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <StyledTextField
+                    label="Description"
+                    value={item.description}
+                    onChange={(e) => updateEditItem(index, "description", e.target.value)}
+                    size="small"
+                    fullWidth
+                    placeholder="e.g., Root Canal"
+                    disabled={editLoading}
+                  />
+                </Grid>
+                <Grid size={{ xs: 10, sm: 2.5 }}>
+                  <StyledTextField
+                    label="Amount (₹)"
+                    type="number"
+                    value={item.unitPrice}
+                    onChange={(e) => updateEditItem(index, "unitPrice", e.target.value)}
+                    size="small"
+                    fullWidth
+                    inputProps={{ min: 0, step: 50 }}
+                    disabled={editLoading}
+                  />
+                </Grid>
+                <Grid size={{ xs: 2, sm: 0.5 }} sx={{ display: "flex", justifyContent: "flex-end" }}>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => removeEditItem(index)}
+                    disabled={editLoading || editItems.length <= 1}
+                    sx={{ p: 0.5 }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Grid>
+              </Grid>
             </Box>
           ))}
           {editItemsError && (
@@ -891,7 +1040,7 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
             </Typography>
           )}
 
-          <TextField
+          <StyledTextField
             label="Discount %"
             type="number"
             size="small"
@@ -954,6 +1103,25 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Session reschedule (Item 5) -- generic modal, reused as-is; it already
+          calls the shared reschedule endpoint, which enforces the same
+          slot-capacity/backdating validation as every other booking path. */}
+      <RescheduleAppointmentModal
+        open={!!rescheduleSession}
+        onClose={() => setRescheduleSession(null)}
+        appointment={rescheduleSession}
+        onSuccess={() => { setRescheduleSession(null); refreshAll(); }}
+      />
+
+      {/* Item 6 -- "Refund the difference" connector, pre-filled */}
+      <PaymentDetailModal
+        open={!!refundTarget}
+        onClose={() => setRefundTarget(null)}
+        payment={refundTarget?.payment}
+        initialRefundAmount={refundTarget?.amount}
+        onRefund={() => { setRefundTarget(null); refreshAll(); }}
+      />
     </>
   );
 };
