@@ -430,26 +430,22 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
     <>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ className: "rounded-xl" }}>
         <DialogTitle className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-0">
-          <Box className="flex items-center justify-between px-4 py-2">
-            <Box className="flex items-center gap-3">
-              <Avatar className="bg-white text-indigo-600 w-10 h-10">
-                <LocalHospitalIcon fontSize="small" />
+          <Box className="flex items-center justify-between px-4 py-1.5">
+            <Box className="flex items-center gap-2">
+              <Avatar className="bg-white text-indigo-600 w-7 h-7">
+                <LocalHospitalIcon sx={{ fontSize: 16 }} />
               </Avatar>
-              <Box>
-                <Typography variant="h6" component="span" className="font-bold leading-tight">
-                  {displayTreatmentName || "Treatment Plan"}
-                </Typography>
-                <Box className="flex items-center gap-2 mt-0.5">
-                  <Chip
-                    label={alreadyClosed ? (treatmentStatusLabels[appointment.treatmentStatus] || "Completed") : "Active"}
-                    size="small"
-                    color={alreadyClosed ? (treatmentStatusColors[appointment.treatmentStatus] || "success") : "primary"}
-                  />
-                </Box>
-              </Box>
+              <Typography variant="subtitle1" component="span" className="font-bold leading-tight">
+                {displayTreatmentName || "Treatment Plan"}
+              </Typography>
+              <Chip
+                label={alreadyClosed ? (treatmentStatusLabels[appointment.treatmentStatus] || "Completed") : "Active"}
+                size="small"
+                color={alreadyClosed ? (treatmentStatusColors[appointment.treatmentStatus] || "success") : "primary"}
+              />
             </Box>
-            <IconButton onClick={onClose}>
-              <CloseIcon className="text-white" />
+            <IconButton onClick={onClose} size="small">
+              <CloseIcon className="text-white" fontSize="small" />
             </IconButton>
           </Box>
         </DialogTitle>

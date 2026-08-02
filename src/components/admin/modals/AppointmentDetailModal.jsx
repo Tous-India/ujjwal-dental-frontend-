@@ -289,26 +289,28 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
     >
       {/* Header — slim strip */}
       <DialogTitle className="bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-0">
-        <Box className="flex items-center justify-between px-4 py-2">
-          <Box className="flex items-center gap-3">
-            <Avatar className="bg-white text-indigo-600 w-10 h-10">
-              <EventIcon fontSize="small" />
+        <Box className="flex items-center justify-between px-4 py-1.5">
+          <Box className="flex items-center gap-2">
+            <Avatar className="bg-white text-indigo-600 w-7 h-7">
+              <EventIcon sx={{ fontSize: 16 }} />
             </Avatar>
             <Box>
-              <Typography variant="h6" component="span" className="font-bold leading-tight">
+              <Typography variant="subtitle1" component="span" className="font-bold leading-tight">
                 {appointmentNumber || "Appointment"}
               </Typography>
-              <Box className="flex items-center gap-2 mt-0.5">
+              <Box className="flex items-center gap-1.5 mt-0.5">
                 <Chip
                   label={status?.replace("_", " ").toUpperCase()}
                   size="small"
                   color={statusColors[status] || "default"}
+                  sx={{ height: 20 }}
                 />
                 <Chip
                   label={typeLabels[type] || type}
                   size="small"
                   variant="outlined"
                   className="text-white border-white"
+                  sx={{ height: 20 }}
                 />
                 {isParentTreatment && appointment.treatmentStatus && (
                   <Chip
@@ -316,13 +318,14 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
                     size="small"
                     color={treatmentStatusColors[appointment.treatmentStatus] || "default"}
                     icon={alreadyClosed ? <LockIcon sx={{ fontSize: "12px !important" }} /> : undefined}
+                    sx={{ height: 20 }}
                   />
                 )}
               </Box>
             </Box>
           </Box>
-          <IconButton onClick={onClose}>
-            <CloseIcon className="text-white" />
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon className="text-white" fontSize="small" />
           </IconButton>
         </Box>
       </DialogTitle>
