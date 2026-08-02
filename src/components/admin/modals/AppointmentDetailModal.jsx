@@ -43,6 +43,8 @@ import PersonOffIcon from "@mui/icons-material/PersonOff";
 import api from "../../../api/axios";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import CollectPaymentModal from "./CollectPaymentModal";
+import PaymentMethodSelector from "../shared/PaymentMethodSelector";
+import PaymentLinkDisplay from "../shared/PaymentLinkDisplay";
 import { usePatientActiveContext } from "../../../hooks/admin/usePatients";
 
 /**
@@ -145,6 +147,13 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
   const [closeLoading, setCloseLoading] = useState(false);
   const [closeError, setCloseError] = useState("");
 
+  // Change Payment Method
+  const [changePaymentOpen, setChangePaymentOpen] = useState(false);
+  const [newPaymentMethod, setNewPaymentMethod] = useState("cash");
+  const [changePaymentLoading, setChangePaymentLoading] = useState(false);
+  const [changePaymentError, setChangePaymentError] = useState("");
+  const [changePaymentLink, setChangePaymentLink] = useState(null);
+
   // Fetch this treatment's session count/plan the same way the Add Appointment
   // banner does — needed to know whether there's room for another session.
   const { data: activeContextData } = usePatientActiveContext(appointment?.patient?._id);
@@ -173,6 +182,51 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
     isSession &&
     appointment.invoice &&
     (appointment.invoice.paymentStatus === "unpaid" || appointment.invoice.paymentStatus === "partial");
+
+  // Same "editable until completed" gate as the Edit button, plus the
+  // treatment-specific treatmentStatus check the backend also enforces.
+  const canChangePaymentMethod =
+    !appointment.isFree &&
+    !["cancelled", "completed", "no_show"].includes(status) &&
+    !(isParentTreatment && appointment.treatmentStatus);
+
+  /**
+   * Change Payment Method -- editable any time before status/treatmentStatus
+   * mark the appointment/treatment complete (enforced authoritatively by the
+   * backend too; this mirrors it for the button's visibility). Switching TO
+   * razorpay regenerates a fresh link; switching away needs no cleanup.
+   */
+  const handleOpenChangePayment = () => {
+    setNewPaymentMethod(
+      ["cash", "upi", "razorpay"].includes(appointment.paymentMethod) ? appointment.paymentMethod : "cash"
+    );
+    setChangePaymentError("");
+    setChangePaymentLink(null);
+    setChangePaymentOpen(true);
+  };
+
+  const handleChangePaymentSubmit = async () => {
+    setChangePaymentLoading(true);
+    setChangePaymentError("");
+    try {
+      const res = await api.patch(`/appointments/${appointment._id}`, {
+        paymentMethod: newPaymentMethod,
+      });
+      const payload = res.data?.data;
+      if (payload?.paymentLink) {
+        // Razorpay link was (re)generated -- keep the dialog open to show it
+        // (Copy Link + real WhatsApp outcome), same as the booking success banner.
+        setChangePaymentLink(payload.paymentLink);
+      } else {
+        setChangePaymentOpen(false);
+        onClose();
+      }
+    } catch (err) {
+      setChangePaymentError(err?.response?.data?.message || "Failed to update payment method");
+    } finally {
+      setChangePaymentLoading(false);
+    }
+  };
 
   const handleCloseTreatmentSubmit = async () => {
     if (!closeReason.trim()) {
@@ -528,6 +582,15 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
               Close Treatment Plan
             </Button>
           )}
+          {canChangePaymentMethod && (
+            <Button
+              variant="outlined"
+              startIcon={<PaymentIcon />}
+              onClick={handleOpenChangePayment}
+            >
+              Change Payment Method
+            </Button>
+          )}
           {canCollectSessionPayment && (
             <Button
               variant="contained"
@@ -646,6 +709,69 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
         >
           {closeLoading ? "Closing…" : "Confirm Close"}
         </Button>
+      </DialogActions>
+    </Dialog>
+
+    {/* Change Payment Method dialog */}
+    <Dialog
+      open={changePaymentOpen}
+      onClose={() => {
+        if (!changePaymentLoading) {
+          setChangePaymentOpen(false);
+          setChangePaymentError("");
+          setChangePaymentLink(null);
+        }
+      }}
+      maxWidth="xs"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <PaymentIcon color="primary" fontSize="small" />
+        Change Payment Method
+      </DialogTitle>
+      <DialogContent sx={{ pt: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Current method: <strong>{appointment.paymentMethod?.toUpperCase() || "CASH"}</strong>.
+          Switching to Razorpay generates a fresh payment link and sends it via WhatsApp. Switching away
+          from Razorpay doesn't affect any payment already collected via a prior link.
+        </Typography>
+        <PaymentMethodSelector value={newPaymentMethod} onChange={setNewPaymentMethod} size="medium" disabled={changePaymentLoading} />
+        {changePaymentError && (
+          <Typography variant="caption" color="error" sx={{ mt: 1.5, display: "block" }}>
+            {changePaymentError}
+          </Typography>
+        )}
+        {changePaymentLink && (
+          <PaymentLinkDisplay
+            shortUrl={changePaymentLink.shortUrl}
+            whatsappSent={changePaymentLink.whatsappSent}
+            error={changePaymentLink.error}
+          />
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button
+          onClick={() => {
+            setChangePaymentOpen(false);
+            setChangePaymentError("");
+            setChangePaymentLink(null);
+            if (changePaymentLink) onClose(); // a link was generated -- refresh parent on exit too
+          }}
+          color="inherit"
+          disabled={changePaymentLoading}
+        >
+          {changePaymentLink ? "Done" : "Cancel"}
+        </Button>
+        {!changePaymentLink && (
+          <Button
+            variant="contained"
+            startIcon={changePaymentLoading ? <CircularProgress size={14} color="inherit" /> : <PaymentIcon />}
+            onClick={handleChangePaymentSubmit}
+            disabled={changePaymentLoading}
+          >
+            {changePaymentLoading ? "Updating…" : "Update"}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
     </>

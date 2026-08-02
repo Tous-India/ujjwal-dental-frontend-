@@ -53,6 +53,8 @@ import {
 } from "../../../utils/dateInput";
 import { generateTimeSlots } from "../../../utils/timeSlots";
 import StyledTextField from "../shared/StyledTextField";
+import PaymentMethodSelector from "../shared/PaymentMethodSelector";
+import PaymentLinkDisplay from "../shared/PaymentLinkDisplay";
 import { TREATMENT_NAME_OPTIONS, TREATMENT_NAME_OTHER, treatmentNameToChoice } from "../../../constants/treatmentNames";
 
 // Admin (this modal only) may backdate a walk-in entry up to this many days.
@@ -718,6 +720,156 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
     }
   };
 
+  /**
+   * Fee / Payment Method summary -- single source of truth shared between
+   * the OPD/Appointment branch and the Treatment branch (Part 4: "don't
+   * duplicate the component/logic between the two branches"). Rendered in
+   * different POSITIONS depending on visit type (see the two Grid usages
+   * below), but this is the one place its content is defined.
+   */
+  const paymentMethodPaper = (
+    <Paper variant="outlined" className="p-3 bg-gray-50">
+      <Box className="flex justify-between items-center py-1">
+        <Typography variant="caption" className="text-gray-600">
+          {formData.visitType === "treatment"
+            ? formData.treatmentName.trim() || "Treatment fee"
+            : "Appointment / Consultation fee"}
+        </Typography>
+        {discountPercent > 0 && !formData.isFree ? (
+          <Box className="flex items-center gap-2">
+            <span className="font-numbers text-gray-400 line-through text-[13px]">
+              {formatCurrency(baseFee)}
+            </span>
+            <span className="font-numbers font-semibold text-accent">
+              {formatCurrency(discountedFee)}
+            </span>
+          </Box>
+        ) : (
+          <span className="font-numbers font-semibold">
+            {formData.isFree ? "Free" : formatCurrency(baseFee)}
+          </span>
+        )}
+      </Box>
+      {discountPercent > 0 && !formData.isFree && (
+        <Box className="flex justify-between items-center py-1">
+          <Typography variant="caption" className="text-gray-500">
+            Membership discount
+          </Typography>
+          <Chip size="small" color="warning" label={`${discountPercent}% off`} sx={{ height: 18, fontWeight: 700 }} />
+        </Box>
+      )}
+      <Divider className="my-2.5" />
+      <Box className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-0.5 mt-2">
+        {formData.visitType === "treatment" && !formData.isFree && (
+          <Box className="flex items-center gap-1">
+            <TextField
+              label="Discount %"
+              type="number"
+              value={formData.treatmentDiscountPercent}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, treatmentDiscountPercent: e.target.value }))
+              }
+              size="small"
+              inputProps={{ min: 0, max: 100 }}
+              sx={{ width: 110, "& .MuiInputBase-root": { height: 30 } }}
+            />
+          </Box>
+        )}
+        <Box className="flex items-center gap-1">
+          <Typography variant="caption" className="text-gray-500">Method:</Typography>
+          {formData.isFree ? (
+            <Chip size="small" variant="outlined" label="Free" sx={{ height: 20 }} />
+          ) : (
+            <PaymentMethodSelector
+              value={paymentMethod}
+              onChange={(method) => {
+                setPaymentMethod(method);
+                // Razorpay generates a link paid LATER by the patient -- it can
+                // never be "collected" at booking time, so force the checkbox off.
+                if (method === "razorpay") setFeeCollected(false);
+              }}
+            />
+          )}
+        </Box>
+      </Box>
+      {/* Free toggle (below method, above payment collected) */}
+      <Box sx={{ mt: 1 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={formData.isFree}
+              onChange={(e) => {
+                const isFree = e.target.checked;
+                const defaultFee = formData.appointmentType === "emergency"
+                  ? feeSettings.opdFeeEmergency
+                  : feeSettings.opdFeeRegular;
+                setFormData((prev) => ({
+                  ...prev,
+                  isFree,
+                  opdFee: isFree ? 0 : defaultFee,
+                }));
+                if (isFree) { setPaymentMethod("cash"); setFeeCollected(false); }
+              }}
+              color="success"
+              size="small"
+            />
+          }
+          label={<Typography variant="body2" sx={{ fontSize: "0.8rem" }}>Free</Typography>}
+        />
+      </Box>
+
+      {!formData.isFree && paymentMethod === "razorpay" && (
+        <Typography variant="caption" sx={{ display: "block", color: "#2563eb", fontSize: "0.7rem", mt: 1 }}>
+          A Razorpay payment link will be generated on booking and sent via WhatsApp — payment is collected later by the patient, not now.
+        </Typography>
+      )}
+
+      {!formData.isFree && paymentMethod !== "razorpay" && (
+        <Box className="flex flex-col gap-1 mt-2">
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={feeCollected}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setFeeCollected(checked);
+                  if (checked && formData.visitType === "treatment") {
+                    setFormData((prev) => ({
+                      ...prev,
+                      treatmentPaymentAmount: treatmentTotal,
+                    }));
+                  }
+                }}
+                size="small"
+                sx={{ py: 0.5, color: "#059669", "&.Mui-checked": { color: "#059669" } }}
+              />
+            }
+            label={
+              <Typography variant="caption" sx={{ color: feeCollected ? "#059669" : "text.secondary", fontWeight: feeCollected ? 600 : 400 }}>
+                Payment collected
+              </Typography>
+            }
+            sx={{ m: 0 }}
+          />
+          {formData.visitType === "treatment" && feeCollected && (
+            <TextField
+              label="Amount collected (₹)"
+              type="number"
+              value={formData.treatmentPaymentAmount ?? ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, treatmentPaymentAmount: Number(e.target.value) }))
+              }
+              size="small"
+              inputProps={{ min: 0, max: treatmentTotal || 999999 }}
+              helperText={`Treatment total: ₹${treatmentTotal.toLocaleString("en-IN")}. Enter full or partial advance.`}
+              sx={{ maxWidth: 220, "& .MuiFormHelperText-root": { visibility: "visible !important" } }}
+            />
+          )}
+        </Box>
+      )}
+    </Paper>
+  );
+
   return (
     <>
     <Dialog
@@ -823,6 +975,19 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
             >
               Preview & Download Slip
             </Button>
+
+            {/* Razorpay Payment Link -- only present when this booking's
+                payment method was "razorpay". Always shows the link (manual-
+                copy fallback) plus the REAL WhatsApp send outcome from the
+                booking response, never assumed successful. */}
+            {bookedAppointment.paymentLink && (
+              <PaymentLinkDisplay
+                shortUrl={bookedAppointment.paymentLink.shortUrl}
+                whatsappSent={bookedAppointment.paymentLink.whatsappSent}
+                error={bookedAppointment.paymentLink.error}
+              />
+            )}
+
             <Typography variant="caption" sx={{ display: "block", color: "#9ca3af", mt: 2 }}>
               Close this dialog to book another appointment.
             </Typography>
@@ -1167,8 +1332,11 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               full-width row, then the Fee/Method Paper sat in a separate row
               below it; merging them reclaims the vertical space Visit Type
               used to occupy on its own, since the Fee summary Paper is
-              already the taller of the two. ─── */}
-          <Grid size={{ xs: 12, sm: 5, md: 4 }}>
+              already the taller of the two. Treatment mode: the Fee/Method
+              Paper no longer shares this row (Part 5 reorder -- it now
+              renders after Fee Items/Subtotal/Total further down), so this
+              box goes full-width instead of sharing sm:5/md:4. ─── */}
+          <Grid size={{ xs: 12, sm: isTreatmentMode ? 12 : 5, md: isTreatmentMode ? 12 : 4 }}>
             <Box
               sx={{
                 border: "1px solid #e5e7eb",
@@ -1338,164 +1506,16 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
             </Box>
           </Grid>
 
-          {/* Fee / Payment Method summary -- now shares ROW 4a with Visit
-              Type above instead of stacking in its own row (Fix 3). Content
-              is unchanged from the old standalone "ROW 5", just relocated. */}
-          {!isSessionMode && (
+          {/* Fee / Payment Method summary -- shared between OPD and Treatment
+              (single source of truth, see paymentMethodPaper below). Position
+              differs by visit type: OPD keeps it here beside Visit Type;
+              Treatment mode renders it further down, AFTER Treatment Name/
+              Sessions/OPD-link/Fee-Items/Subtotal/Total (Part 5 reorder --
+              admin needs to know WHAT the treatment is and costs before
+              deciding how to collect payment for it). */}
+          {!isSessionMode && !isTreatmentMode && (
           <Grid size={{ xs: 12, sm: 7, md: 8 }}>
-            <Paper variant="outlined" className="p-3 bg-gray-50">
-              <Box className="flex justify-between items-center py-1">
-                <Typography variant="caption" className="text-gray-600">
-                  {formData.visitType === "treatment"
-                    ? formData.treatmentName.trim() || "Treatment fee"
-                    : "Appointment / Consultation fee"}
-                </Typography>
-                {discountPercent > 0 && !formData.isFree ? (
-                  <Box className="flex items-center gap-2">
-                    <span className="font-numbers text-gray-400 line-through text-[13px]">
-                      {formatCurrency(baseFee)}
-                    </span>
-                    <span className="font-numbers font-semibold text-accent">
-                      {formatCurrency(discountedFee)}
-                    </span>
-                  </Box>
-                ) : (
-                  <span className="font-numbers font-semibold">
-                    {formData.isFree ? "Free" : formatCurrency(baseFee)}
-                  </span>
-                )}
-              </Box>
-              {discountPercent > 0 && !formData.isFree && (
-                <Box className="flex justify-between items-center py-1">
-                  <Typography variant="caption" className="text-gray-500">
-                    Membership discount
-                  </Typography>
-                  <Chip size="small" color="warning" label={`${discountPercent}% off`} sx={{ height: 18, fontWeight: 700 }} />
-                </Box>
-              )}
-              <Divider className="my-2.5" />
-              <Box className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-0.5 mt-2">
-                {formData.visitType === "treatment" && !formData.isFree && (
-                  <Box className="flex items-center gap-1">
-                    <TextField
-                      label="Discount %"
-                      type="number"
-                      value={formData.treatmentDiscountPercent}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, treatmentDiscountPercent: e.target.value }))
-                      }
-                      size="small"
-                      inputProps={{ min: 0, max: 100 }}
-                      sx={{ width: 110, "& .MuiInputBase-root": { height: 30 } }}
-                    />
-                  </Box>
-                )}
-                <Box className="flex items-center gap-1">
-                  <Typography variant="caption" className="text-gray-500">Method:</Typography>
-                  {formData.isFree ? (
-                    <Chip size="small" variant="outlined" label="Free" sx={{ height: 20 }} />
-                  ) : (
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <Button
-                        variant={paymentMethod === "cash" ? "contained" : "outlined"}
-                        size="small"
-                        onClick={() => setPaymentMethod("cash")}
-                        sx={{
-                          textTransform: "none", fontSize: "11px", height: 22, minWidth: 0, px: 1.5,
-                          ...(paymentMethod === "cash"
-                            ? { backgroundColor: "#1e3a5f", color: "#fff", "&:hover": { backgroundColor: "#162d4a" } }
-                            : { borderColor: "#1e3a5f", color: "#1e3a5f" }),
-                        }}
-                      >
-                        Cash
-                      </Button>
-                      <Button
-                        variant={paymentMethod === "online" ? "contained" : "outlined"}
-                        size="small"
-                        onClick={() => setPaymentMethod("online")}
-                        sx={{
-                          textTransform: "none", fontSize: "11px", height: 22, minWidth: 0, px: 1.5,
-                          ...(paymentMethod === "online"
-                            ? { backgroundColor: "#059669", color: "#fff", "&:hover": { backgroundColor: "#047857" } }
-                            : { borderColor: "#059669", color: "#059669" }),
-                        }}
-                      >
-                        Online
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-              {/* Free toggle (below method, above payment collected) */}
-              <Box sx={{ mt: 1 }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.isFree}
-                      onChange={(e) => {
-                        const isFree = e.target.checked;
-                        const defaultFee = formData.appointmentType === "emergency"
-                          ? feeSettings.opdFeeEmergency
-                          : feeSettings.opdFeeRegular;
-                        setFormData((prev) => ({
-                          ...prev,
-                          isFree,
-                          opdFee: isFree ? 0 : defaultFee,
-                        }));
-                        if (isFree) { setPaymentMethod("cash"); setFeeCollected(false); }
-                      }}
-                      color="success"
-                      size="small"
-                    />
-                  }
-                  label={<Typography variant="body2" sx={{ fontSize: "0.8rem" }}>Free</Typography>}
-                />
-              </Box>
-
-              {!formData.isFree && (
-                <Box className="flex flex-col gap-1 mt-2">
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={feeCollected}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setFeeCollected(checked);
-                          if (checked && formData.visitType === "treatment") {
-                            setFormData((prev) => ({
-                              ...prev,
-                              treatmentPaymentAmount: treatmentTotal,
-                            }));
-                          }
-                        }}
-                        size="small"
-                        sx={{ py: 0.5, color: "#059669", "&.Mui-checked": { color: "#059669" } }}
-                      />
-                    }
-                    label={
-                      <Typography variant="caption" sx={{ color: feeCollected ? "#059669" : "text.secondary", fontWeight: feeCollected ? 600 : 400 }}>
-                        Payment collected
-                      </Typography>
-                    }
-                    sx={{ m: 0 }}
-                  />
-                  {formData.visitType === "treatment" && feeCollected && (
-                    <TextField
-                      label="Amount collected (₹)"
-                      type="number"
-                      value={formData.treatmentPaymentAmount ?? ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, treatmentPaymentAmount: Number(e.target.value) }))
-                      }
-                      size="small"
-                      inputProps={{ min: 0, max: treatmentTotal || 999999 }}
-                      helperText={`Treatment total: ₹${treatmentTotal.toLocaleString("en-IN")}. Enter full or partial advance.`}
-                      sx={{ maxWidth: 220, "& .MuiFormHelperText-root": { visibility: "visible !important" } }}
-                    />
-                  )}
-                </Box>
-              )}
-            </Paper>
+            {paymentMethodPaper}
           </Grid>
           )}
 
@@ -1748,6 +1768,17 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                 </Box>
               </Box>
             </Grid>
+          )}
+
+          {/* ─── Discount % / Payment Method / Free toggle / Payment collected
+              -- LAST in Treatment mode (Part 5 reorder). Same shared
+              paymentMethodPaper as OPD mode, just rendered here instead of
+              up in ROW 4a, so admin sees WHAT the treatment is and costs
+              before deciding how to collect payment for it. ─── */}
+          {!isSessionMode && isTreatmentMode && (
+          <Grid size={{ xs: 12 }}>
+            {paymentMethodPaper}
+          </Grid>
           )}
 
           {/* ─── SESSION PAYMENT (optional, treatment_session only, hidden when nothing to collect) ─── */}
