@@ -499,6 +499,26 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollec
 const treatmentPlanStatusColors = { active: "primary", completed: "success" };
 const getTreatmentColumns = (onView, sessionsBookedMap = {}) => [
   {
+    field: "appointmentNumber",
+    headerName: "Treatment #",
+    minWidth: 130,
+    render: (value, row) => (
+      <Typography
+        variant="body2"
+        className="font-numbers"
+        sx={{
+          fontSize: "12px",
+          color: "#4f46e5",
+          cursor: "pointer",
+          "&:hover": { textDecoration: "underline" },
+        }}
+        onClick={(e) => { e.stopPropagation(); onView(row); }}
+      >
+        {value || "-"}
+      </Typography>
+    ),
+  },
+  {
     field: "patient",
     headerName: "Patient",
     minWidth: 160,
