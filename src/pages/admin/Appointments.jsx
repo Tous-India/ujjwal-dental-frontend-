@@ -1372,10 +1372,16 @@ const Appointments = () => {
         invoice={collectRow?.invoice}
         patient={collectRow?.patient}
         onSuccess={(msg) => {
-          setCollectOpen(false);
-          setCollectRow(null);
           refetch();
-          if (msg) toast.success(msg);
+          // msg is only passed for the immediate cash/UPI collection path --
+          // Razorpay calls onSuccess() with no args right after generating the
+          // link, while the modal is still showing it, and must NOT be
+          // treated as "fully done, close the dialog" (see CollectPaymentModal).
+          if (msg) {
+            setCollectOpen(false);
+            setCollectRow(null);
+            toast.success(msg);
+          }
         }}
       />
 

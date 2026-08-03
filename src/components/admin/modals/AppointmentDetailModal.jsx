@@ -641,9 +641,15 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
         onClose={() => setCollectPaymentOpen(false)}
         invoice={appointment.invoice}
         patient={appointment.patient}
-        onSuccess={() => {
-          setCollectPaymentOpen(false);
-          onClose();
+        onSuccess={(msg) => {
+          // msg is only passed for the immediate cash/UPI collection path --
+          // Razorpay calls onSuccess() with no args right after generating the
+          // link, while CollectPaymentModal is still showing it, and must NOT
+          // cascade-close this detail modal before the admin can see/copy it.
+          if (msg) {
+            setCollectPaymentOpen(false);
+            onClose();
+          }
         }}
       />
     )}
