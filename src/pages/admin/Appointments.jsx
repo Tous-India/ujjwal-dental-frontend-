@@ -1242,7 +1242,18 @@ const Appointments = () => {
                 (row) => { setSelectedAppointment(row); setCancelModalOpen(true); },
                 (row) => { setSlipAppointment(row); setSlipPreviewOpen(true); },
                 (row) => { setSelectedAppointment(row); setEditModalOpen(true); },
-                (row) => { setCollectRow(row); setCollectOpen(true); },
+                (row) => {
+                  // CollectPaymentModal silently renders nothing when invoice
+                  // is falsy (if (!invoice) return null) -- without this guard,
+                  // a row missing a populated invoice makes Collect look like
+                  // it "does nothing" with zero feedback. Surface it instead.
+                  if (!row?.invoice) {
+                    toast.error("No invoice found for this appointment -- cannot collect payment.");
+                    return;
+                  }
+                  setCollectRow(row);
+                  setCollectOpen(true);
+                },
                 handleStatusChange,
                 updatingStatusId,
                 (row) => { setSelectedAppointment(row); setRescheduleModalOpen(true); },
