@@ -50,6 +50,7 @@ import { useAdminStore } from "../../../store/admin.store";
 import StyledTextField from "../shared/StyledTextField";
 import RescheduleAppointmentModal from "./RescheduleAppointmentModal";
 import PaymentDetailModal from "./PaymentDetailModal";
+import CollectPaymentModal from "./CollectPaymentModal";
 import { TREATMENT_NAME_OPTIONS, TREATMENT_NAME_OTHER, treatmentNameToChoice } from "../../../constants/treatmentNames";
 
 // Same underlying itemType enum as AddAppointmentModal's treatment booking
@@ -106,11 +107,11 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
   const [reopenError, setReopenError] = useState("");
 
   const [markingCompleteId, setMarkingCompleteId] = useState(null);
+  // Holds the session appointment currently being collected for -- opens the
+  // shared CollectPaymentModal (Cash/UPI/Razorpay, same component/logic as
+  // every other collection entry point) scoped to THIS session via its
+  // appointmentId prop.
   const [collectDialogSession, setCollectDialogSession] = useState(null);
-  const [collectAmount, setCollectAmount] = useState("");
-  const [collectMode, setCollectMode] = useState("cash");
-  const [collectLoading, setCollectLoading] = useState(false);
-  const [collectError, setCollectError] = useState("");
 
   // Edit Treatment -- name/line items/discount, available throughout the
   // active lifecycle (locked once treatmentStatus is set, see alreadyClosed
@@ -353,32 +354,6 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
         onSettled: () => setMarkingCompleteId(null),
       }
     );
-  };
-
-  const handleCollectPaymentSubmit = async () => {
-    const amt = Number(collectAmount);
-    if (!amt || amt <= 0) {
-      setCollectError("Enter a valid amount.");
-      return;
-    }
-    setCollectLoading(true);
-    setCollectError("");
-    try {
-      await api.post("/payments/admin/collect", {
-        invoiceId: appointment.invoice?._id,
-        amount: amt,
-        mode: collectMode,
-        appointmentId: collectDialogSession._id,
-      });
-      toast.success("Payment collected.");
-      setCollectDialogSession(null);
-      setCollectAmount("");
-      refreshAll();
-    } catch (err) {
-      setCollectError(err?.response?.data?.message || "Failed to collect payment.");
-    } finally {
-      setCollectLoading(false);
-    }
   };
 
   const handleCloseTreatmentSubmit = async () => {
@@ -640,12 +615,7 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                             <Tooltip title="Collect Payment">
                               <IconButton
                                 size="small"
-                                onClick={() => {
-                                  setCollectDialogSession(s);
-                                  setCollectAmount("");
-                                  setCollectMode("cash");
-                                  setCollectError("");
-                                }}
+                                onClick={() => setCollectDialogSession(s)}
                               >
                                 <PaymentsIcon fontSize="small" />
                               </IconButton>
@@ -842,63 +812,27 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
         </DialogActions>
       </Dialog>
 
-      {/* Collect Payment dialog -- post-hoc, per-session collection */}
-      <Dialog
+      {/* Collect Payment -- post-hoc, per-session collection. Shared
+          CollectPaymentModal (Cash/UPI/Razorpay), scoped to THIS session via
+          appointmentId so the resulting Payment (immediate for cash/UPI, or
+          created later by the payment_link.paid webhook for Razorpay) is
+          attributed to this specific session, not the invoice as a whole --
+          keeps collectedBySession per-session (non-cumulative). */}
+      <CollectPaymentModal
         open={!!collectDialogSession}
-        onClose={() => { if (!collectLoading) { setCollectDialogSession(null); setCollectError(""); } }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Collect Payment</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Recording a payment for{" "}
-            {collectDialogSession?.visitType === "treatment" ? "Session 1" : `Session ${collectDialogSession?.sessionNumber || "?"}`}
-            . Balance due: ₹{(displayInvoice?.balanceDue || 0).toLocaleString("en-IN")}
-          </Typography>
-          <TextField
-            label="Amount *"
-            type="number"
-            fullWidth
-            size="small"
-            value={collectAmount}
-            onChange={(e) => { setCollectAmount(e.target.value); if (collectError) setCollectError(""); }}
-            disabled={collectLoading}
-            sx={{ mb: 2 }}
-          />
-          <FormControl fullWidth size="small">
-            <InputLabel>Mode</InputLabel>
-            <Select
-              value={collectMode}
-              label="Mode"
-              onChange={(e) => setCollectMode(e.target.value)}
-              disabled={collectLoading}
-            >
-              <MenuItem value="cash">Cash</MenuItem>
-              <MenuItem value="card">Card</MenuItem>
-              <MenuItem value="upi">UPI</MenuItem>
-            </Select>
-          </FormControl>
-          {collectError && (
-            <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
-              {collectError}
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => { setCollectDialogSession(null); setCollectError(""); }} color="inherit" disabled={collectLoading}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleCollectPaymentSubmit}
-            disabled={collectLoading}
-            startIcon={collectLoading ? <CircularProgress size={14} color="inherit" /> : null}
-          >
-            {collectLoading ? "Collecting…" : "Collect Payment"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onClose={() => setCollectDialogSession(null)}
+        invoice={displayInvoice}
+        patient={appointment.patient}
+        appointmentId={collectDialogSession?._id}
+        onSuccess={(msg) => {
+          refreshAll();
+          // msg is only passed for the immediate cash/UPI collection path --
+          // Razorpay calls onSuccess() with no args right after generating the
+          // link, while the modal is still showing it, and must NOT close the
+          // dialog before the admin can see/copy it (see CollectPaymentModal).
+          if (msg) setCollectDialogSession(null);
+        }}
+      />
 
       {/* Edit Treatment dialog -- name/line items/discount, available throughout
           the active lifecycle (any sessions delivered), locked once closed.
