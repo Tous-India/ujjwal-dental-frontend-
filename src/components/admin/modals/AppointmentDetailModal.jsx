@@ -187,7 +187,7 @@ const AppointmentDetailModal = ({ open, onClose, appointment, onEdit, onCancel, 
   // treatment-specific treatmentStatus check the backend also enforces.
   const canChangePaymentMethod =
     !appointment.isFree &&
-    !["cancelled", "completed", "no_show"].includes(status) &&
+    !["cancelled", "completed", "no_show"].includes(appointment.status) &&
     !(isParentTreatment && appointment.treatmentStatus);
 
   /**
