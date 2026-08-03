@@ -674,7 +674,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
         // Collect session payment (after session appointment created successfully)
         if (shouldCollectPayment) {
           try {
-            await collectPaymentMutation({
+            const collectRes = await collectPaymentMutation({
               invoiceId: capturedInvoiceId,
               amount: capturedAmount,
               mode: capturedMode,
@@ -683,9 +683,20 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
               // session rather than the shared invoice's cumulative total.
               appointmentId: response?.data?.appointmentId,
             });
-            toast.success(
-              `Session booked${token ? ` — Token #${token}` : ""} + ₹${capturedAmount.toLocaleString("en-IN")} payment recorded`,
-            );
+            if (capturedMode === "razorpay") {
+              // Merge the generated link onto the already-set success-banner
+              // state -- reuses the SAME PaymentLinkDisplay block below that
+              // booking-time razorpay already renders, no new UI needed.
+              const paymentLink = collectRes?.data?.paymentLink;
+              setBookedAppointment((prev) => (prev ? { ...prev, paymentLink } : prev));
+              toast.success(
+                `Session booked${token ? ` — Token #${token}` : ""} — Razorpay payment link generated`,
+              );
+            } else {
+              toast.success(
+                `Session booked${token ? ` — Token #${token}` : ""} + ₹${capturedAmount.toLocaleString("en-IN")} payment recorded`,
+              );
+            }
           } catch {
             toast.success(token ? `Session booked — Token #${token}` : "Session booked");
             toast.warning("Payment could not be recorded — collect via session detail");
@@ -1830,21 +1841,23 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                       inputProps={{ min: 0, max: formData.selectedTreatmentInvoiceBalance || 999999 }}
                       sx={{ width: 140 }}
                     />
-                    <TextField
-                      label="Method"
-                      select
-                      value={formData.sessionPaymentMode}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, sessionPaymentMode: e.target.value }))
-                      }
-                      size="small"
-                      sx={{ width: 110 }}
-                    >
-                      <MenuItem value="cash">Cash</MenuItem>
-                      <MenuItem value="upi">UPI</MenuItem>
-                      <MenuItem value="card">Card</MenuItem>
-                    </TextField>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "#6b7280", display: "block", mb: 0.5 }}>
+                        Method
+                      </Typography>
+                      <PaymentMethodSelector
+                        value={formData.sessionPaymentMode}
+                        onChange={(method) =>
+                          setFormData((prev) => ({ ...prev, sessionPaymentMode: method }))
+                        }
+                      />
+                    </Box>
                   </Box>
+                )}
+                {formData.collectSessionPayment && formData.sessionPaymentMode === "razorpay" && (
+                  <Typography variant="caption" sx={{ display: "block", color: "#2563eb", fontSize: "0.7rem", mt: 1 }}>
+                    A Razorpay payment link will be generated for this amount and sent via WhatsApp after the session is booked — payment is collected later by the patient, not now.
+                  </Typography>
                 )}
               </Box>
             </Grid>
