@@ -131,6 +131,7 @@ const Dashboard = () => {
     todayAppointments,
     recentEnquiries,
     staleTreatments,
+    unbilledAppointments,
     isLoadingStats,
     isLoadingRecentAppointments,
     isLoadingRecentPatients,
@@ -501,6 +502,58 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Unbilled Appointments — chargeable but no invoice exists. Red, not
+            amber: this is unrecoverable revenue until someone acts, and these
+            are invisible on the Billing page by construction (no invoice for it
+            to list). Shown ABOVE stalled treatments — higher severity. */}
+        {unbilledAppointments?.length > 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Card elevation={0} className="rounded-xl! border border-red-300 bg-red-50/50">
+              <CardContent className="p-5!">
+                <Box className="flex justify-between items-center mb-2">
+                  <Typography variant="h6" className="font-semibold text-[#991b1b] text-[16px]">
+                    Unbilled Appointments ({unbilledAppointments.length})
+                  </Typography>
+                  <Button
+                    size="small"
+                    className="text-accent!"
+                    endIcon={<ArrowForwardIcon />}
+                    onClick={() => navigate("/admin/appointments")}
+                  >
+                    View Appointments
+                  </Button>
+                </Box>
+                <Typography variant="caption" className="text-red-800 block mb-3">
+                  These appointments have a fee but no invoice, so they cannot be
+                  billed or collected against and will not appear in Billing.
+                  Please contact support to have an invoice created.
+                </Typography>
+                <Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {unbilledAppointments.map((a) => (
+                    <Box
+                      key={a._id}
+                      className="p-3 border border-red-200 rounded-lg bg-white hover:shadow-sm transition-all cursor-pointer"
+                      onClick={() => navigate("/admin/appointments")}
+                    >
+                      <Typography variant="body2" className="font-medium text-gray-800 truncate">
+                        {a.patient?.name || "Unknown"}
+                      </Typography>
+                      <Typography variant="caption" className="text-gray-500 block truncate">
+                        {a.appointmentNumber} • ₹{(a.fee ?? a.opdFee ?? 0).toLocaleString("en-IN")}
+                      </Typography>
+                      <Typography variant="caption" className="text-red-700 font-medium block truncate">
+                        {a.invoiceError?.message
+                          ? `Invoice failed: ${a.invoiceError.message}`
+                          : "No invoice linked"}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
         {/* Stalled Treatments — not yet closed, behind on sessions, no activity in 90+ days */}
         {staleTreatments?.length > 0 && (

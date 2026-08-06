@@ -648,6 +648,19 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
     createAppointment(appointmentData, {
       onSuccess: async (response) => {
         const token = response?.data?.tokenNumber;
+
+        // The booking is deliberately kept even when auto-invoice generation
+        // fails -- but it must never read as a clean success. Without an
+        // invoice this appointment can't be billed or collected against, and
+        // it won't show up in Billing at all. Surfaced loudly here (long
+        // autoClose) plus persisted server-side for the Dashboard alert.
+        if (response?.data?.warning || response?.data?.invoiceError) {
+          toast.error(
+            response.data.warning ||
+              "Appointment booked, but invoice generation failed — please contact support.",
+            { autoClose: 15000 }
+          );
+        }
         // Build slip object from formData (before reset) + server response
         const slipData = {
           ...response?.data,

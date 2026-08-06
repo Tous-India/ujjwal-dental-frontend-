@@ -20,6 +20,7 @@ import {
   getRecentPatients,
   getTodayAppointments,
   getStaleTreatments,
+  getUnbilledAppointments,
 } from "../../api/admin/dashboard.api";
 import { getEnquiries } from "../../api/admin/enquiries.api";
 
@@ -88,6 +89,16 @@ export const useDashboard = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  /**
+   * Unbilled Appointments Query -- chargeable appointments with no invoice.
+   * Short staleTime: this is a money-loss alert, worth surfacing promptly.
+   */
+  const unbilledAppointmentsQuery = useQuery({
+    queryKey: ["admin", "dashboard", "unbilledAppointments"],
+    queryFn: getUnbilledAppointments,
+    staleTime: 2 * 60 * 1000,
+  });
+
   // Combined loading state
   const isLoading =
     statsQuery.isLoading ||
@@ -127,6 +138,10 @@ export const useDashboard = () => {
     // Stale Treatments
     staleTreatments: staleTreatmentsQuery.data?.data?.staleTreatments || [],
     isLoadingStaleTreatments: staleTreatmentsQuery.isLoading,
+
+    // Unbilled (chargeable but invoice-less) appointments
+    unbilledAppointments: unbilledAppointmentsQuery.data?.data?.unbilledAppointments || [],
+    isLoadingUnbilledAppointments: unbilledAppointmentsQuery.isLoading,
 
     // Combined states
     isLoading,

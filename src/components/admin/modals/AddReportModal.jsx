@@ -71,14 +71,14 @@ const FileSlot = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf,.jpg,.jpeg,.png,.heic,.heif"
         onChange={onFileSelect}
         className="hidden"
       />
       <input
         ref={cameraInputRef}
         type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf,.jpg,.jpeg,.png,.heic,.heif"
         capture="environment"
         onChange={onFileSelect}
         className="hidden"
@@ -203,9 +203,12 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
   };
 
   const validateFile = (file) => {
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Please select a PDF or image file (JPEG, PNG)");
+    // HEIC/HEIF included -- iPhones shoot HEIC by default. Some browsers report
+    // an EMPTY type for .heic, so fall back to the extension before rejecting.
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg", "image/heic", "image/heif"];
+    const extOk = /\.(pdf|jpe?g|png|heic|heif)$/i.test(file.name || "");
+    if (!allowedTypes.includes(file.type) && !extOk) {
+      toast.error("Please select a PDF or image file (JPEG, PNG, HEIC)");
       return false;
     }
     if (file.size > 10 * 1024 * 1024) {

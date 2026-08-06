@@ -75,3 +75,16 @@ export const getStaleTreatments = () =>
   api.get("/appointments/stale-treatments").then((res) => ({
     data: res.data?.data || { staleTreatments: [], count: 0 },
   }));
+
+/**
+ * Get chargeable appointments that have NO invoice -- a billing gap.
+ *
+ * These are invisible to the Billing page by construction (there's no invoice
+ * for it to list), so without this alert they're only discovered when someone
+ * tries to collect and can't. Exactly how a real patient's ₹300 went unbilled.
+ * @returns {Promise} - { unbilledAppointments: [...], count }
+ */
+export const getUnbilledAppointments = () =>
+  api.get("/appointments/unbilled").then((res) => ({
+    data: res.data?.data || { unbilledAppointments: [], count: 0 },
+  }));
