@@ -54,6 +54,7 @@ import { searchPatients } from "../../api/admin/patients.api";
 import AddPaymentModal from "../../components/admin/modals/AddPaymentModal";
 import { downloadInvoicePDF } from "../../utils/downloadInvoicePDF";
 import { exportPaymentsPdf } from "../../api/admin/payments.api";
+import { usePermissions } from "../../hooks/admin/usePermissions";
 
 const fmt = (n) => (n || 0).toLocaleString("en-IN");
 
@@ -177,6 +178,7 @@ const Payments = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
 
   // ── Collect payment modal state ────────────────────────────────────────────
+  const { hasPermission } = usePermissions();
   const [collectOpen, setCollectOpen] = useState(false);
   const [collectInvoice, setCollectInvoice] = useState(null);
 
@@ -890,24 +892,26 @@ const Payments = () => {
                                 </Typography>
                               </TableCell>
                               <TableCell align="center">
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  onClick={() => {
-                                    setCollectInvoice(inv);
-                                    setCollectOpen(true);
-                                  }}
-                                  sx={{
-                                    bgcolor: "#f59e0b",
-                                    color: "#fff",
-                                    fontWeight: 700,
-                                    fontSize: 12,
-                                    px: 1.5,
-                                    "&:hover": { bgcolor: "#d97706" },
-                                  }}
-                                >
-                                  Collect Payment
-                                </Button>
+                                {hasPermission("payments", "create") && (
+                                  <Button
+                                    variant="contained"
+                                    size="small"
+                                    onClick={() => {
+                                      setCollectInvoice(inv);
+                                      setCollectOpen(true);
+                                    }}
+                                    sx={{
+                                      bgcolor: "#f59e0b",
+                                      color: "#fff",
+                                      fontWeight: 700,
+                                      fontSize: 12,
+                                      px: 1.5,
+                                      "&:hover": { bgcolor: "#d97706" },
+                                    }}
+                                  >
+                                    Collect Payment
+                                  </Button>
+                                )}
                               </TableCell>
                             </TableRow>
                           );

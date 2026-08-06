@@ -381,14 +381,16 @@ const Patients = () => {
               <ListItemText>Export as PDF</ListItemText>
             </MenuItem>
           </Menu>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={handleAddClick}
-          >
-            Add Patient
-          </Button>
+          {hasPermission("patients", "create") && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleAddClick}
+            >
+              Add Patient
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -432,9 +434,9 @@ const Patients = () => {
           }
         }}
         patient={selectedPatient}
-        onEdit={handleEditPatient}
+        onEdit={hasPermission("patients", "edit") ? handleEditPatient : undefined}
         onDelete={hasPermission("patients", "delete") ? handleDeletePatient : undefined}
-        onReactivate={handleReactivatePatient}
+        onReactivate={hasPermission("patients", "edit") ? handleReactivatePatient : undefined}
       />
 
       {/* Add Patient Modal */}

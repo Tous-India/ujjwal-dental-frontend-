@@ -63,6 +63,7 @@ import PatientDetailModal from "../../components/admin/modals/PatientDetailModal
 import api from "../../api/axios";
 import { useAdminStore } from "../../store/admin.store";
 import { downloadFile } from "../../utils/downloadFile";
+import { usePermissions } from "../../hooks/admin/usePermissions";
 
 // Shared date formatter — matches DataTable's built-in type="date" format
 const fmtDate = (val) =>
@@ -192,6 +193,7 @@ const Billing = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState(null);
+  const { hasPermission } = usePermissions();
   const [collectOpen, setCollectOpen] = useState(false);
   const [collectInvoice, setCollectInvoice] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
@@ -457,7 +459,7 @@ const Billing = () => {
           >
             ₹{(value || 0).toLocaleString("en-IN")}
           </Typography>
-          {value > 0 && row.paymentStatus !== "paid" && row.status !== "cancelled" && (
+          {value > 0 && row.paymentStatus !== "paid" && row.status !== "cancelled" && hasPermission("payments", "create") && (
             <Button
               size="small"
               variant="contained"
@@ -632,14 +634,16 @@ const Billing = () => {
               <ListItemText>Export as PDF</ListItemText>
             </MenuItem>
           </Menu>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setCreateModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            Create Invoice
-          </Button>
+          {hasPermission("billing", "create") && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setCreateModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              Create Invoice
+            </Button>
+          )}
         </Box>
       </Box>
 

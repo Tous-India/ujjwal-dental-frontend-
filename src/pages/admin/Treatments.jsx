@@ -16,6 +16,7 @@ import TreatmentDetailModal from "../../components/admin/modals/TreatmentDetailM
 import AddTreatmentModal from "../../components/admin/modals/AddTreatmentModal";
 import EditTreatmentModal from "../../components/admin/modals/EditTreatmentModal";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
+import { usePermissions } from "../../hooks/admin/usePermissions";
 
 /**
  * Table columns
@@ -182,6 +183,7 @@ const TreatmentMaster = () => {
   /**
    * Handle edit from detail modal
    */
+  const { hasPermission } = usePermissions();
   const handleEditTreatment = (treatment) => {
     setDetailModalOpen(false);
     setSelectedTreatment(treatment);
@@ -260,14 +262,19 @@ const TreatmentMaster = () => {
           </Typography>
         </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddClick}
-          className="bg-teal-600 hover:bg-teal-700"
-        >
-          Add Treatment
-        </Button>
+        {/* This page is the treatment MASTER CATALOG (types/pricing), which is
+            the separate `treatment_catalog` module -- NOT `treatments`, which
+            covers day-to-day patient treatment work. */}
+        {hasPermission("treatment_catalog", "create") && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddClick}
+            className="bg-teal-600 hover:bg-teal-700"
+          >
+            Add Treatment
+          </Button>
+        )}
       </Box>
 
       {/* Data Table */}
@@ -292,8 +299,8 @@ const TreatmentMaster = () => {
         open={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
         treatment={selectedTreatment}
-        onEdit={handleEditTreatment}
-        onDelete={handleDeleteTreatment}
+        onEdit={hasPermission("treatment_catalog", "edit") ? handleEditTreatment : undefined}
+        onDelete={hasPermission("treatment_catalog", "delete") ? handleDeleteTreatment : undefined}
       />
 
       {/* Add Treatment Modal */}

@@ -303,7 +303,7 @@ const rowPaymentStatus = (row) => {
 };
 
 // Function to get columns with action handlers
-const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollectRow, onStatusChange, updatingStatusId, onRescheduleRow, canDelete = true, showSessionColumn = true) => [
+const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollectRow, onStatusChange, updatingStatusId, onRescheduleRow, canDelete = true, showSessionColumn = true, canEdit = true, canCollect = true) => [
   ...columns.filter((c) =>
     c.field !== "paymentStatus" &&
     c.field !== "status" &&
@@ -315,7 +315,10 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollec
     headerName: "Status",
     minWidth: 140,
     render: (value, row) => {
-      const isTerminal = ["completed", "cancelled", "no_show"].includes(value);
+      // Without edit permission the status Select is replaced by a read-only
+      // chip -- the backend rejects the PATCH anyway, so offering the control
+      // would only produce a 403.
+      const isTerminal = !canEdit || ["completed", "cancelled", "no_show"].includes(value);
       if (isTerminal) {
         return (
           <Chip
@@ -372,14 +375,16 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollec
               ₹{amtPaid.toLocaleString("en-IN")} / ₹{grandTotal.toLocaleString("en-IN")}
             </Typography>
             <Chip size="small" label="Partial" color="warning" variant="outlined" sx={{ fontSize: "10px", height: 18, mb: 0.5 }} />
-            <Button
-              size="small"
-              variant="contained"
-              onClick={(e) => { e.stopPropagation(); onCollectRow(row); }}
-              sx={{ display: "block", fontSize: "10px", py: 0.25, px: 1, minWidth: 0, textTransform: "none" }}
-            >
-              Collect
-            </Button>
+            {canCollect && (
+              <Button
+                size="small"
+                variant="contained"
+                onClick={(e) => { e.stopPropagation(); onCollectRow(row); }}
+                sx={{ display: "block", fontSize: "10px", py: 0.25, px: 1, minWidth: 0, textTransform: "none" }}
+              >
+                Collect
+              </Button>
+            )}
           </Box>
         );
       }
@@ -402,6 +407,11 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollec
       // amounts). Replaces the old raw Paid/Unpaid dropdown, which could
       // only flip the WHOLE balance paid in one shot and duplicated a
       // second payment-collection path alongside the proven one in Billing.
+      // No payment-create permission -> show the status only. The backend
+      // rejects /payments/admin/collect for this role regardless.
+      if (!canCollect) {
+        return <Chip size="small" label="Unpaid" color="error" variant="outlined" />;
+      }
       return (
         <Button
           size="small"
@@ -419,8 +429,11 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollec
     headerName: "Actions",
     minWidth: 160,
     render: (_, row) => {
-      const canCancel = !["cancelled", "completed", "no_show"].includes(row?.status);
-      const canReschedule = ["scheduled", "confirmed"].includes(row?.status);
+      // Permission gating (canEdit) layered on top of the existing
+      // status-based rules -- both must allow the action.
+      const canCancel = canEdit && !["cancelled", "completed", "no_show"].includes(row?.status);
+      const canReschedule = canEdit && ["scheduled", "confirmed"].includes(row?.status);
+      const canEditRow = canEdit && row?.status !== "completed";
       const canEditOrDelete = row?.status !== "completed";
       return (
         <Box className="flex items-center gap-1">
@@ -435,7 +448,7 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollec
           >
             <DownloadIcon fontSize="small" />
           </IconButton>
-          {canEditOrDelete && (
+          {canEditRow && (
             <IconButton
               size="small"
               title="Edit Appointment"
@@ -1190,21 +1203,23 @@ const Appointments = () => {
             </Button>
           )}
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddClick}
-            sx={{
-              textTransform: "none",
-              fontSize: "13px",
-              fontWeight: 600,
-              height: 36,
-              px: 2,
-              whiteSpace: "nowrap",
-            }}
-          >
-            New Appointment
-          </Button>
+          {hasPermission("appointments", "create") && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddClick}
+              sx={{
+                textTransform: "none",
+                fontSize: "13px",
+                fontWeight: 600,
+                height: 36,
+                px: 2,
+                whiteSpace: "nowrap",
+              }}
+            >
+              New Appointment
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -1259,6 +1274,8 @@ const Appointments = () => {
                 (row) => { setSelectedAppointment(row); setRescheduleModalOpen(true); },
                 hasPermission("appointments", "delete"),
                 activeTab === 1,
+                hasPermission("appointments", "edit"),
+                hasPermission("payments", "create"),
               )
         }
         getRowSx={(row) => {
