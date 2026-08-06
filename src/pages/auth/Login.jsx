@@ -3,15 +3,16 @@
  *
  * Login redesigned — phone-first, navy primary, OTP hidden behind flag — 2026-07-04
  *
- * Supports two login methods:
- * 1. Password-based (default): Patient enters phone + password
- * 2. OTP-based (hidden): gated behind SHOW_OTP_TAB — re-enable when SMS OTP is ready
+ * Login methods:
+ * 1. WhatsApp OTP (default) — phone, then a 6-digit code
+ * 2. Password (transition fallback) — retained until OTP is confirmed live
+ *
+ * The legacy EMAIL-OTP flow was retired (backend now answers 410).
  */
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
 import {
-  requestOtp,
   loginWithPassword,
   forgotPassword,
   requestWhatsappOtp,
@@ -30,9 +31,6 @@ const fireBookAppointmentConversion = () => {
   }
 };
 
-// Set to true when SMS OTP is integrated to reveal the OTP tab
-const SHOW_OTP_TAB = false;
-
 // Field style — navy focus ring instead of orange
 const fieldCls =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[15px] text-gray-800 outline-none transition-colors focus:border-[#0d1b4a] focus:ring-2 focus:ring-[#0d1b4a]/20";
@@ -48,13 +46,9 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   // Optional post-login destination, e.g. /login?redirect=/membership-plans
   const redirect = searchParams.get("redirect");
-  const setPendingEmail = useAuthStore((state) => state.setPendingEmail);
   const login = useAuthStore((state) => state.login);
 
-  // Tab state — default to password (1); OTP tab hidden unless SHOW_OTP_TAB
-  const [loginMethod, setLoginMethod] = useState(1); // 0 = OTP, 1 = Password
-
-  // OTP tab state (kept intact for easy re-enable)
+  // Email is still used by the forgot-password (reset link) flow.
   const [email, setEmail] = useState("");
 
   // Password tab state — phone-first
@@ -73,6 +67,9 @@ const Login = () => {
   const [otpStep, setOtpStep] = useState("phone"); // "phone" | "code"
   const [otpCode, setOtpCode] = useState("");
   const [resendIn, setResendIn] = useState(0); // seconds until Resend re-enables
+  // Shown INLINE on the code-entry step (not as a toast) so it stays readable
+  // while the patient waits for the message and can act on the guidance.
+  const [otpNotice, setOtpNotice] = useState("");
 
   // Countdown driving the Resend button. Mirrors the backend's 60s per-phone
   // cooldown so the UI never invites a request the server will reject.
@@ -102,13 +99,19 @@ const Login = () => {
 
     setLoading(true);
     try {
-      await requestWhatsappOtp(phone);
+      const res = await requestWhatsappOtp(phone);
       setOtpStep("code");
       setOtpCode("");
       setResendIn(60);
-      // Deliberately generic: the API returns the same response whether or not
-      // the number is registered, so we must not imply the account exists.
-      toast.success("If that number is registered, a code has been sent on WhatsApp.");
+      // Surfaced inline and persistently, NOT as a toast -- the message tells
+      // the patient what to do if nothing arrives, which is useless if it
+      // vanishes after two seconds. Uses the server's own wording, which is
+      // deliberately identical for registered and unregistered numbers: we
+      // must never imply whether the account exists.
+      setOtpNotice(
+        res?.message ||
+          "If this number is registered with us, you'll receive a login code on WhatsApp within a minute. Didn't receive it? Please check the number, or call us at +91-9467776028."
+      );
     } catch (err) {
       const status = err.response?.status;
       const msg = err.response?.data?.message;
@@ -157,38 +160,6 @@ const Login = () => {
     }
   };
 
-  // --- OTP handlers (preserved, gate behind SHOW_OTP_TAB) ---
-
-  const validateEmail = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address");
-      return null;
-    }
-    return email.toLowerCase();
-  };
-
-  const handleOtpSubmit = async (e) => {
-    e.preventDefault();
-    const validEmail = validateEmail();
-    if (!validEmail) return;
-    setLoading(true);
-    try {
-      await requestOtp(validEmail);
-      setPendingEmail(validEmail);
-      navigate(
-        redirect
-          ? `/verify-otp?redirect=${encodeURIComponent(redirect)}`
-          : "/verify-otp",
-        { replace: true },
-      );
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to send OTP. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // --- Password handler ---
 
   const handlePasswordSubmit = async (e) => {
@@ -230,6 +201,17 @@ const Login = () => {
   };
 
   // --- Forgot password handler (email-based, unchanged) ---
+
+  // Still used by the forgot-password flow, which is genuinely email-based
+  // (a reset LINK, not an OTP) and is unaffected by the email-OTP retirement.
+  const validateEmail = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      return null;
+    }
+    return email.toLowerCase();
+  };
 
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
@@ -326,58 +308,6 @@ const Login = () => {
 
           {!forgotMode && (
             <>
-              {/* Tab switcher — only shown when SHOW_OTP_TAB is true */}
-              {SHOW_OTP_TAB && (
-                <div className="flex gap-2 mt-5 mb-6">
-                  <button
-                    type="button"
-                    onClick={() => setLoginMethod(0)}
-                    className={`flex-1 rounded-full py-2 text-[14px] font-semibold transition-colors cursor-pointer ${
-                      loginMethod === 0
-                        ? "bg-[#0d1b4a] text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    Login with OTP
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLoginMethod(1)}
-                    className={`flex-1 rounded-full py-2 text-[14px] font-semibold transition-colors cursor-pointer ${
-                      loginMethod === 1
-                        ? "bg-[#0d1b4a] text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    Login with Password
-                  </button>
-                </div>
-              )}
-
-              {/* OTP login — hidden until SHOW_OTP_TAB is true */}
-              {SHOW_OTP_TAB && loginMethod === 0 && (
-                <form onSubmit={handleOtpSubmit} className="mt-5">
-                  <input
-                    type="email"
-                    className={fieldCls}
-                    placeholder="Enter your registered email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
-                  />
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full mt-5 flex items-center justify-center bg-[#0d1b4a] hover:bg-[#0d1b4a]/90 disabled:opacity-70 text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    {loading ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Send OTP"}
-                  </button>
-                  <p className="text-[13px] text-gray-400 text-center mt-3">
-                    You will receive an OTP on your registered email address
-                  </p>
-                </form>
-              )}
-
               {/* ---- WhatsApp OTP login (default) ---- */}
               {!usePassword && (
                 <div className="mt-5">
@@ -421,14 +351,23 @@ const Login = () => {
                     </form>
                   ) : (
                     <form onSubmit={handleVerifyOtp}>
+                      {/* Persistent guidance -- stays visible while they wait */}
+                      {otpNotice && (
+                        <div className="mb-4 rounded-xl border border-[#0d1b4a]/15 bg-[#0d1b4a]/[0.04] px-4 py-3">
+                          <p className="text-[13px] leading-relaxed text-gray-700">
+                            {otpNotice}
+                          </p>
+                        </div>
+                      )}
+
                       <p className="text-[13px] text-gray-600 mb-3 text-center">
-                        Code sent to your WhatsApp on{" "}
+                        Sent to{" "}
                         <span className="font-semibold text-gray-800">
                           {countryCode} {phone}
                         </span>
                         <button
                           type="button"
-                          onClick={() => { setOtpStep("phone"); setError(""); setOtpCode(""); }}
+                          onClick={() => { setOtpStep("phone"); setError(""); setOtpCode(""); setOtpNotice(""); }}
                           className="ml-2 text-accent font-semibold hover:text-accent-dark cursor-pointer bg-transparent border-0"
                         >
                           Change
@@ -478,7 +417,7 @@ const Login = () => {
                   <p className="text-center mt-4">
                     <button
                       type="button"
-                      onClick={() => { setUsePassword(true); setError(""); }}
+                      onClick={() => { setUsePassword(true); setError(""); setOtpNotice(""); }}
                       className="text-[13px] text-gray-500 hover:text-gray-700 underline cursor-pointer bg-transparent border-0"
                     >
                       Login with password instead
@@ -576,7 +515,7 @@ const Login = () => {
                   <p className="text-center mt-4">
                     <button
                       type="button"
-                      onClick={() => { setUsePassword(false); setError(""); setOtpStep("phone"); }}
+                      onClick={() => { setUsePassword(false); setError(""); setOtpStep("phone"); setOtpNotice(""); }}
                       className="text-[13px] text-gray-500 hover:text-gray-700 underline cursor-pointer bg-transparent border-0"
                     >
                       Login with WhatsApp OTP instead

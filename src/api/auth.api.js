@@ -1,31 +1,19 @@
-import api from "./axios";
-
 /**
  * AUTH API
  *
- * Patient authentication endpoints (Email OTP-based).
+ * Patient authentication.
  *
- * Flow:
- * 1. requestOtp(email) → sends OTP to patient's email
- * 2. verifyOtp(email, otp) → verifies OTP, returns token + patient data
+ * Current flow: WhatsApp OTP -- requestWhatsappOtp(phone) then
+ * verifyWhatsappOtp(phone, otp). Password login is retained as a transition
+ * fallback (loginWithPassword).
+ *
+ * The legacy EMAIL OTP endpoints (requestOtp / verifyOtp / resendOtp) have
+ * been REMOVED: the backend now answers 410 Gone on them. They stored the code
+ * in plaintext, had no attempt cap or rate limiting, and leaked account
+ * enumeration. Nothing should call them again.
  */
 
-/**
- * Request OTP for patient login
- * @param {string} email - Patient's email address
- * @returns {Promise} - API response
- */
-export const requestOtp = (email) =>
-  api.post("/auth/patient/login", { email }).then((res) => res.data);
-
-/**
- * Verify OTP and login
- * @param {string} email - Patient's email address
- * @param {string} otp - OTP received via email
- * @returns {Promise} - { patient, accessToken }
- */
-export const verifyOtp = (email, otp) =>
-  api.post("/auth/patient/verify-otp", { email, otp }).then((res) => res.data);
+import api from "./axios";
 
 /**
  * Get current patient profile
@@ -33,14 +21,6 @@ export const verifyOtp = (email, otp) =>
  */
 export const getMe = () =>
   api.get("/patients/me").then((res) => res.data);
-
-/**
- * Resend OTP
- * @param {string} email - Patient's email address
- * @returns {Promise} - API response
- */
-export const resendOtp = (email) =>
-  api.post("/auth/patient/resend-otp", { email }).then((res) => res.data);
 
 /**
  * Login with password — accepts phone number OR email as identifier.

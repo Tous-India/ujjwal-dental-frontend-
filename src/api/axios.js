@@ -33,7 +33,10 @@ api.interceptors.response.use(
       const isAuthEndpoint =
         requestUrl.includes("/auth/login") ||
         requestUrl.includes("/auth/patient/login-password") ||
-        requestUrl.includes("/auth/patient/verify-otp");
+        // WhatsApp OTP login -- a 401/failed verify here must show an inline
+        // error on the login form, never trigger the global logout+redirect.
+        requestUrl.includes("/patients/auth/request-otp") ||
+        requestUrl.includes("/patients/auth/verify-otp");
 
       if (!isAuthEndpoint) {
         const { isAuthenticated: isAdminAuth } = useAdminStore.getState();
