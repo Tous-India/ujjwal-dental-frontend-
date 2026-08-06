@@ -30,6 +30,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import { useReportMutations } from "../../../hooks/admin/useReports";
+import { uploadFilesDirect } from "../../../utils/directUpload";
 import { usePatients } from "../../../hooks/admin/usePatients";
 
 /**
@@ -62,6 +63,8 @@ const FileSlot = ({
   onRemoveSlot,
   canRemoveSlot,
   formatFileSize,
+  uploadPercent,
+  busy,
 }) => {
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -118,7 +121,7 @@ const FileSlot = ({
                 {formatFileSize(fileEntry.file.size)}
               </Typography>
             </Box>
-            <IconButton onClick={onRemoveFile} size="small" className="text-red-500">
+            <IconButton onClick={onRemoveFile} size="small" className="text-red-500" disabled={busy}>
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -134,6 +137,23 @@ const FileSlot = ({
         </IconButton>
       </Box>
 
+      {/* Per-file transfer progress. Large phone photos upload from the
+          browser now, which takes real time on mobile data -- without this the
+          dialog would look frozen. */}
+      {uploadPercent !== undefined && (
+        <Box className="mt-2">
+          <Box className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
+            <Box
+              className="h-full bg-teal-600 transition-all duration-200"
+              sx={{ width: `${uploadPercent}%` }}
+            />
+          </Box>
+          <Typography variant="caption" className="text-gray-500">
+            {uploadPercent < 100 ? `Uploading… ${uploadPercent}%` : "Uploaded"}
+          </Typography>
+        </Box>
+      )}
+
       <TextField
         fullWidth
         size="small"
@@ -142,6 +162,7 @@ const FileSlot = ({
         onChange={onDescriptionChange}
         sx={{ mt: 1.5 }}
         placeholder={`Note for file ${index + 1}`}
+        disabled={busy}
       />
     </Paper>
   );
@@ -160,8 +181,18 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
   // files: [{ file: File|null, description: string }]
   const [files, setFiles] = useState([{ file: null, description: "" }]);
   const [patientSearch, setPatientSearch] = useState("");
+  // Direct-to-Cloudinary upload state. An 8MB upload on mobile data takes real
+  // time, so silence would look like a hang -- progress is per-file index.
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState({});
 
   const { uploadReport, isUploading } = useReportMutations();
+
+  // Busy spans BOTH phases: the browser->Cloudinary transfer and the
+  // subsequent metadata save. Gating only on the mutation would leave the
+  // dialog interactive during the long part.
+  const busy = uploading || isUploading;
+  const uploadingLabel = uploading ? "Uploading files…" : "Saving…";
 
   // Fetch all patients for dropdown (using same hook as Patients page)
   const { data: patientsData, isLoading: isLoadingPatients } = usePatients({
@@ -251,7 +282,7 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validation
     if (!formData.patient) {
       toast.error("Please select a patient");
@@ -267,30 +298,57 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
       return;
     }
 
-    // Build FormData for multipart upload
-    const data = new FormData();
-    selectedFiles.forEach((f) => data.append("files", f.file));
-    data.append("descriptions", JSON.stringify(selectedFiles.map((f) => f.description.trim())));
-    data.append("patient", formData.patient._id);
-    data.append("title", formData.title.trim());
-    data.append("category", formData.category);
-    data.append("description", formData.description.trim());
-    data.append("reportDate", formData.reportDate);
-    data.append("isVisibleToPatient", formData.isVisibleToPatient);
-    if (formData.notes.trim()) {
-      data.append("notes", formData.notes.trim());
-    }
+    /**
+     * DIRECT upload: each file goes browser -> Cloudinary first, then only the
+     * resulting metadata (a few hundred bytes) is posted to our API.
+     *
+     * The files deliberately do NOT pass through our backend any more: it runs
+     * as a Vercel serverless function with a hard ~4.5MB request body limit,
+     * which rejected every phone-camera photo (typically 3-12MB) before our
+     * code ran -- and applied cumulatively across all 10 files in one request.
+     */
+    setUploading(true);
+    setProgress({});
+    try {
+      const uploaded = await uploadFilesDirect(
+        selectedFiles.map((f) => f.file),
+        (index, pct) => setProgress((prev) => ({ ...prev, [index]: pct }))
+      );
 
-    uploadReport(data, {
-      onSuccess: () => {
-        resetForm();
-        onSuccess?.();
-        onClose();
-      },
-      onError: (err) => {
-        toast.error(err.response?.data?.message || "Failed to upload report");
-      },
-    });
+      // Attach each file's own description, by position.
+      const filesPayload = uploaded.map((meta, i) => ({
+        ...meta,
+        description: selectedFiles[i].description.trim(),
+      }));
+
+      uploadReport(
+        {
+          files: filesPayload,
+          patient: formData.patient._id,
+          title: formData.title.trim(),
+          category: formData.category,
+          description: formData.description.trim(),
+          reportDate: formData.reportDate,
+          isVisibleToPatient: formData.isVisibleToPatient,
+          ...(formData.notes.trim() ? { notes: formData.notes.trim() } : {}),
+        },
+        {
+          onSuccess: () => {
+            resetForm();
+            onSuccess?.();
+            onClose();
+          },
+          onError: (err) => {
+            toast.error(err.response?.data?.message || "Failed to save the report");
+          },
+          onSettled: () => setUploading(false),
+        }
+      );
+    } catch (err) {
+      // Cloudinary-side failure (network drop, oversized file, bad signature).
+      toast.error(err.message || "Failed to upload the file. Please try again.");
+      setUploading(false);
+    }
   };
 
   const resetForm = () => {
@@ -337,7 +395,7 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
               Upload Report
             </Typography>
           </Box>
-          <IconButton onClick={handleClose} disabled={isUploading}>
+          <IconButton onClick={handleClose} disabled={busy}>
             <CloseIcon className="text-white" />
           </IconButton>
         </Box>
@@ -503,6 +561,8 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
                   onRemoveSlot={() => removeFileSlot(index)}
                   canRemoveSlot={files.length > 1}
                   formatFileSize={formatFileSize}
+                  uploadPercent={progress[files.filter((x) => x.file).indexOf(f)]}
+                  busy={busy}
                 />
               ))}
             </Box>
@@ -522,17 +582,17 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
 
       {/* Actions */}
       <DialogActions className="p-4 bg-gray-50">
-        <Button onClick={handleClose} color="inherit" disabled={isUploading}>
+        <Button onClick={handleClose} color="inherit" disabled={busy}>
           Cancel
         </Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={isUploading}
+          disabled={busy}
           className="bg-teal-600 hover:bg-teal-700"
           startIcon={isUploading ? <CircularProgress size={16} /> : <UploadFileIcon />}
         >
-          {isUploading ? "Uploading..." : "Upload Report"}
+          {busy ? uploadingLabel : "Upload Report"}
         </Button>
       </DialogActions>
     </Dialog>

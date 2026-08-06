@@ -30,14 +30,30 @@ export const getReport = (id) =>
 
 /**
  * Upload new report with file
- * @param {FormData} formData - Form data with file and report details
+ * Create a report from ALREADY-UPLOADED files.
+ *
+ * The browser uploads each file straight to Cloudinary first (see
+ * utils/directUpload.js) and this call carries only the resulting metadata --
+ * a few hundred bytes. Files no longer stream through our API, which runs as a
+ * Vercel serverless function with a hard ~4.5MB request body limit that
+ * rejected every phone-camera photo and applied cumulatively across all files
+ * in one request.
+ *
+ * Still accepts a FormData (legacy multipart path) so any older caller keeps
+ * working; the backend supports both shapes.
+ *
+ * @param {Object|FormData} payload - { files: [...], patient, title, ... }
  * @returns {Promise}
  */
-export const uploadReport = (formData) =>
+export const uploadReport = (payload) =>
   api
-    .post("/reports", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
+    .post(
+      "/reports",
+      payload,
+      payload instanceof FormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined
+    )
     .then((res) => res.data);
 
 /**
