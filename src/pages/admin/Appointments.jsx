@@ -1281,10 +1281,16 @@ const Appointments = () => {
         getRowSx={(row) => {
           const today = isToday(row?.date);
           const unpaid = rowPaymentStatus(row) === "unpaid";
+          // For a TREATMENT row, "muted" must key off treatmentStatus alone.
+          // A treatment plan's parent appointment is marked status:"completed"
+          // as soon as that visit happens, while treatmentStatus stays null
+          // because the PLAN is still running -- so the old
+          // `status === "completed"` clause faded active, ongoing treatments.
+          // Plain appointments still mute on their own completed status.
           const isMuted =
-            row?.status === "completed" ||
-            (row?.visitType === "treatment" &&
-              ["completed", "closed_early", "abandoned"].includes(row?.treatmentStatus));
+            row?.visitType === "treatment"
+              ? ["completed", "closed_early", "abandoned"].includes(row?.treatmentStatus)
+              : row?.status === "completed";
           if (today) {
             return {
               backgroundColor: "#eff6ff",
