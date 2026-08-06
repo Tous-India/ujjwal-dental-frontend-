@@ -51,6 +51,20 @@ export const resendOtp = (email) =>
 export const loginWithPassword = (identifier, password) =>
   api.post("/auth/patient/login-password", { identifier, password }).then((res) => res.data);
 
+/**
+ * WhatsApp OTP login -- the replacement for the shared default password.
+ *
+ * requestWhatsappOtp always resolves with the SAME generic message whether or
+ * not the number is registered (deliberate: no phone-number enumeration
+ * against real patient records), so the UI must never treat success as proof
+ * the account exists.
+ */
+export const requestWhatsappOtp = (phone) =>
+  api.post("/patients/auth/request-otp", { phone }).then((res) => res.data);
+
+export const verifyWhatsappOtp = (phone, otp) =>
+  api.post("/patients/auth/verify-otp", { phone, otp }).then((res) => res.data);
+
 export const logoutPatient = () =>
   api.post("/auth/patient/logout").then((res) => res.data);
 

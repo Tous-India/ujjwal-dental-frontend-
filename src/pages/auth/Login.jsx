@@ -7,10 +7,16 @@
  * 1. Password-based (default): Patient enters phone + password
  * 2. OTP-based (hidden): gated behind SHOW_OTP_TAB — re-enable when SMS OTP is ready
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/auth.store";
-import { requestOtp, loginWithPassword, forgotPassword } from "../../api/auth.api";
+import {
+  requestOtp,
+  loginWithPassword,
+  forgotPassword,
+  requestWhatsappOtp,
+  verifyWhatsappOtp,
+} from "../../api/auth.api";
 import { CircularProgress } from "@mui/material";
 import { toast } from "react-toastify";
 import Visibility from "@mui/icons-material/Visibility";
@@ -60,6 +66,96 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
   const [error, setError] = useState("");
+
+  // --- WhatsApp OTP login (the default flow; password is now the fallback) ---
+  // usePassword=true switches to the legacy password form during transition.
+  const [usePassword, setUsePassword] = useState(false);
+  const [otpStep, setOtpStep] = useState("phone"); // "phone" | "code"
+  const [otpCode, setOtpCode] = useState("");
+  const [resendIn, setResendIn] = useState(0); // seconds until Resend re-enables
+
+  // Countdown driving the Resend button. Mirrors the backend's 60s per-phone
+  // cooldown so the UI never invites a request the server will reject.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
+
+  const validatePhone = () => {
+    if (!phone) return "Please enter your phone number";
+    if (phone.length !== 10) return "Phone number must be 10 digits";
+    if (countryCode === "+91" && !/^[6-9]\d{9}$/.test(phone)) {
+      return "Enter a valid 10-digit Indian mobile number starting with 6–9";
+    }
+    return null;
+  };
+
+  const handleSendOtp = async (e) => {
+    e?.preventDefault();
+    setError("");
+    const invalid = validatePhone();
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await requestWhatsappOtp(phone);
+      setOtpStep("code");
+      setOtpCode("");
+      setResendIn(60);
+      // Deliberately generic: the API returns the same response whether or not
+      // the number is registered, so we must not imply the account exists.
+      toast.success("If that number is registered, a code has been sent on WhatsApp.");
+    } catch (err) {
+      const status = err.response?.status;
+      const msg = err.response?.data?.message;
+      if (status === 429) {
+        // Rate limited -- surface the wait, and start the countdown from the
+        // server's own retryAfter so the UI and backend agree.
+        const wait = err.response?.data?.errors?.retryAfterSec;
+        if (wait) setResendIn(wait);
+        setError(msg || "Please wait before requesting another code.");
+        setOtpStep("code"); // a code may already be in their hand
+      } else if (!err.response) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError(msg || "Could not send the code. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!/^\d{6}$/.test(otpCode.trim())) {
+      setError("Enter the 6-digit code sent to your WhatsApp");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await verifyWhatsappOtp(phone, otpCode.trim());
+      // Identical to the password path -- same store call, same redirect.
+      login(response.data.patient, response.data.token);
+      navigate(redirect || "/dashboard", { replace: true });
+    } catch (err) {
+      if (!err.response) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        // The backend already returns precise, safe copy here: wrong code with
+        // attempts remaining, too many attempts, or expired.
+        setError(err.response?.data?.message || "That code was not accepted.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- OTP handlers (preserved, gate behind SHOW_OTP_TAB) ---
 
@@ -282,8 +378,117 @@ const Login = () => {
                 </form>
               )}
 
-              {/* Password login — always shown when SHOW_OTP_TAB is false, or when tab=1 */}
-              {(!SHOW_OTP_TAB || loginMethod === 1) && (
+              {/* ---- WhatsApp OTP login (default) ---- */}
+              {!usePassword && (
+                <div className="mt-5">
+                  {otpStep === "phone" ? (
+                    <form onSubmit={handleSendOtp}>
+                      <div className="flex gap-2 mb-4">
+                        <select
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          disabled={loading}
+                          className="rounded-xl border border-gray-200 bg-white px-2 py-3 text-[15px] text-gray-800 outline-none transition-colors focus:border-[#0d1b4a] focus:ring-2 focus:ring-[#0d1b4a]/20 cursor-pointer shrink-0"
+                          aria-label="Country code"
+                        >
+                          <option value="+91">🇮🇳 +91</option>
+                          <option value="+1">🇺🇸 +1</option>
+                          <option value="+44">🇬🇧 +44</option>
+                          <option value="+971">🇦🇪 +971</option>
+                        </select>
+                        <input
+                          type="tel"
+                          inputMode="numeric"
+                          className={fieldCls}
+                          placeholder="Enter your phone number"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                          disabled={loading}
+                          autoComplete="tel"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full mt-1 flex items-center justify-center bg-[#0d1b4a] hover:bg-[#0d1b4a]/90 disabled:opacity-70 text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        {loading ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Send OTP"}
+                      </button>
+                      <p className="text-[13px] text-gray-400 text-center mt-3">
+                        We'll send a 6-digit code to your WhatsApp
+                      </p>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleVerifyOtp}>
+                      <p className="text-[13px] text-gray-600 mb-3 text-center">
+                        Code sent to your WhatsApp on{" "}
+                        <span className="font-semibold text-gray-800">
+                          {countryCode} {phone}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => { setOtpStep("phone"); setError(""); setOtpCode(""); }}
+                          className="ml-2 text-accent font-semibold hover:text-accent-dark cursor-pointer bg-transparent border-0"
+                        >
+                          Change
+                        </button>
+                      </p>
+
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        className={`${fieldCls} text-center tracking-[0.5em] text-[20px] font-semibold`}
+                        placeholder="------"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        disabled={loading}
+                        autoComplete="one-time-code"
+                        autoFocus
+                      />
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full mt-5 flex items-center justify-center bg-[#0d1b4a] hover:bg-[#0d1b4a]/90 disabled:opacity-70 text-white rounded-xl py-3 text-[15px] font-semibold transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        {loading ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Verify & Login"}
+                      </button>
+
+                      {/* Resend, gated by the same 60s cooldown the backend enforces */}
+                      <p className="text-[13px] text-gray-500 text-center mt-3">
+                        {resendIn > 0 ? (
+                          <>Resend code in {resendIn}s</>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleSendOtp}
+                            disabled={loading}
+                            className="text-accent font-semibold hover:text-accent-dark cursor-pointer bg-transparent border-0 disabled:opacity-60"
+                          >
+                            Resend code
+                          </button>
+                        )}
+                      </p>
+                    </form>
+                  )}
+
+                  {/* Transition fallback -- backend keeps password login alive */}
+                  <p className="text-center mt-4">
+                    <button
+                      type="button"
+                      onClick={() => { setUsePassword(true); setError(""); }}
+                      className="text-[13px] text-gray-500 hover:text-gray-700 underline cursor-pointer bg-transparent border-0"
+                    >
+                      Login with password instead
+                    </button>
+                  </p>
+                </div>
+              )}
+
+              {/* ---- Password login (transition fallback) ---- */}
+              {usePassword && (
                 <form onSubmit={handlePasswordSubmit} className="mt-5">
                   {/* Phone input with country-code selector */}
                   <div className="flex gap-2 mb-4">
@@ -367,6 +572,15 @@ const Login = () => {
                   </button>
                   <p className="text-[13px] text-gray-400 text-center mt-3">
                     Enter your registered phone number with your password
+                  </p>
+                  <p className="text-center mt-4">
+                    <button
+                      type="button"
+                      onClick={() => { setUsePassword(false); setError(""); setOtpStep("phone"); }}
+                      className="text-[13px] text-gray-500 hover:text-gray-700 underline cursor-pointer bg-transparent border-0"
+                    >
+                      Login with WhatsApp OTP instead
+                    </button>
                   </p>
                 </form>
               )}
