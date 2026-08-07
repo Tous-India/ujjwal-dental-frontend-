@@ -130,7 +130,12 @@ const filterOptions = [
   {
     key: "isActive",
     label: "Status",
+    // "All" is listed EXPLICITLY rather than leaning on the shared table's
+    // implicit all-option. The backend now treats isActive=all as "no
+    // condition"; relying on "param absent means all" is exactly what made
+    // this filter silently wrong before.
     options: [
+      { value: "all", label: "All" },
       { value: "true", label: "Active" },
       { value: "false", label: "Inactive" },
     ],
