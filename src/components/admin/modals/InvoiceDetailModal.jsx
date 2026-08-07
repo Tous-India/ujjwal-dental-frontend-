@@ -45,6 +45,8 @@ import { usePermissions } from "../../../hooks/admin/usePermissions";
 import InvoicePreviewModal from "../../InvoicePreviewModal";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import EditInvoiceModal from "./EditInvoiceModal";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import { verifyRazorpayPaymentLink } from "../../../api/admin/payments.api";
 
 /**
  * Status config
@@ -105,6 +107,10 @@ const InfoRow = ({ label, children }) => (
 );
 
 const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
+  // Verify Payment (missed-webhook safety net)
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState(null);
+
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [showVoidForm, setShowVoidForm] = useState(false);
@@ -165,6 +171,50 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
       onError: (err) =>
         toast.error(err.response?.data?.message || "Failed to issue invoice"),
     });
+  };
+
+  /**
+   * Only offered where it can actually help: a Razorpay link exists AND money
+   * still appears outstanding. On a fully-paid invoice there is nothing to
+   * reconcile, and on an invoice with no link there is nothing to ask about.
+   */
+  const canVerifyPayment =
+    !!inv?.paymentLink?.id && (inv?.balanceDue || 0) > 0 && !inv?.isVoided;
+
+  const handleVerifyPayment = async () => {
+    setVerifying(true);
+    setVerifyResult(null);
+    try {
+      const res = await verifyRazorpayPaymentLink(inv._id);
+      const { outcome } = res.data || {};
+
+      if (outcome === "reconciled") {
+        setVerifyResult({ tone: "success", message: res.message });
+        toast.success(res.message);
+        refetchInvoice();
+        onRefresh?.();
+      } else if (outcome === "already_reconciled") {
+        // The webhook got there first -- report it, change nothing, and still
+        // refresh so the admin sees the already-correct state.
+        setVerifyResult({ tone: "success", message: "Already recorded — no action taken." });
+        toast.info("This payment was already recorded.");
+        refetchInvoice();
+        onRefresh?.();
+      } else {
+        // Razorpay says it isn't paid. This is a real answer, not an error:
+        // it tells the admin the patient has not actually paid yet.
+        setVerifyResult({ tone: "warning", message: res.message });
+        toast.warn(res.message);
+      }
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        "Could not check the payment status. Please try again.";
+      setVerifyResult({ tone: "error", message });
+      toast.error(message);
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const handleRecordPayment = () => {
@@ -476,6 +526,46 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
                     {formatCurrency(inv?.balanceDue)}
                   </span>
                 </InfoRow>
+
+                {/* Verify Payment -- the missed-webhook safety net.
+                    Shown only where it can actually help: a Razorpay link was
+                    generated AND the invoice still shows money outstanding.
+                    This is exactly the "the patient says they already paid"
+                    situation, so it sits right under Balance Due. */}
+                {canVerifyPayment && (
+                  <Box className="mt-2">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      fullWidth
+                      onClick={handleVerifyPayment}
+                      disabled={verifying}
+                      startIcon={
+                        verifying ? <CircularProgress size={14} /> : <VerifiedUserIcon fontSize="small" />
+                      }
+                      sx={{ textTransform: "none", fontSize: "12px" }}
+                    >
+                      {verifying ? "Checking with Razorpay…" : "Verify Payment"}
+                    </Button>
+                    <Typography variant="caption" className="block text-gray-500 mt-1 text-center">
+                      Patient says they paid? Check the payment link's real status.
+                    </Typography>
+                    {verifyResult && (
+                      <Typography
+                        variant="caption"
+                        className={`block mt-1 text-center font-medium ${
+                          verifyResult.tone === "success"
+                            ? "text-green-700"
+                            : verifyResult.tone === "warning"
+                            ? "text-amber-700"
+                            : "text-red-700"
+                        }`}
+                      >
+                        {verifyResult.message}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
               </Paper>
             </Box>
 

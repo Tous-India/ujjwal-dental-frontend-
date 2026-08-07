@@ -116,5 +116,19 @@ export const reverseAdminPayment = (data) =>
 export const exportPaymentsPdf = (params = {}) =>
   api.get("/payments/export/pdf", { params, responseType: "blob" }).then((res) => res.data);
 
+/**
+ * Ask Razorpay for a payment link's REAL status and reconcile the invoice if
+ * it has genuinely been paid.
+ *
+ * The safety net for a missed webhook (one really happened: payment_link.paid
+ * wasn't enabled, so a patient paid and the invoice stayed unpaid). Fully
+ * idempotent server-side -- calling it twice, or after the webhook already
+ * worked, never creates a second Payment.
+ *
+ * @returns {Promise} - { outcome: "reconciled"|"not_paid"|"already_reconciled", ... }
+ */
+export const verifyRazorpayPaymentLink = (invoiceId) =>
+  api.post(`/payments/verify-razorpay-link/${invoiceId}`).then((res) => res.data);
+
 export const confirmManualRefund = (id, data) =>
   api.post(`/payments/${id}/confirm-manual-refund`, data).then((res) => res.data);
