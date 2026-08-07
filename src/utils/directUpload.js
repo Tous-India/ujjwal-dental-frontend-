@@ -62,11 +62,24 @@ const uploadOne = (file, signature, onProgress) =>
       try {
         body = JSON.parse(xhr.responseText);
       } catch {
-        return reject(new Error("Unexpected response from the upload service"));
+        // Surface what actually came back -- a bare "unexpected response"
+        // tells whoever is debugging a phone-only failure nothing at all.
+        console.error("[directUpload] Non-JSON response", xhr.status, xhr.responseText?.slice(0, 300));
+        return reject(
+          new Error(`Upload service returned an unreadable response (HTTP ${xhr.status})`)
+        );
       }
 
       if (xhr.status < 200 || xhr.status >= 300) {
-        return reject(new Error(body?.error?.message || `Upload failed (${xhr.status})`));
+        const detail = body?.error?.message || `HTTP ${xhr.status}`;
+        console.error("[directUpload] Upload rejected", {
+          status: xhr.status,
+          detail,
+          fileName: file.name,
+          fileType: file.type,
+          fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
+        });
+        return reject(new Error(`Upload failed: ${detail}`));
       }
 
       resolve({
@@ -105,7 +118,24 @@ const uploadOne = (file, signature, onProgress) =>
  * @returns {Promise<Array>} metadata for each uploaded file, in input order
  */
 export const uploadFilesDirect = async (files, onFileProgress) => {
-  const { data } = await getUploadSignature();
+  // Distinguish a signature failure from an upload failure -- they have very
+  // different causes (auth/permissions/server config vs the file or network),
+  // and lumping them together makes a report of "upload failed" undiagnosable.
+  let data;
+  try {
+    ({ data } = await getUploadSignature());
+  } catch (err) {
+    console.error("[directUpload] Could not obtain an upload signature", err?.response?.status, err?.response?.data);
+    throw new Error(
+      err?.response?.data?.message ||
+        "Could not start the upload (could not get authorisation). Please refresh and try again."
+    );
+  }
+
+  if (!data?.signature || !data?.cloudName || !data?.apiKey) {
+    console.error("[directUpload] Signature response missing fields", data);
+    throw new Error("Uploads are not configured correctly on the server. Please contact support.");
+  }
 
   const results = [];
   for (let i = 0; i < files.length; i++) {

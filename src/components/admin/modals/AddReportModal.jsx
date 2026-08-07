@@ -234,16 +234,47 @@ const AddReportModal = ({ open, onClose, onSuccess }) => {
   };
 
   const validateFile = (file) => {
-    // HEIC/HEIF included -- iPhones shoot HEIC by default. Some browsers report
-    // an EMPTY type for .heic, so fall back to the extension before rejecting.
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg", "image/heic", "image/heif"];
-    const extOk = /\.(pdf|jpe?g|png|heic|heif)$/i.test(file.name || "");
-    if (!allowedTypes.includes(file.type) && !extOk) {
-      toast.error("Please select a PDF or image file (JPEG, PNG, HEIC)");
+    /**
+     * Deliberately permissive about TYPE, strict about size.
+     *
+     * Phone camera captures are the reason. A file picked from a gallery (or
+     * on a tablet) arrives with a clean name and MIME type and passes any
+     * check. A file straight off a phone camera often does not: Android
+     * WebViews commonly report type "application/octet-stream" or "" AND a
+     * filename with no extension. The previous rule required an allowlisted
+     * type OR a known extension, so those captures were rejected here --
+     * before an upload was even attempted. That is consistent with camera
+     * capture appearing to work while upload "fails", on phones only.
+     *
+     * Rejecting a genuinely bad file is not this function's job anyway: the
+     * backend re-validates the MIME type, and Cloudinary rejects anything it
+     * cannot decode. So accept anything plausibly an image or document and let
+     * those layers be authoritative.
+     */
+    const allowedTypes = [
+      "application/pdf", "image/jpeg", "image/png", "image/jpg",
+      "image/heic", "image/heif", "image/webp",
+    ];
+    const type = (file.type || "").toLowerCase();
+    const extOk = /\.(pdf|jpe?g|png|heic|heif|webp)$/i.test(file.name || "");
+    // Any image/* subtype, including ones we don't enumerate.
+    const looksLikeImage = type.startsWith("image/");
+    // Camera captures with no usable type/name at all -- trust them through.
+    const opaque = !type || type === "application/octet-stream";
+
+    if (!allowedTypes.includes(type) && !extOk && !looksLikeImage && !opaque) {
+      toast.error(`Unsupported file type${file.type ? ` (${file.type})` : ""}. Please choose a PDF or an image.`);
       return false;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size must be less than 10MB");
+      // Cloudinary itself caps images at 10MB, so this is a real ceiling, not
+      // an arbitrary one. Naming the actual size makes it actionable -- a
+      // high-resolution phone photo can genuinely exceed this.
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      toast.error(
+        `This file is ${mb}MB, over the 10MB limit. Please use a lower camera resolution, or send it as a PDF.`,
+        { autoClose: 10000 }
+      );
       return false;
     }
     return true;
