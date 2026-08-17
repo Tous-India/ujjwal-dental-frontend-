@@ -33,6 +33,7 @@ import { todayStr } from "../../utils/dateInput";
 const PRESETS = [
   { value: "today", label: "Today" },
   { value: "yesterday", label: "Yesterday" },
+  { value: "week", label: "This Week" },
   { value: "month", label: "This Month" },
   { value: "fy", label: "This FY" },
   { value: "custom", label: "Custom Range" },
@@ -53,6 +54,13 @@ const computeRange = (preset) => {
     case "yesterday": {
       const y = toDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
       return { from: y, to: y };
+    }
+    case "week": {
+      // ISO Monday-anchored week (standard business week, correct for India).
+      const dayOfWeek = now.getDay(); // 0=Sun … 6=Sat
+      const daysFromMonday = (dayOfWeek + 6) % 7; // 0 on Mon, 1 on Tue, …
+      const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMonday);
+      return { from: toDateStr(monday), to: todayStr() };
     }
     case "month": {
       const first = toDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
