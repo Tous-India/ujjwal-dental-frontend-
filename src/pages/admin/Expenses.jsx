@@ -8,6 +8,8 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Paper,
+  InputAdornment,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -31,9 +33,10 @@ import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import SearchIcon from "@mui/icons-material/Search";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import DataTable from "../../components/common/DataTable";
-import CompactFilterBar from "../../components/common/CompactFilterBar";
 import {
   useExpenses,
   useExpenseStaff,
@@ -844,9 +847,10 @@ const Expenses = () => {
         </Alert>
       )}
 
-      {/* Filters */}
-      <CompactFilterBar
-        dateFilterSlot={
+      {/* Filters — two-row layout so Custom Range date inputs don't overflow */}
+      <Paper className="p-3 mb-4">
+        {/* Row 1: date preset (+ From/To when Custom Range) + search */}
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center", mb: 1.5 }}>
           <QuickDateRangeFilter
             value={{ from: fromDate, to: toDate }}
             onChange={({ from, to }) => {
@@ -855,15 +859,49 @@ const Expenses = () => {
               setPage(1);
             }}
           />
-        }
-        search={search}
-        onSearchChange={handleSearch}
-        searchPlaceholder="Search description or vendor…"
-        filters={filterOptions}
-        filterValues={filters}
-        onFilterChange={handleFilterChange}
-        onRefresh={handleReset}
-      />
+          <TextField
+            size="small"
+            placeholder="Search description or vendor…"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            sx={{ flex: 1, minWidth: 200 }}
+            autoComplete="off"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+
+        {/* Row 2: category / mode / spent-by / status dropdowns + refresh */}
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
+          {filterOptions.map((filter) => (
+            <FormControl key={filter.key} size="small" sx={{ minWidth: 160 }}>
+              <InputLabel>{filter.label}</InputLabel>
+              <Select
+                value={filters[filter.key] || ""}
+                label={filter.label}
+                onChange={(e) => handleFilterChange(filter.key, e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                {filter.options.map((option) => (
+                  <MenuItem key={option.value || `_${option.label}`} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          ))}
+          <Tooltip title="Refresh">
+            <IconButton onClick={handleReset}>
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </Paper>
 
       {/* Table */}
       <DataTable
