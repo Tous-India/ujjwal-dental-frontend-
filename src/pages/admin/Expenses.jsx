@@ -782,6 +782,21 @@ const Expenses = () => {
             Track clinic expenditure. Lab costs are sourced from Lab Order payments.
           </Typography>
         </Box>
+        <TextField
+          size="small"
+          placeholder="Search description or vendor…"
+          value={search}
+          onChange={(e) => handleSearch(e.target.value)}
+          sx={{ flex: 1, minWidth: 200 }}
+          autoComplete="off"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+              </InputAdornment>
+            ),
+          }}
+        />
         {hasPermission("expenses", "create") && !isVoidedView && (
           <Button
             variant="contained"
@@ -847,28 +862,8 @@ const Expenses = () => {
         </Alert>
       )}
 
-      {/* Filters — search on its own row; everything else on row 2 with wrap */}
+      {/* Filters — date range + all dropdowns + refresh; flexWrap so nothing clips */}
       <Paper className="p-3 mb-4">
-        {/* Row 1: search only, full width */}
-        <Box sx={{ mb: 1.5 }}>
-          <TextField
-            size="small"
-            placeholder="Search description or vendor…"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            sx={{ width: "100%" }}
-            autoComplete="off"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-
-        {/* Row 2: date range + all dropdowns + refresh; flexWrap so nothing clips */}
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
           <QuickDateRangeFilter
             value={{ from: fromDate, to: toDate }}
