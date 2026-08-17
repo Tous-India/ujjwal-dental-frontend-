@@ -34,6 +34,7 @@ import BuildIcon from "@mui/icons-material/Build";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
@@ -44,9 +45,16 @@ import {
   useCreateExpense,
   useUpdateExpense,
   useVoidExpense,
+  useProfitLoss,
 } from "../../hooks/admin/useExpenses";
 import { useAdminStore } from "../../store/admin.store";
 import { usePermissions } from "../../hooks/admin/usePermissions";
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+// Categories where a vendor/supplier name is meaningful.
+// For salaries, rent, utilities, other — vendor doesn't apply.
+const VENDOR_CATEGORIES = new Set(["lab", "materials", "equipment", "marketing"]);
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -115,42 +123,57 @@ const EMPTY_FORM = {
 };
 
 // ── Stats card ─────────────────────────────────────────────────────────────────
+// `positive` (bool | undefined): when provided, colors the icon bg and value
+// text green (true) or red (false) and adds a matching border — mirrors the
+// HeadlineCard treatment on the P&L page. Omit for a neutral colored card.
 
-const StatCard = ({ icon: Icon, label, value, color, sub }) => (
-  <Card variant="outlined" sx={{ height: "100%" }}>
-    <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: color,
-            flexShrink: 0,
-          }}
-        >
-          <Icon sx={{ color: "#fff", fontSize: 20 }} />
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            {label}
-          </Typography>
-          <Typography variant="h6" fontWeight={700} lineHeight={1.2}>
-            {value}
-          </Typography>
-          {sub && (
+const StatCard = ({ icon: Icon, label, value, color, sub, positive }) => {
+  const hasSign = positive !== undefined;
+  const iconBg = hasSign ? (positive ? "#22c55e" : "#ef4444") : color;
+  const valueColor = hasSign ? (positive ? "success.main" : "error.main") : "text.primary";
+
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        height: "100%",
+        borderColor: hasSign ? (positive ? "success.light" : "error.light") : undefined,
+      }}
+    >
+      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: iconBg,
+              flexShrink: 0,
+            }}
+          >
+            <Icon sx={{ color: "#fff", fontSize: 20 }} />
+          </Box>
+          <Box>
             <Typography variant="caption" color="text.secondary">
-              {sub}
+              {label}
             </Typography>
-          )}
+            <Typography variant="h6" fontWeight={700} lineHeight={1.2} color={valueColor}>
+              {value}
+            </Typography>
+            {sub && (
+              <Typography variant="caption" color="text.secondary">
+                {sub}
+              </Typography>
+            )}
+          </Box>
         </Box>
-      </Box>
-    </CardContent>
-  </Card>
-);
+      </CardContent>
+    </Card>
+  );
+};
 
 // ── Expense form modal ─────────────────────────────────────────────────────────
 
@@ -176,7 +199,22 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
 
+  const showVendor = VENDOR_CATEGORIES.has(form.category);
+
+  // Derive recorder name from staff list — display only, recordedBy is always server-set.
+  const recorderName = staffList.find((u) => u._id === currentUserId)?.name || "you";
+
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+
+  // When category changes, clear vendor if the new category doesn't use it.
+  // This prevents a stale vendor from a previous category being silently saved.
+  const handleCategoryChange = (newCategory) => {
+    setForm((f) => ({
+      ...f,
+      category: newCategory,
+      vendor: VENDOR_CATEGORIES.has(newCategory) ? f.vendor : "",
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!form.date) return setError("Date is required");
@@ -196,7 +234,9 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
         amount: Number(form.amount),
         paymentMode: form.paymentMode,
         spentBy: form.spentBy,
-        vendor: form.vendor.trim() || undefined,
+        // Belt-and-suspenders: never send vendor for categories that don't support it,
+        // even if state somehow drifted (e.g. category changed without triggering onChange).
+        vendor: VENDOR_CATEGORIES.has(form.category) ? (form.vendor.trim() || undefined) : undefined,
         notes: form.notes.trim() || undefined,
       };
 
@@ -225,6 +265,23 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
         )}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 0.5 }}>
           <Grid container spacing={2}>
+            {/* Category first — it controls which additional fields appear */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl size="small" fullWidth>
+                <InputLabel>Category *</InputLabel>
+                <Select
+                  value={form.category}
+                  label="Category *"
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                >
+                  {CATEGORY_OPTIONS.map((o) => (
+                    <MenuItem key={o.value} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Date *"
@@ -234,6 +291,16 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
                 value={form.date}
                 onChange={(e) => set("date", e.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                label="Description *"
+                size="small"
+                fullWidth
+                value={form.description}
+                onChange={(e) => set("description", e.target.value)}
+                placeholder="What was this expense for?"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -246,22 +313,6 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
                 onChange={(e) => set("amount", e.target.value)}
                 slotProps={{ input: { inputProps: { min: 0.01, step: 0.01 } } }}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl size="small" fullWidth>
-                <InputLabel>Category *</InputLabel>
-                <Select
-                  value={form.category}
-                  label="Category *"
-                  onChange={(e) => set("category", e.target.value)}
-                >
-                  {CATEGORY_OPTIONS.map((o) => (
-                    <MenuItem key={o.value} value={o.value}>
-                      {o.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl size="small" fullWidth>
@@ -279,17 +330,7 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                label="Description *"
-                size="small"
-                fullWidth
-                value={form.description}
-                onChange={(e) => set("description", e.target.value)}
-                placeholder="What was this expense for?"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: showVendor ? 6 : 12 }}>
               <FormControl size="small" fullWidth>
                 <InputLabel>Spent By *</InputLabel>
                 <Select
@@ -306,16 +347,19 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Vendor (optional)"
-                size="small"
-                fullWidth
-                value={form.vendor}
-                onChange={(e) => set("vendor", e.target.value)}
-                placeholder="Supplier / vendor name"
-              />
-            </Grid>
+            {/* Vendor — shown only for categories that involve an outside supplier */}
+            {showVendor && (
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Vendor (optional)"
+                  size="small"
+                  fullWidth
+                  value={form.vendor}
+                  onChange={(e) => set("vendor", e.target.value)}
+                  placeholder="Supplier / vendor name"
+                />
+              </Grid>
+            )}
             <Grid size={{ xs: 12 }}>
               <TextField
                 label="Notes (optional)"
@@ -327,8 +371,13 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
                 onChange={(e) => set("notes", e.target.value)}
               />
             </Grid>
-            {isEdit && expense.recordedBy && (
-              <Grid size={{ xs: 12 }}>
+            {/* Attribution line — shown in both create and edit */}
+            <Grid size={{ xs: 12 }}>
+              {!isEdit ? (
+                <Typography variant="caption" color="text.secondary">
+                  Recorded by: <strong>{recorderName}</strong> (system-assigned at save, not editable)
+                </Typography>
+              ) : expense.recordedBy ? (
                 <Typography variant="caption" color="text.secondary">
                   Recorded by:{" "}
                   <strong>{expense.recordedBy?.name || "—"}</strong>
@@ -336,8 +385,8 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
                     <> · Last edited by <strong>{expense.editedBy?.name}</strong> on {fmtDate(expense.editedAt)}</>
                   )}
                 </Typography>
-              </Grid>
-            )}
+              ) : null}
+            </Grid>
           </Grid>
         </Box>
       </DialogContent>
@@ -466,14 +515,27 @@ const Expenses = () => {
     category: filters.category || undefined,
   }), [fromDate, toDate, filters.category]);
 
+  // P&L params: date range only — category filter is intentionally excluded so
+  // net profit always reflects the full picture, not just one filtered category.
+  // This is the SAME endpoint the Profit & Loss page uses; there is no parallel
+  // computation here.
+  const pnlParams = useMemo(() => ({
+    from: fromDate || undefined,
+    to: toDate || undefined,
+  }), [fromDate, toDate]);
+
   const { data: expenseData, isLoading } = useExpenses(queryParams);
   const { data: statsData } = useExpenseStats(statsParams);
   const { data: staffData } = useExpenseStaff();
+  const { data: pnlData } = useProfitLoss(pnlParams);
 
   const expenses = expenseData?.data || [];
   const pagination = expenseData?.pagination || {};
   const stats = statsData?.data || {};
   const staffList = staffData?.data?.users || [];
+
+  const netProfit = pnlData?.data?.netProfit;
+  const isProfitPositive = netProfit !== undefined ? netProfit >= 0 : undefined;
 
   const handleFilterChange = (key, value) => {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -666,6 +728,7 @@ const Expenses = () => {
       {/* Stats cards — only for active (non-voided) view */}
       {!isVoidedView && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
+          {/* Card 1: Total Expenses */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={MoneyOffIcon}
@@ -675,7 +738,8 @@ const Expenses = () => {
               sub={statDateLabel}
             />
           </Grid>
-          {(stats.byCategory || []).slice(0, 3).map((cat) => {
+          {/* Cards 2–3: Top 2 expense categories */}
+          {(stats.byCategory || []).slice(0, 2).map((cat) => {
             const Icon = CATEGORY_ICONS[cat.category] || MoreHorizIcon;
             return (
               <Grid key={cat.category} size={{ xs: 12, sm: 6, md: 3 }}>
@@ -689,6 +753,17 @@ const Expenses = () => {
               </Grid>
             );
           })}
+          {/* Card 4: Net Profit — from the same P&L endpoint the P&L page uses */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              icon={AccountBalanceIcon}
+              label="Net Profit"
+              value={netProfit !== undefined ? INR(netProfit) : "—"}
+              color="#6366f1"
+              sub={statDateLabel}
+              positive={isProfitPositive}
+            />
+          </Grid>
         </Grid>
       )}
 
