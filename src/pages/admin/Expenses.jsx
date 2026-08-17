@@ -26,25 +26,20 @@ import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import HomeWorkIcon from "@mui/icons-material/HomeWork";
-import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
-import BuildIcon from "@mui/icons-material/Build";
-import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
-import CampaignIcon from "@mui/icons-material/Campaign";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
 import {
   useExpenses,
-  useExpenseStats,
   useExpenseStaff,
   useCreateExpense,
   useUpdateExpense,
   useVoidExpense,
+  usePermanentDeleteExpense,
   useProfitLoss,
 } from "../../hooks/admin/useExpenses";
 import { useAdminStore } from "../../store/admin.store";
@@ -86,17 +81,6 @@ const CATEGORY_COLORS = {
   equipment: "default",
   marketing: "error",
   other: "default",
-};
-
-const CATEGORY_ICONS = {
-  lab: MedicalServicesIcon,
-  salaries: MoneyOffIcon,
-  rent: HomeWorkIcon,
-  utilities: ElectricBoltIcon,
-  materials: BuildIcon,
-  equipment: ShoppingCartIcon,
-  marketing: CampaignIcon,
-  other: MoreHorizIcon,
 };
 
 const PAYMENT_MODE_LABELS = {
@@ -471,6 +455,59 @@ const VoidDialog = ({ expense, onClose, onVoided }) => {
   );
 };
 
+// ── Permanent delete dialog (admin only, voided expenses only) ─────────────────
+
+const PermanentDeleteDialog = ({ expense, onClose, onDeleted }) => {
+  const deleteMutation = usePermanentDeleteExpense();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleDelete = async () => {
+    setBusy(true);
+    try {
+      await deleteMutation.mutateAsync(expense._id);
+      onDeleted();
+      onClose();
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to delete expense");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!expense} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ color: "error.main" }}>Delete Permanently?</DialogTitle>
+      <DialogContent>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          This cannot be undone. The record will be removed from the database
+          permanently. Any historical P&amp;L report that included this expense will
+          show different figures if re-generated.
+        </Alert>
+        <Typography variant="body2" sx={{ mb: 1 }}>
+          <strong>{fmtDate(expense?.date)}</strong> · {CATEGORY_LABELS[expense?.category]} ·{" "}
+          <strong>{INR(expense?.amount)}</strong>
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {expense?.description}
+        </Typography>
+        {error && (
+          <Alert severity="error" sx={{ mt: 1.5 }}>
+            {error}
+          </Alert>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={busy}>
+          Cancel
+        </Button>
+        <Button variant="contained" color="error" onClick={handleDelete} disabled={busy}>
+          {busy ? <CircularProgress size={18} /> : "Delete Permanently"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 const Expenses = () => {
@@ -485,10 +522,13 @@ const Expenses = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
 
+  const isAdmin = admin?.role === "admin";
+
   // Modal state
   const [showForm, setShowForm] = useState(false);
   const [editExpense, setEditExpense] = useState(null);
   const [voidTarget, setVoidTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Snackbar
   const [snack, setSnack] = useState({ open: false, msg: "", sev: "success" });
@@ -509,12 +549,6 @@ const Expenses = () => {
     limit,
   }), [fromDate, toDate, filters, search, page]);
 
-  const statsParams = useMemo(() => ({
-    from: fromDate || undefined,
-    to: toDate || undefined,
-    category: filters.category || undefined,
-  }), [fromDate, toDate, filters.category]);
-
   // P&L params: date range only — category filter is intentionally excluded so
   // net profit always reflects the full picture, not just one filtered category.
   // This is the SAME endpoint the Profit & Loss page uses; there is no parallel
@@ -525,15 +559,16 @@ const Expenses = () => {
   }), [fromDate, toDate]);
 
   const { data: expenseData, isLoading } = useExpenses(queryParams);
-  const { data: statsData } = useExpenseStats(statsParams);
   const { data: staffData } = useExpenseStaff();
   const { data: pnlData } = useProfitLoss(pnlParams);
 
   const expenses = expenseData?.data || [];
   const pagination = expenseData?.pagination || {};
-  const stats = statsData?.data || {};
   const staffList = staffData?.data?.users || [];
 
+  // All three stat card values come from the same P&L endpoint.
+  const totalPayment = pnlData?.data?.revenue?.net;
+  const totalExpense = pnlData?.data?.expenses?.total;
   const netProfit = pnlData?.data?.netProfit;
   const isProfitPositive = netProfit !== undefined ? netProfit >= 0 : undefined;
 
@@ -679,7 +714,17 @@ const Expenses = () => {
       minWidth: 100,
       align: "center",
       render: (_v, row) => {
-        if (row.isVoided) return null;
+        if (row.isVoided) {
+          // In the voided view, admin can permanently delete the record.
+          if (!isAdmin) return null;
+          return (
+            <Tooltip title="Delete permanently">
+              <IconButton size="small" color="error" onClick={() => setDeleteTarget(row)}>
+                <DeleteForeverIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          );
+        }
         return (
           <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
             {hasPermission("expenses", "edit") && (
@@ -725,39 +770,32 @@ const Expenses = () => {
         )}
       </Box>
 
-      {/* Stats cards — only for active (non-voided) view */}
+      {/* Stats cards — three fixed cards, all from the same P&L endpoint.
+          Hidden in voided view (voided records don't count in any figures). */}
       {!isVoidedView && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          {/* Card 1: Total Expenses */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <StatCard
+              icon={TrendingUpIcon}
+              label="Total Payment"
+              value={totalPayment !== undefined ? INR(totalPayment) : "—"}
+              color="#22c55e"
+              sub={statDateLabel}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <StatCard
               icon={MoneyOffIcon}
-              label="Total Expenses"
-              value={INR(stats.total)}
+              label="Total Expense"
+              value={totalExpense !== undefined ? INR(totalExpense) : "—"}
               color="#ef4444"
               sub={statDateLabel}
             />
           </Grid>
-          {/* Cards 2–3: Top 2 expense categories */}
-          {(stats.byCategory || []).slice(0, 2).map((cat) => {
-            const Icon = CATEGORY_ICONS[cat.category] || MoreHorizIcon;
-            return (
-              <Grid key={cat.category} size={{ xs: 12, sm: 6, md: 3 }}>
-                <StatCard
-                  icon={Icon}
-                  label={CATEGORY_LABELS[cat.category] || cat.category}
-                  value={INR(cat.total)}
-                  color="#6366f1"
-                  sub={`${cat.count} entries · ${cat.pct}%`}
-                />
-              </Grid>
-            );
-          })}
-          {/* Card 4: Net Profit — from the same P&L endpoint the P&L page uses */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <StatCard
               icon={AccountBalanceIcon}
-              label="Net Profit"
+              label="Profit"
               value={netProfit !== undefined ? INR(netProfit) : "—"}
               color="#6366f1"
               sub={statDateLabel}
@@ -830,6 +868,15 @@ const Expenses = () => {
           expense={voidTarget}
           onClose={() => setVoidTarget(null)}
           onVoided={() => showSnack("Expense voided", "warning")}
+        />
+      )}
+
+      {/* Permanent delete dialog — admin only, voided expenses only */}
+      {deleteTarget && (
+        <PermanentDeleteDialog
+          expense={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => showSnack("Expense permanently deleted", "error")}
         />
       )}
 

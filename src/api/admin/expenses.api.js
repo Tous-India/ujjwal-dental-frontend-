@@ -31,3 +31,6 @@ export const getProfitLoss = (filters = {}) =>
 
 export const getExpenseStaff = () =>
   api.get("/expenses/staff").then((r) => r.data);
+
+export const permanentDeleteExpense = (id) =>
+  api.delete(`/expenses/${id}/permanent`).then((r) => r.data);

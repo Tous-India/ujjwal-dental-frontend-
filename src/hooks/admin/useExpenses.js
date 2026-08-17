@@ -8,6 +8,7 @@ import {
   getExpenseStats,
   getProfitLoss,
   getExpenseStaff,
+  permanentDeleteExpense,
 } from "../../api/admin/expenses.api";
 
 export const useExpenses = (filters = {}) =>
@@ -73,6 +74,18 @@ export const useVoidExpense = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, reason }) => voidExpense(id, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expenses"] });
+      qc.invalidateQueries({ queryKey: ["expense-stats"] });
+      qc.invalidateQueries({ queryKey: ["pnl"] });
+    },
+  });
+};
+
+export const usePermanentDeleteExpense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => permanentDeleteExpense(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["expenses"] });
       qc.invalidateQueries({ queryKey: ["expense-stats"] });
