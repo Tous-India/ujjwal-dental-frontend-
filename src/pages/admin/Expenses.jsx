@@ -847,24 +847,16 @@ const Expenses = () => {
         </Alert>
       )}
 
-      {/* Filters — two-row layout so Custom Range date inputs don't overflow */}
+      {/* Filters — search on its own row; everything else on row 2 with wrap */}
       <Paper className="p-3 mb-4">
-        {/* Row 1: date preset (+ From/To when Custom Range) + search */}
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center", mb: 1.5 }}>
-          <QuickDateRangeFilter
-            value={{ from: fromDate, to: toDate }}
-            onChange={({ from, to }) => {
-              setFromDate(from);
-              setToDate(to);
-              setPage(1);
-            }}
-          />
+        {/* Row 1: search only, full width */}
+        <Box sx={{ mb: 1.5 }}>
           <TextField
             size="small"
             placeholder="Search description or vendor…"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            sx={{ flex: 1, minWidth: 200 }}
+            sx={{ width: "100%" }}
             autoComplete="off"
             InputProps={{
               startAdornment: (
@@ -876,8 +868,16 @@ const Expenses = () => {
           />
         </Box>
 
-        {/* Row 2: category / mode / spent-by / status dropdowns + refresh */}
+        {/* Row 2: date range + all dropdowns + refresh; flexWrap so nothing clips */}
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
+          <QuickDateRangeFilter
+            value={{ from: fromDate, to: toDate }}
+            onChange={({ from, to }) => {
+              setFromDate(from);
+              setToDate(to);
+              setPage(1);
+            }}
+          />
           {filterOptions.map((filter) => (
             <FormControl key={filter.key} size="small" sx={{ minWidth: 160 }}>
               <InputLabel>{filter.label}</InputLabel>
