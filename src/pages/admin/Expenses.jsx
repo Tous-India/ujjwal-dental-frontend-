@@ -567,9 +567,9 @@ const Expenses = () => {
   const pagination = expenseData?.pagination || {};
   const staffList = staffData?.data?.users || [];
 
-  // All three stat card values come from the same P&L endpoint.
   // All four stat card values come from the same P&L endpoint.
-  // expenses.other = Expense collection (non-lab); expenses.lab = LabOrder.paymentHistory.
+  // expenses.lab   = LabOrder.paymentHistory payments + Expense docs where category === "lab"
+  // expenses.other = Expense docs where category !== "lab"
   // The two are mutually exclusive: other + lab = total. Profit = Payment − other − lab.
   const totalPayment = pnlData?.data?.revenue?.net;
   const otherExpense = pnlData?.data?.expenses?.other;
