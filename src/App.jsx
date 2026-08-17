@@ -78,7 +78,6 @@ const AdminEnquiries = lazy(() => import("./pages/admin/Enquiries"));
 const AdminBlogs = lazy(() => import("./pages/admin/Blogs"));
 const AdminBlogEditor = lazy(() => import("./pages/admin/BlogEditor"));
 const AdminExpenses = lazy(() => import("./pages/admin/Expenses"));
-const AdminProfitLoss = lazy(() => import("./pages/admin/ProfitLoss"));
 
 /**
  * App Routes
@@ -228,7 +227,6 @@ const App = () => {
             <Route path="settings" element={<AdminSettings />} />
             <Route path="permissions" element={<AdminPermissionManager />} />
             <Route path="expenses" element={<AdminExpenses />} />
-            <Route path="profit-loss" element={<AdminProfitLoss />} />
           </Route>
         </Route>
 

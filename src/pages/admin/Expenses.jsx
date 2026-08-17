@@ -28,6 +28,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import QuickDateRangeFilter from "../../components/admin/QuickDateRangeFilter";
@@ -567,9 +568,13 @@ const Expenses = () => {
   const staffList = staffData?.data?.users || [];
 
   // All three stat card values come from the same P&L endpoint.
+  // All four stat card values come from the same P&L endpoint.
+  // expenses.other = Expense collection (non-lab); expenses.lab = LabOrder.paymentHistory.
+  // The two are mutually exclusive: other + lab = total. Profit = Payment − other − lab.
   const totalPayment = pnlData?.data?.revenue?.net;
-  const totalExpense = pnlData?.data?.expenses?.total;
-  const netProfit = pnlData?.data?.netProfit;
+  const otherExpense = pnlData?.data?.expenses?.other;
+  const labExpense   = pnlData?.data?.expenses?.lab;
+  const netProfit    = pnlData?.data?.netProfit;
   const isProfitPositive = netProfit !== undefined ? netProfit >= 0 : undefined;
 
   const handleFilterChange = (key, value) => {
@@ -756,7 +761,7 @@ const Expenses = () => {
             Expenses
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Track clinic expenditure. Revenue and lab costs appear in Profit &amp; Loss.
+            Track clinic expenditure. Lab costs are sourced from Lab Order payments.
           </Typography>
         </Box>
         {hasPermission("expenses", "create") && !isVoidedView && (
@@ -770,11 +775,14 @@ const Expenses = () => {
         )}
       </Box>
 
-      {/* Stats cards — three fixed cards, all from the same P&L endpoint.
+      {/* Stats cards — four fixed cards, all from the same P&L endpoint.
+          "Other Expenses" and "Lab Expenses" are mutually exclusive subsets of total
+          expenses — they never overlap, so readers can safely add them without
+          double-counting. Profit = Total Payment − Other Expenses − Lab Expenses.
           Hidden in voided view (voided records don't count in any figures). */}
       {!isVoidedView && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={TrendingUpIcon}
               label="Total Payment"
@@ -783,16 +791,25 @@ const Expenses = () => {
               sub={statDateLabel}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={MoneyOffIcon}
-              label="Total Expense"
-              value={totalExpense !== undefined ? INR(totalExpense) : "—"}
+              label="Other Expenses"
+              value={otherExpense !== undefined ? INR(otherExpense) : "—"}
               color="#ef4444"
               sub={statDateLabel}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              icon={MedicalServicesIcon}
+              label="Lab Expenses"
+              value={labExpense !== undefined ? INR(labExpense) : "—"}
+              color="#f59e0b"
+              sub={statDateLabel}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={AccountBalanceIcon}
               label="Profit"

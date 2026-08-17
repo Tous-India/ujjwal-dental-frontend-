@@ -47,7 +47,6 @@ import ContactPhoneIcon from "@mui/icons-material/ContactPhone";
 import ArticleIcon from "@mui/icons-material/Article";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
-import BarChartIcon from "@mui/icons-material/BarChart";
 import { useAdminStore } from "../../store/admin.store";
 import { usePermissions } from "../../hooks/admin/usePermissions";
 
@@ -72,7 +71,6 @@ const ADMIN_NAV = [
   { label: "Payment History", path: "/admin/payments", icon: PaymentIcon, badgeKey: "payments", badgeColor: "#f59e0b", module: "payments" },
   { label: "Billing", path: "/admin/billing", icon: ReceiptLongIcon, module: "billing" },
   { label: "Expenses", path: "/admin/expenses", icon: MoneyOffIcon, module: "expenses" },
-  { label: "Profit & Loss", path: "/admin/profit-loss", icon: BarChartIcon, module: "reports" },
   { label: "Reports", path: "/admin/reports", icon: AssessmentIcon, module: "reports" },
   { label: "Memberships", path: "/admin/memberships", icon: CardMembershipIcon, badgeKey: "memberships", badgeColor: "#8b5cf6", module: "memberships" },
   { label: "Blogs", path: "/admin/blogs", icon: ArticleIcon, module: "blogs" },
