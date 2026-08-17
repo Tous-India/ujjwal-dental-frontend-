@@ -142,14 +142,29 @@ const StatCard = ({ icon: Icon, label, value, color, sub, positive }) => {
             <Icon sx={{ color: "#fff", fontSize: 20 }} />
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontFamily: '"Inter", "DM Sans", sans-serif' }}
+            >
               {label}
             </Typography>
-            <Typography variant="h6" fontWeight={700} lineHeight={1.2} color={valueColor}>
+            <Typography
+              variant="h6"
+              fontWeight={700}
+              lineHeight={1.2}
+              color={valueColor}
+              className="font-numbers"
+              sx={{ fontFeatureSettings: '"tnum"' }}
+            >
               {value}
             </Typography>
             {sub && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontFamily: '"Inter", "DM Sans", sans-serif' }}
+              >
                 {sub}
               </Typography>
             )}
