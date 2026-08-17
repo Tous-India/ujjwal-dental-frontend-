@@ -4,7 +4,7 @@ import {
   getExpenseById,
   createExpense,
   updateExpense,
-  deleteExpense,
+  voidExpense,
   getExpenseStats,
   getProfitLoss,
   getExpenseStaff,
@@ -69,10 +69,10 @@ export const useUpdateExpense = () => {
   });
 };
 
-export const useDeleteExpense = () => {
+export const useVoidExpense = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id) => deleteExpense(id),
+    mutationFn: ({ id, reason }) => voidExpense(id, reason),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["expenses"] });
       qc.invalidateQueries({ queryKey: ["expense-stats"] });

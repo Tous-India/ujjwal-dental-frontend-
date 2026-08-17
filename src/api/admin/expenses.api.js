@@ -20,8 +20,8 @@ export const createExpense = (data) =>
 export const updateExpense = (id, data) =>
   api.patch(`/expenses/${id}`, data).then((r) => r.data);
 
-export const deleteExpense = (id) =>
-  api.delete(`/expenses/${id}`).then((r) => r.data);
+export const voidExpense = (id, reason) =>
+  api.post(`/expenses/${id}/void`, { reason }).then((r) => r.data);
 
 export const getExpenseStats = (filters = {}) =>
   api.get("/expenses/stats", { params: buildParams(filters) }).then((r) => r.data);

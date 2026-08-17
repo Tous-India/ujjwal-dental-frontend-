@@ -25,7 +25,7 @@ import {
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import BlockIcon from "@mui/icons-material/Block";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
@@ -43,7 +43,7 @@ import {
   useExpenseStaff,
   useCreateExpense,
   useUpdateExpense,
-  useDeleteExpense,
+  useVoidExpense,
 } from "../../hooks/admin/useExpenses";
 import { useAdminStore } from "../../store/admin.store";
 import { usePermissions } from "../../hooks/admin/usePermissions";
@@ -353,45 +353,69 @@ const ExpenseModal = ({ open, onClose, expense, staffList, currentUserId, onSave
   );
 };
 
-// ── Delete confirmation dialog ─────────────────────────────────────────────────
+// ── Void dialog ────────────────────────────────────────────────────────────────
 
-const DeleteDialog = ({ expense, onClose, onDeleted }) => {
-  const deleteMutation = useDeleteExpense();
-  const [deleting, setDeleting] = useState(false);
+const VoidDialog = ({ expense, onClose, onVoided }) => {
+  const voidMutation = useVoidExpense();
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+  const [voiding, setVoiding] = useState(false);
 
-  const handleDelete = async () => {
-    setDeleting(true);
+  const handleVoid = async () => {
+    if (!reason.trim() || reason.trim().length < 10) {
+      return setError("Please enter a reason of at least 10 characters.");
+    }
+    setError("");
+    setVoiding(true);
     try {
-      await deleteMutation.mutateAsync(expense._id);
-      onDeleted();
+      await voidMutation.mutateAsync({ id: expense._id, reason: reason.trim() });
+      onVoided();
       onClose();
-    } catch {
-      setDeleting(false);
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to void expense");
+      setVoiding(false);
     }
   };
 
   return (
     <Dialog open={!!expense} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ color: "error.main" }}>Delete Expense?</DialogTitle>
+      <DialogTitle sx={{ color: "warning.main" }}>Void Expense?</DialogTitle>
       <DialogContent>
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          This is a permanent hard delete. The record cannot be recovered and
-          historical P&L figures will change silently.
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Voiding removes this expense from P&L and stats. The record is preserved
+          for audit and can be viewed under the "Voided" filter.
         </Alert>
-        <Typography variant="body2">
+        <Typography variant="body2" sx={{ mb: 2 }}>
           <strong>{fmtDate(expense?.date)}</strong> · {CATEGORY_LABELS[expense?.category]} ·{" "}
           <strong>{INR(expense?.amount)}</strong>
+          <br />
+          <Typography component="span" variant="caption" color="text.secondary">
+            {expense?.description}
+          </Typography>
         </Typography>
-        <Typography variant="body2" color="text.secondary" mt={0.5}>
-          {expense?.description}
-        </Typography>
+        {error && (
+          <Alert severity="error" sx={{ mb: 1.5 }}>
+            {error}
+          </Alert>
+        )}
+        <TextField
+          label="Void reason *"
+          size="small"
+          fullWidth
+          multiline
+          rows={2}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Why is this expense being voided? (min 10 chars)"
+          helperText={`${reason.length} / 10 min`}
+        />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={deleting}>
+        <Button onClick={onClose} disabled={voiding}>
           Cancel
         </Button>
-        <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
-          {deleting ? <CircularProgress size={18} /> : "Delete Permanently"}
+        <Button variant="contained" color="warning" onClick={handleVoid} disabled={voiding}>
+          {voiding ? <CircularProgress size={18} /> : "Void Expense"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -415,11 +439,13 @@ const Expenses = () => {
   // Modal state
   const [showForm, setShowForm] = useState(false);
   const [editExpense, setEditExpense] = useState(null);
-  const [deleteExpense, setDeleteExpense] = useState(null);
+  const [voidTarget, setVoidTarget] = useState(null);
 
   // Snackbar
   const [snack, setSnack] = useState({ open: false, msg: "", sev: "success" });
   const showSnack = (msg, sev = "success") => setSnack({ open: true, msg, sev });
+
+  const isVoidedView = filters.voided === "true";
 
   // Query params — stats + list share the same date/filter window
   const queryParams = useMemo(() => ({
@@ -428,6 +454,7 @@ const Expenses = () => {
     category: filters.category || undefined,
     paymentMode: filters.paymentMode || undefined,
     spentBy: filters.spentBy || undefined,
+    voided: filters.voided || undefined,
     search: search || undefined,
     page,
     limit,
@@ -489,6 +516,14 @@ const Expenses = () => {
       label: "Spent By",
       options: staffList.map((u) => ({ value: u._id, label: u.name })),
     },
+    {
+      key: "voided",
+      label: "Status",
+      options: [
+        { value: "", label: "Active" },
+        { value: "true", label: "Voided" },
+      ],
+    },
   ];
 
   const columns = [
@@ -517,10 +552,20 @@ const Expenses = () => {
       minWidth: 180,
       render: (v, row) => (
         <Box>
-          <Typography variant="body2">{v}</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <Typography variant="body2">{v}</Typography>
+            {row.isVoided && (
+              <Chip label="Voided" size="small" color="default" sx={{ height: 18, fontSize: "0.65rem" }} />
+            )}
+          </Box>
           {row.vendor && (
             <Typography variant="caption" color="text.secondary">
               {row.vendor}
+            </Typography>
+          )}
+          {row.isVoided && row.voidReason && (
+            <Typography variant="caption" color="text.secondary" display="block">
+              Reason: {row.voidReason}
             </Typography>
           )}
         </Box>
@@ -531,8 +576,8 @@ const Expenses = () => {
       headerName: "Amount",
       minWidth: 110,
       align: "right",
-      render: (v) => (
-        <Typography fontWeight={600} color="error.main">
+      render: (v, row) => (
+        <Typography fontWeight={600} color={row.isVoided ? "text.disabled" : "error.main"}>
           {INR(v)}
         </Typography>
       ),
@@ -571,24 +616,27 @@ const Expenses = () => {
       headerName: "Actions",
       minWidth: 100,
       align: "center",
-      render: (_v, row) => (
-        <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
-          {hasPermission("expenses", "edit") && (
-            <Tooltip title="Edit">
-              <IconButton size="small" onClick={() => setEditExpense(row)}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          {hasPermission("expenses", "delete") && (
-            <Tooltip title="Delete">
-              <IconButton size="small" color="error" onClick={() => setDeleteExpense(row)}>
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      ),
+      render: (_v, row) => {
+        if (row.isVoided) return null;
+        return (
+          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
+            {hasPermission("expenses", "edit") && (
+              <Tooltip title="Edit">
+                <IconButton size="small" onClick={() => setEditExpense(row)}>
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {hasPermission("expenses", "delete") && (
+              <Tooltip title="Void expense">
+                <IconButton size="small" color="warning" onClick={() => setVoidTarget(row)}>
+                  <BlockIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        );
+      },
     },
   ];
 
@@ -604,7 +652,7 @@ const Expenses = () => {
             Track clinic expenditure. Revenue and lab costs appear in Profit &amp; Loss.
           </Typography>
         </Box>
-        {hasPermission("expenses", "create") && (
+        {hasPermission("expenses", "create") && !isVoidedView && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -615,32 +663,41 @@ const Expenses = () => {
         )}
       </Box>
 
-      {/* Stats cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            icon={MoneyOffIcon}
-            label="Total Expenses"
-            value={INR(stats.total)}
-            color="#ef4444"
-            sub={statDateLabel}
-          />
+      {/* Stats cards — only for active (non-voided) view */}
+      {!isVoidedView && (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              icon={MoneyOffIcon}
+              label="Total Expenses"
+              value={INR(stats.total)}
+              color="#ef4444"
+              sub={statDateLabel}
+            />
+          </Grid>
+          {(stats.byCategory || []).slice(0, 3).map((cat) => {
+            const Icon = CATEGORY_ICONS[cat.category] || MoreHorizIcon;
+            return (
+              <Grid key={cat.category} size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={Icon}
+                  label={CATEGORY_LABELS[cat.category] || cat.category}
+                  value={INR(cat.total)}
+                  color="#6366f1"
+                  sub={`${cat.count} entries · ${cat.pct}%`}
+                />
+              </Grid>
+            );
+          })}
         </Grid>
-        {(stats.byCategory || []).slice(0, 3).map((cat) => {
-          const Icon = CATEGORY_ICONS[cat.category] || MoreHorizIcon;
-          return (
-            <Grid key={cat.category} size={{ xs: 12, sm: 6, md: 3 }}>
-              <StatCard
-                icon={Icon}
-                label={CATEGORY_LABELS[cat.category] || cat.category}
-                value={INR(cat.total)}
-                color="#6366f1"
-                sub={`${cat.count} entries · ${cat.pct}%`}
-              />
-            </Grid>
-          );
-        })}
-      </Grid>
+      )}
+
+      {/* Voided view banner */}
+      {isVoidedView && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Showing voided expenses. These records are excluded from all stats and P&L figures.
+        </Alert>
+      )}
 
       {/* Filters */}
       <CompactFilterBar
@@ -675,9 +732,9 @@ const Expenses = () => {
           limit,
           total: pagination.total || 0,
           onPageChange: setPage,
-          onLimitChange: (l) => { setPage(1); },
+          onLimitChange: () => { setPage(1); },
         }}
-        emptyMessage="No expenses recorded for this period."
+        emptyMessage={isVoidedView ? "No voided expenses found." : "No expenses recorded for this period."}
       />
 
       {/* Add / Edit modal */}
@@ -692,12 +749,12 @@ const Expenses = () => {
         />
       )}
 
-      {/* Delete confirmation */}
-      {deleteExpense && (
-        <DeleteDialog
-          expense={deleteExpense}
-          onClose={() => setDeleteExpense(null)}
-          onDeleted={() => showSnack("Expense deleted", "warning")}
+      {/* Void confirmation dialog */}
+      {voidTarget && (
+        <VoidDialog
+          expense={voidTarget}
+          onClose={() => setVoidTarget(null)}
+          onVoided={() => showSnack("Expense voided", "warning")}
         />
       )}
 
