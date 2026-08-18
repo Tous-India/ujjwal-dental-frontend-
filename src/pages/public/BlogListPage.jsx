@@ -110,16 +110,16 @@ const BlogListPage = () => {
                     to={`/blog/${blog.slug}`}
                     className="group flex flex-col h-full rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 no-underline"
                   >
-                    <div className="aspect-3/2 w-full overflow-hidden shrink-0">
+                    <div className="relative aspect-video w-full overflow-hidden shrink-0">
                       {blog.coverImage ? (
                         <img
                           src={blog.coverImage}
                           alt={blog.title}
                           loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full bg-[#e8f4fd] flex items-center justify-center">
+                        <div className="absolute inset-0 bg-[#e8f4fd] flex items-center justify-center">
                           <span className="text-[#006694] font-bold text-lg">Ujjwal Dental</span>
                         </div>
                       )}
