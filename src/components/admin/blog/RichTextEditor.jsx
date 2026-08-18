@@ -46,9 +46,15 @@ export default function RichTextEditor({ content, onChange, placeholder = "Write
   // memoising here prevents Tiptap v3's compareOptions from detecting a spurious
   // change on every render and calling editor.setOptions() (which resets the
   // document state and silently drops toolbar commands).
+  //
+  // StarterKit v3 bundles Link internally. Passing Link.configure() separately
+  // caused a "Duplicate extension names: ['link']" warning that destabilised the
+  // extension chain. Fix: disable Link inside StarterKit and keep the explicit
+  // Link.configure({ openOnClick: false }) — the openOnClick option is essential
+  // so editor clicks don't navigate instead of letting you edit the link.
   const extensions = useMemo(
     () => [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       Image.configure({ inline: false, HTMLAttributes: { class: "blog-editor-image" } }),
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder }),
