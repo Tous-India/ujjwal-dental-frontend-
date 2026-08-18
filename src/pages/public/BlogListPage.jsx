@@ -110,7 +110,7 @@ const BlogListPage = () => {
                     to={`/blog/${blog.slug}`}
                     className="group flex flex-col h-full rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 no-underline"
                   >
-                    <div className="relative aspect-video w-full overflow-hidden shrink-0">
+                    <div className="relative aspect-2/1 w-full overflow-hidden shrink-0">
                       {blog.coverImage ? (
                         <img
                           src={blog.coverImage}
