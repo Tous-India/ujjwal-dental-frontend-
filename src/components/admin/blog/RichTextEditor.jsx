@@ -9,7 +9,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { uploadBlogImage } from "../../../api/admin/blogs.api";
 import { Box, IconButton, Tooltip, CircularProgress, Divider } from "@mui/material";
@@ -26,6 +26,7 @@ const ToolbarButton = ({ label, active, onClick, disabled, children }) => (
     <span>
       <IconButton
         size="small"
+        onMouseDown={(e) => e.preventDefault()}
         onClick={onClick}
         disabled={disabled}
         color={active ? "primary" : "default"}
@@ -41,13 +42,25 @@ export default function RichTextEditor({ content, onChange, placeholder = "Write
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
 
-  const editor = useEditor({
-    extensions: [
+  // Stable extension array — .configure() returns a new object each call, so
+  // memoising here prevents Tiptap v3's compareOptions from detecting a spurious
+  // change on every render and calling editor.setOptions() (which resets the
+  // document state and silently drops toolbar commands).
+  const extensions = useMemo(
+    () => [
       StarterKit,
       Image.configure({ inline: false, HTMLAttributes: { class: "blog-editor-image" } }),
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder }),
     ],
+    // placeholder is stable (default arg); add it to the dep array if it ever
+    // becomes dynamic.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const editor = useEditor({
+    extensions,
     content: content || "",
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
