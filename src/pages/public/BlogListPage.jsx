@@ -1,21 +1,30 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Pagination, Chip, CircularProgress } from "@mui/material";
+import { Pagination, CircularProgress } from "@mui/material";
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
 import { getPublicBlogs } from "../../api/blogs.api";
 
 const PAGE_SIZE = 9;
 
-const truncate = (text, max) => {
-  if (!text) return "";
-  return text.length > max ? `${text.slice(0, max).trim()}…` : text;
-};
+function ordinalSuffix(day) {
+  if (day >= 11 && day <= 13) return "th";
+  switch (day % 10) {
+    case 1: return "st";
+    case 2: return "nd";
+    case 3: return "rd";
+    default: return "th";
+  }
+}
 
-const formatDate = (date) =>
-  date
-    ? new Date(date).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
-    : "";
+const formatDate = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  const day = d.getDate();
+  const month = d.toLocaleDateString("en-IN", { month: "short" });
+  const year = d.getFullYear();
+  return `${day}${ordinalSuffix(day)} ${month} ${year}`;
+};
 
 const BlogListPage = () => {
   const [page, setPage] = useState(1);
@@ -94,59 +103,41 @@ const BlogListPage = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {blogs.map((blog) => (
-                  <article
+                  <Link
                     key={blog._id}
-                    className="flex flex-col rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                    to={`/blog/${blog.slug}`}
+                    className="group flex flex-col h-full rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 no-underline"
                   >
-                    <Link to={`/blog/${blog.slug}`} className="no-underline">
+                    <div className="aspect-3/2 w-full overflow-hidden shrink-0">
                       {blog.coverImage ? (
                         <img
                           src={blog.coverImage}
                           alt={blog.title}
                           loading="lazy"
-                          className="w-full aspect-video object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full aspect-video bg-[#e8f4fd] flex items-center justify-center">
+                        <div className="w-full h-full bg-[#e8f4fd] flex items-center justify-center">
                           <span className="text-[#006694] font-bold text-lg">Ujjwal Dental</span>
                         </div>
                       )}
-                    </Link>
-                    <div className="flex flex-col flex-grow p-5">
-                      {(blog.category || blog.tags?.length > 0) && (
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          {blog.category && (
-                            <Chip size="small" label={blog.category} className="bg-[#e8f4fd] text-[#006694]" />
-                          )}
-                          {blog.tags?.slice(0, 3).map((tag) => (
-                            <Chip key={tag} size="small" label={tag} variant="outlined" className="capitalize" />
-                          ))}
-                        </div>
-                      )}
-                      <Link to={`/blog/${blog.slug}`} className="no-underline">
-                        <h2
-                          className="text-[#003366] hover:text-[#006694] transition-colors duration-200 mb-2"
-                          style={{ fontSize: "1.15rem", fontWeight: 700, lineHeight: 1.35 }}
-                        >
-                          {blog.title}
-                        </h2>
-                      </Link>
-                      <p className="text-gray-500 text-sm leading-relaxed mb-3 flex-grow">
-                        {truncate(blog.excerpt, 120)}
-                      </p>
-                      <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-                        <span className="text-gray-400 text-xs">{formatDate(blog.publishedAt)}</span>
-                        <Link
-                          to={`/blog/${blog.slug}`}
-                          className="text-accent text-sm font-semibold no-underline hover:underline"
-                        >
-                          Read More →
-                        </Link>
-                      </div>
                     </div>
-                  </article>
+                    <div className="flex flex-col flex-1 p-5 bg-gray-50">
+                      <h2
+                        className="text-[#003366] group-hover:text-[#006694] transition-colors duration-200 mb-3 line-clamp-2 leading-snug"
+                        style={{ fontSize: "1.05rem", fontWeight: 700 }}
+                      >
+                        {blog.title}
+                      </h2>
+                      <div className="flex-1" />
+                      <p className="text-gray-400 text-xs">
+                        {formatDate(blog.publishedAt)}
+                        {blog.readTimeMinutes ? ` | ${blog.readTimeMinutes} min read` : ""}
+                      </p>
+                    </div>
+                  </Link>
                 ))}
               </div>
 
