@@ -18,7 +18,7 @@ const fireBookAppointmentConversion = () => {
 };
 
 const stats = [
-  { value: "8+", label: "Years Experience" },
+  { value: "15+", label: "Years Experience" },
   { value: "2022", label: "Assistant Professor Since" },
   { value: "IDA", label: "Professional Member" },
 ];
@@ -29,7 +29,7 @@ const credentials = [
   { icon: <ShieldOutlinedIcon />, text: "Member — Haryana State Dental Council" },
   { icon: <GroupsIcon />, text: "Member — Indian Dental Association (IDA)" },
   { icon: <WorkspacePremiumIcon />, text: "Published researcher — national & international dental journals" },
-  { icon: <MedicalServicesIcon />, text: "8+ years of clinical and academic experience" },
+  { icon: <MedicalServicesIcon />, text: "15+ years of clinical and academic experience" },
 ];
 
 const expertise = [
@@ -69,7 +69,7 @@ const jsonLd = {
   name: "Dr. Ajay Kaushik",
   jobTitle: "Assistant Professor, Department of Dentistry",
   description:
-    "Dr. Ajay Kaushik, BDS MDS, is an experienced dentist with 8+ years in clinical dentistry and academic excellence at Ujjwal Dental Clinic, Sonipat.",
+    "Dr. Ajay Kaushik, BDS MDS, is an experienced dentist with 15+ years in clinical dentistry and academic excellence at Ujjwal Dental Clinic, Sonipat.",
   image: "https://ujjwaldentalplanet.com/doctors/ajay.webp",
   url: "https://ujjwaldentalplanet.com/doctors/ajay-kaushik",
   telephone: "+91-8708362763",
@@ -108,7 +108,7 @@ const DoctorProfileAjayKaushik = () => {
       </title>
       <meta
         name="description"
-        content="Dr. Ajay Kaushik, BDS MDS, is an experienced dentist at Ujjwal Dental Clinic, Sonipat with 8+ years in clinical dentistry. Book an appointment today."
+        content="Dr. Ajay Kaushik, BDS MDS, is an experienced dentist at Ujjwal Dental Clinic, Sonipat with 15+ years in clinical dentistry. Book an appointment today."
       />
       <meta
         name="keywords"
@@ -122,7 +122,7 @@ const DoctorProfileAjayKaushik = () => {
       />
       <meta
         property="og:description"
-        content="BDS MDS dentist with 8+ years in clinical dentistry, dental research and patient care at Ujjwal Dental Clinic, Sonipat."
+        content="BDS MDS dentist with 15+ years in clinical dentistry, dental research and patient care at Ujjwal Dental Clinic, Sonipat."
       />
       <meta property="og:url" content="https://ujjwaldentalplanet.com/doctors/ajay-kaushik" />
       <meta
@@ -133,7 +133,7 @@ const DoctorProfileAjayKaushik = () => {
       <meta name="twitter:title" content="Dr. Ajay Kaushik — Dentist in Sonipat | Ujjwal Dental Clinic" />
       <meta
         name="twitter:description"
-        content="BDS MDS dentist with 8+ years in clinical dentistry, dental research and patient care at Ujjwal Dental Clinic, Sonipat."
+        content="BDS MDS dentist with 15+ years in clinical dentistry, dental research and patient care at Ujjwal Dental Clinic, Sonipat."
       />
       <meta
         name="twitter:image"
@@ -213,7 +213,7 @@ const DoctorProfileAjayKaushik = () => {
             Yamunanagar.
           </p>
           <p className="text-gray-600 text-base leading-relaxed mt-4">
-            With more than eight years of clinical and academic experience,
+            With over 15 years of clinical and academic experience,
             Dr. Kaushik has consistently demonstrated excellence in dental
             education, patient care, and research. His professional journey
             reflects a strong commitment to integrating evidence-based
