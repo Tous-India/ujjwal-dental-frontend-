@@ -50,6 +50,7 @@ const MODULE_LABELS = {
   lab: "Lab",
   payments: "Payment History",
   billing: "Billing",
+  expenses: "Expenses",
   reports: "Reports",
   memberships: "Memberships",
   blogs: "Blogs",
