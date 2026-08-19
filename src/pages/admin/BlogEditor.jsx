@@ -6,6 +6,7 @@
  */
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -35,6 +36,8 @@ import RichTextEditor from "../../components/admin/blog/RichTextEditor";
 import BlogPreviewModal from "../../components/admin/blog/BlogPreviewModal";
 import { useBlog, useBlogMutations } from "../../hooks/admin/useBlogs";
 import { uploadBlogImage } from "../../api/admin/blogs.api";
+import { getBlogAuthors } from "../../api/admin/users.api";
+import { useAdminStore } from "../../store/admin.store";
 
 const slugify = (title) =>
   title
@@ -84,6 +87,7 @@ const getInitialFormState = () => ({
   ogDescription: "",
   category: "General",
   scheduledPublishAt: "",
+  author: "",
 });
 
 const BlogEditor = () => {
@@ -93,6 +97,9 @@ const BlogEditor = () => {
   const coverInputRef = useRef(null);
   const ogImageInputRef = useRef(null);
 
+  // Logged-in admin — used to default the author field on new posts
+  const loggedInAdmin = useAdminStore((s) => s.admin);
+
   const { data, isLoading } = useBlog(id);
   const {
     createBlogAsync,
@@ -100,6 +107,14 @@ const BlogEditor = () => {
     isCreating,
     isUpdating,
   } = useBlogMutations();
+
+  // Fetch selectable blog authors
+  const { data: authorsData } = useQuery({
+    queryKey: ["blog-authors"],
+    queryFn: getBlogAuthors,
+    staleTime: 5 * 60 * 1000,
+  });
+  const authors = authorsData?.data?.authors || [];
 
   const [formData, setFormData] = useState(getInitialFormState());
   const [status, setStatus] = useState("draft");
@@ -131,11 +146,22 @@ const BlogEditor = () => {
         ogDescription: blog.ogDescription || "",
         category: blog.category || "General",
         scheduledPublishAt: toLocalInputValue(blog.scheduledPublishAt),
+        // author is an ObjectId ref — API returns populated { _id, name };
+        // store the _id string so it matches the <Select> values
+        author: blog.author?._id || blog.author || "",
       });
       setStatus(blog.status || "draft");
       setSlugTouched(true);
     }
   }, [data]);
+
+  // For new posts: default author to the logged-in user once their ID is known
+  useEffect(() => {
+    if (!isEditMode && loggedInAdmin?._id && !formData.author) {
+      setFormData((prev) => ({ ...prev, author: loggedInAdmin._id }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedInAdmin, isEditMode]);
 
   const handleChange = (field) => (e) => {
     const value = e.target.value;
@@ -225,6 +251,7 @@ const BlogEditor = () => {
         ? new Date(formData.scheduledPublishAt).toISOString()
         : null,
     status: targetStatus,
+    author: formData.author || undefined,
   });
 
   const handleSave = async (targetStatus) => {
@@ -507,6 +534,24 @@ const BlogEditor = () => {
                   <MenuItem value="draft">Draft</MenuItem>
                   <MenuItem value="published">Published</MenuItem>
                   <MenuItem value="scheduled">Scheduled</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel shrink>Author</InputLabel>
+                <Select
+                  label="Author"
+                  value={formData.author}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, author: e.target.value }))
+                  }
+                  displayEmpty
+                >
+                  {authors.map((a) => (
+                    <MenuItem key={a._id} value={a._id}>
+                      {a.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               {status === "scheduled" && (

@@ -55,3 +55,10 @@ export const reactivateUser = (id) =>
  */
 export const permanentDeleteUser = (id) =>
   api.delete(`/users/${id}/permanent`).then((res) => res.data);
+
+/**
+ * Get users eligible to be selected as blog authors
+ * (admin, blog_editor, clinic_manager roles, active only)
+ */
+export const getBlogAuthors = () =>
+  api.get("/users/blog-authors").then((res) => res.data);
