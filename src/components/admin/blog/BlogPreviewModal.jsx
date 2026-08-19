@@ -16,7 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BlogFaqSection from "../../public/BlogFaqSection";
-import BlogTocSection from "../../public/BlogTocSection";
+import BlogTocSection, { buildToc, injectHeadingIds } from "../../public/BlogTocSection";
 
 const formatDate = (date) =>
   date
@@ -40,6 +40,13 @@ export default function BlogPreviewModal({ open, onClose, formData, status }) {
       return Math.max(1, Math.ceil(words.length / 200));
     })(),
   };
+
+  // Inject id attributes into <h2> tags so TOC anchor links have targets in
+  // the modal's scroll container. Mirrors BlogDetailPage's render-time logic.
+  const previewToc = buildToc(previewBlog.content);
+  const renderedContent = previewToc.length >= 3
+    ? injectHeadingIds(previewBlog.content, previewToc)
+    : previewBlog.content;
 
   return (
     <Dialog open={open} onClose={onClose} fullScreen>
@@ -112,10 +119,13 @@ export default function BlogPreviewModal({ open, onClose, formData, status }) {
               </div>
             )}
 
-            {/* Table of Contents — mirrors BlogDetailPage (anchor links won't scroll in modal but TOC still shows) */}
+            {/* Table of Contents — mirrors BlogDetailPage; scrollIntoView works
+                inside the modal's DialogContent scroll container */}
             <BlogTocSection content={previewBlog.content} />
 
-            {/* Blog content — same CSS class block as BlogDetailPage */}
+            {/* Blog content — same CSS class block as BlogDetailPage.
+                renderedContent has id attributes on <h2> tags so TOC anchors
+                have targets for document.getElementById to find. */}
             <div
               className="max-w-none text-gray-700 text-base leading-[1.8]
                 [&_h2]:text-[#003366] [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-4
@@ -126,7 +136,7 @@ export default function BlogPreviewModal({ open, onClose, formData, status }) {
                 [&_a]:text-accent [&_a]:underline
                 [&_strong]:font-semibold [&_strong]:text-[#003366]
                 [&_img]:rounded-xl [&_img]:my-6 [&_img]:w-full"
-              dangerouslySetInnerHTML={{ __html: previewBlog.content }}
+              dangerouslySetInnerHTML={{ __html: renderedContent }}
             />
 
             {/* FAQ Accordion — mirrors the published BlogDetailPage layout */}

@@ -5,8 +5,9 @@
  * stored HTML. Returns null when there are fewer than 3 H2 headings (not
  * worth showing a TOC).
  *
- * Exported buildToc() is also used by BlogDetailPage to inject anchor ids
- * into the rendered article body so the TOC links scroll correctly.
+ * Exported buildToc() and injectHeadingIds() are used by BlogDetailPage and
+ * BlogPreviewModal to inject anchor ids into the rendered article body so the
+ * TOC links scroll correctly.
  */
 
 /**
@@ -28,6 +29,19 @@ export function buildToc(html) {
   });
 }
 
+/**
+ * Inject id attributes into H2 tags at render time.
+ * The stored HTML is never modified — ids are only added in the rendered output.
+ */
+export function injectHeadingIds(html, tocItems) {
+  let i = 0;
+  return html.replace(/<h2([^>]*)>/gi, (match, attrs) => {
+    const id = tocItems[i]?.id || `heading-${i}`;
+    i++;
+    return `<h2${attrs} id="${id}">`;
+  });
+}
+
 export default function BlogTocSection({ content }) {
   const toc = buildToc(content || "");
   if (toc.length < 3) return null;
@@ -38,7 +52,19 @@ export default function BlogTocSection({ content }) {
       <ol className="list-decimal pl-5 space-y-1">
         {toc.map((item) => (
           <li key={item.id}>
-            <a href={`#${item.id}`} className="text-accent text-sm hover:underline">
+            <a
+              href={`#${item.id}`}
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey || e.button !== 0) return;
+                e.preventDefault();
+                const target = document.getElementById(item.id);
+                if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (window.location.pathname.includes("/blog/")) {
+                  window.history.pushState(null, "", `#${item.id}`);
+                }
+              }}
+              className="text-accent text-sm hover:underline"
+            >
               {item.text}
             </a>
           </li>

@@ -13,7 +13,7 @@ import { getPublicBlogBySlug } from "../../api/blogs.api";
 import { useRelatedBlogs } from "../../hooks/public/useBlogs";
 import BlogCard from "../../components/public/BlogCard";
 import BlogFaqSection from "../../components/public/BlogFaqSection";
-import BlogTocSection, { buildToc } from "../../components/public/BlogTocSection";
+import BlogTocSection, { buildToc, injectHeadingIds } from "../../components/public/BlogTocSection";
 import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
 
 const fireBookAppointmentConversion = () => {
@@ -26,19 +26,6 @@ const formatDate = (date) =>
   date
     ? new Date(date).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
     : "";
-
-/**
- * Inject id attributes into H2 tags at render time.
- * The stored HTML is never modified — ids are only added in the rendered output.
- */
-function injectHeadingIds(html, tocItems) {
-  let i = 0;
-  return html.replace(/<h2([^>]*)>/gi, (match, attrs) => {
-    const id = tocItems[i]?.id || `heading-${i}`;
-    i++;
-    return `<h2${attrs} id="${id}">`;
-  });
-}
 
 const BlogDetailPage = () => {
   const { slug } = useParams();
