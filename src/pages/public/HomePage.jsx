@@ -53,7 +53,7 @@ const doctors = [
   { name: "Dr. Alisha Dogra", subtitle: "BDS — Bachelor of Dental Surgery", experience: "5+ Yrs Experience", lead: false, img: "/doctors/alisha.jpg" },
   {
     name: "Dr. Ajay Kaushik",
-    experience: "8+ Yrs Experience",
+    experience: "15+ Yrs Experience",
     subtitle: "MDS — Orthodontics & Dentofacial Orthopaedics | Asst. Professor",
     lead: false,
     img: "/doctors/ajay.webp",
