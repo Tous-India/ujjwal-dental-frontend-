@@ -16,6 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BlogFaqSection from "../../public/BlogFaqSection";
+import BlogTocSection from "../../public/BlogTocSection";
 
 const formatDate = (date) =>
   date
@@ -110,6 +111,9 @@ export default function BlogPreviewModal({ open, onClose, formData, status }) {
                 />
               </div>
             )}
+
+            {/* Table of Contents — mirrors BlogDetailPage (anchor links won't scroll in modal but TOC still shows) */}
+            <BlogTocSection content={previewBlog.content} />
 
             {/* Blog content — same CSS class block as BlogDetailPage */}
             <div
