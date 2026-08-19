@@ -98,6 +98,11 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
   const [treatments, setTreatments] = useState([]);
   const [availableSlots, setAvailableSlots] = useState(null);
 
+  // "Other" treatment popup dialog state — mirrors AddAppointmentModal pattern.
+  const [otherTreatmentDialogOpen, setOtherTreatmentDialogOpen] = useState(false);
+  const [otherTreatmentInput, setOtherTreatmentInput] = useState(""); // dialog text-field working copy
+  const [previousTreatmentObj, setPreviousTreatmentObj] = useState(null); // treatment object before "Other" was selected
+
   const { updateAppointment: updateApptMutation, isUpdating } = useAppointmentMutations();
 
   // Track the original date so we can mark the original slot as "(current)"
@@ -131,6 +136,9 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
     const pm = appointment.paymentMethod;
     setPaymentMethod(pm === "online" ? "online" : pm === "free" || appointment.isFree ? "free" : "cash");
     setErrors({});
+    setOtherTreatmentDialogOpen(false);
+    setOtherTreatmentInput("");
+    setPreviousTreatmentObj(null);
   }, [open, appointment]);
 
   // Fetch treatments when modal opens
@@ -248,6 +256,9 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
   const handleClose = () => {
     if (!isUpdating) {
       setErrors({});
+      setOtherTreatmentDialogOpen(false);
+      setOtherTreatmentInput("");
+      setPreviousTreatmentObj(null);
       onClose();
     }
   };
@@ -261,6 +272,7 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
     : Number(formData.opdFee) || 0;
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -539,17 +551,33 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
               <Grid size={{ xs: 6, sm: 6, md: 4 }}>
                 <Autocomplete
                   options={[...treatments, OTHER_TREATMENT]}
-                  getOptionLabel={(o) => (o ? o.name || "" : "")}
+                  getOptionLabel={(o) => {
+                    if (!o) return "";
+                    // When "Other" is selected and a custom name is saved, show it
+                    // as "Other — <name>" so the admin sees what they entered.
+                    if (o._id === "other" && formData.treatment?._id === "other" && formData.treatmentName)
+                      return `Other — ${formData.treatmentName}`;
+                    return o.name || "";
+                  }}
                   value={formData.treatment}
                   isOptionEqualToValue={(opt, val) => opt._id === val?._id}
                   onChange={(_, value) => {
-                    const isOther = value?._id === "other";
-                    setFormData((prev) => ({
-                      ...prev,
-                      treatment: value,
-                      fee: isOther ? "" : value?.price != null ? String(value.price) : prev.fee,
-                      treatmentName: isOther ? prev.treatmentName : "",
-                    }));
+                    if (value?._id === "other") {
+                      // Save previous treatment so Cancel can revert
+                      setPreviousTreatmentObj(formData.treatment);
+                      setOtherTreatmentInput(formData.treatmentName); // pre-fill with current custom name
+                      setOtherTreatmentDialogOpen(true);
+                      // Set treatment to OTHER_TREATMENT immediately so the
+                      // Autocomplete shows "Other…" — treatmentName unchanged until dialog Save
+                      setFormData((prev) => ({ ...prev, treatment: value }));
+                    } else {
+                      setFormData((prev) => ({
+                        ...prev,
+                        treatment: value,
+                        fee: value?.price != null ? String(value.price) : prev.fee,
+                        treatmentName: "",
+                      }));
+                    }
                     setErrors((prev) => ({ ...prev, treatment: "", treatmentName: "", fee: "" }));
                   }}
                   renderInput={(params) => (
@@ -565,21 +593,6 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
                   )}
                 />
               </Grid>
-              {formData.treatment?._id === "other" && (
-                <Grid size={{ xs: 6, sm: 6, md: 4 }}>
-                  <TextField
-                    fullWidth
-                    label="Treatment name"
-                    name="treatmentName"
-                    value={formData.treatmentName}
-                    onChange={handleChange}
-                    required
-                    size="small"
-                    error={!!errors.treatmentName}
-                    helperText={errors.treatmentName || "Enter the custom treatment name"}
-                  />
-                </Grid>
-              )}
               {!formData.isFree && (
                 <Grid size={{ xs: 6, sm: 6, md: 4 }}>
                   <TextField
@@ -756,6 +769,64 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
         </Button>
       </DialogActions>
     </Dialog>
+
+    {/* "Enter treatment name" popup (other-treatment dialog) — same pattern as AddAppointmentModal.
+        Opens when the admin selects "Other (custom treatment)" from the
+        Autocomplete.  On Save, treatmentName is updated in formData.
+        On Cancel, the Autocomplete reverts to the previous treatment. */}
+    <Dialog
+      open={otherTreatmentDialogOpen}
+      onClose={() => {
+        setFormData((prev) => ({ ...prev, treatment: previousTreatmentObj, treatmentName: previousTreatmentObj?._id === "other" ? prev.treatmentName : "" }));
+        setOtherTreatmentInput("");
+        setOtherTreatmentDialogOpen(false);
+      }}
+      maxWidth="xs"
+      fullWidth
+    >
+      <DialogTitle>Enter treatment name</DialogTitle>
+      <DialogContent sx={{ pt: 2 }}>
+        <TextField
+          autoFocus
+          label="Treatment name"
+          size="small"
+          fullWidth
+          value={otherTreatmentInput}
+          onChange={(e) => setOtherTreatmentInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && otherTreatmentInput.trim()) {
+              setFormData((prev) => ({ ...prev, treatmentName: otherTreatmentInput.trim() }));
+              setOtherTreatmentDialogOpen(false);
+            }
+          }}
+          placeholder="e.g., Root planing"
+          sx={{ mt: 0.5 }}
+        />
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button
+          color="inherit"
+          onClick={() => {
+            setFormData((prev) => ({ ...prev, treatment: previousTreatmentObj, treatmentName: previousTreatmentObj?._id === "other" ? prev.treatmentName : "" }));
+            setOtherTreatmentInput("");
+            setOtherTreatmentDialogOpen(false);
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          disabled={!otherTreatmentInput.trim()}
+          onClick={() => {
+            setFormData((prev) => ({ ...prev, treatmentName: otherTreatmentInput.trim() }));
+            setOtherTreatmentDialogOpen(false);
+          }}
+        >
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 };
 

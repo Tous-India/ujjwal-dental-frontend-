@@ -55,7 +55,7 @@ import { generateTimeSlots } from "../../../utils/timeSlots";
 import StyledTextField from "../shared/StyledTextField";
 import PaymentMethodSelector from "../shared/PaymentMethodSelector";
 import PaymentLinkDisplay from "../shared/PaymentLinkDisplay";
-import { TREATMENT_NAME_OPTIONS, TREATMENT_NAME_OTHER, treatmentNameToChoice } from "../../../constants/treatmentNames";
+import { TREATMENT_NAME_OPTIONS, TREATMENT_NAME_OTHER } from "../../../constants/treatmentNames";
 
 // Admin (this modal only) may backdate a walk-in entry up to this many days.
 // The shared dateInput.js util stays today-forward for every other picker,
@@ -158,11 +158,17 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
   const [, setFeeLoading] = useState(false);
   // null = not fetched yet (no clinic+date); otherwise array of open "HH:MM" slots
   const [availableSlots, setAvailableSlots] = useState(null);
-  // Treatment Name select mode (Items 3+4): null = derive from
-  // formData.treatmentName (a preset match, or "" for the placeholder);
-  // "other" = force custom free-text mode even while formData.treatmentName
-  // is still "" (right after switching, before the admin has typed anything).
-  const [treatmentNameMode, setTreatmentNameMode] = useState(null);
+  // "Other" treatment popup dialog state.
+  // Replaces the old treatmentNameMode + inline-field approach, which was
+  // intermittently broken because treatmentNameToChoice("") returned the
+  // TREATMENT_NAME_OTHER sentinel, making the Select appear to show "Other"
+  // selected on fresh open while the inline field stayed hidden (treatmentNameMode
+  // was null), with no way to open it (MUI Select won't fire onChange for the
+  // already-selected value).
+  const [otherTreatmentDialogOpen, setOtherTreatmentDialogOpen] = useState(false);
+  const [otherTreatmentInput, setOtherTreatmentInput] = useState(""); // dialog text-field working copy
+  const [previousTreatment, setPreviousTreatment] = useState(""); // formData.treatmentName before clicking "Other"
+  const [customTreatmentName, setCustomTreatmentName] = useState(""); // saved custom name (from dialog Save)
   const { createAppointment, isCreating } = useAppointmentMutations();
   const { collectPayment: collectPaymentMutation } = useAdminPaymentMutations();
 
@@ -217,6 +223,19 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
     (treatmentSubtotal * (Number(formData.treatmentDiscountPercent) || 0)) / 100,
   );
   const treatmentTotal = Math.max(0, treatmentSubtotal - treatmentDiscountAmount);
+
+  // Effective value for the Treatment Name Select.  A controlled MUI Select
+  // must always hold a value that matches one of its <MenuItem> values.
+  // "" → shows "Select a treatment" placeholder (displayEmpty + renderValue).
+  // TREATMENT_NAME_OTHER → "Other (custom name)" item is highlighted; when
+  //   customTreatmentName is set, renderValue replaces it with that name.
+  // anything else → standard preset matched by value.
+  const selectTreatmentValue =
+    TREATMENT_NAME_OPTIONS.includes(formData.treatmentName)
+      ? formData.treatmentName
+      : customTreatmentName
+      ? TREATMENT_NAME_OTHER
+      : "";
 
   const addTreatmentItem = () =>
     setFormData((prev) => ({
@@ -287,9 +306,20 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
     // "confirmation lags by one booking" symptom. Reset it in lockstep with
     // formData on every open, not just on explicit close.
     if (open) setBookedAppointment(null);
-    // Treatment Name select mode always re-derives fresh from whatever
-    // treatmentName the reset/prefill above ends up with.
-    if (open) setTreatmentNameMode(null);
+    // Reset "Other" treatment popup state on every open. Also handle the
+    // prefill case: if the incoming treatmentName is a custom (non-preset)
+    // name, restore customTreatmentName so renderValue can display it.
+    if (open) {
+      setOtherTreatmentDialogOpen(false);
+      setOtherTreatmentInput("");
+      setPreviousTreatment("");
+      const incomingName = prefillData?.treatmentName || "";
+      setCustomTreatmentName(
+        incomingName && !TREATMENT_NAME_OPTIONS.includes(incomingName)
+          ? incomingName
+          : "",
+      );
+    }
   }, [open, prefillData, initialVisitType]);
 
   // Fetch slot availability whenever clinic + date are both chosen, so full and
@@ -488,7 +518,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
       selectedTreatmentInvoiceId: null,
       selectedTreatmentInvoiceBalance: 0,
     }));
-    setTreatmentNameMode(null);
+    setCustomTreatmentName("");
   };
 
   /**
@@ -740,6 +770,10 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
       setPaymentMethod("cash");
       setFeeCollected(false);
       setBookedAppointment(null);
+      setOtherTreatmentDialogOpen(false);
+      setOtherTreatmentInput("");
+      setPreviousTreatment("");
+      setCustomTreatmentName("");
       onClose();
     }
   };
@@ -1435,7 +1469,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                           ? { treatmentName: "", fee: "", treatmentItems: [{ description: "", unitPrice: "", itemType: "treatment" }], treatmentDiscountPercent: 0 }
                           : {}),
                       }));
-                      if (newVisitType === "opd") setTreatmentNameMode(null);
+                      if (newVisitType === "opd") setCustomTreatmentName("");
                     }}
                     sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.8rem" }, "& .MuiFormControlLabel-root": { mr: 1 } }}
                   >
@@ -1579,20 +1613,27 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                         select
                         fullWidth
                         label="Treatment Name"
-                        value={
-                          treatmentNameMode === "other"
-                            ? TREATMENT_NAME_OTHER
-                            : treatmentNameToChoice(formData.treatmentName)
-                        }
+                        value={selectTreatmentValue}
+                        SelectProps={{
+                          displayEmpty: true,
+                          renderValue: (val) => {
+                            if (!val) return <em style={{ color: "#9ca3af" }}>Select a treatment</em>;
+                            if (val === TREATMENT_NAME_OTHER)
+                              return customTreatmentName || "Other (custom name)";
+                            return val;
+                          },
+                        }}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (value === TREATMENT_NAME_OTHER) {
-                            setTreatmentNameMode("other");
-                            if (TREATMENT_NAME_OPTIONS.includes(formData.treatmentName)) {
-                              setFormData((prev) => ({ ...prev, treatmentName: "" }));
-                            }
+                            // Save what we had before clicking "Other" so Cancel can revert
+                            setPreviousTreatment(formData.treatmentName);
+                            // Pre-fill dialog with the current custom name (if any)
+                            setOtherTreatmentInput(customTreatmentName);
+                            setOtherTreatmentDialogOpen(true);
+                            // formData.treatmentName is unchanged until dialog Save
                           } else {
-                            setTreatmentNameMode(null);
+                            setCustomTreatmentName("");
                             setFormData((prev) => ({ ...prev, treatmentName: value }));
                           }
                           if (errors.treatmentName) setErrors((prev) => ({ ...prev, treatmentName: "" }));
@@ -1602,9 +1643,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                         error={!!errors.treatmentName}
                         helperText={errors.treatmentName}
                       >
-                        <MenuItem value="" disabled>
-                          Select a treatment
-                        </MenuItem>
                         {TREATMENT_NAME_OPTIONS.map((name) => (
                           <MenuItem key={name} value={name}>
                             {name}
@@ -1631,20 +1669,6 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
                       />
                     </Box>
                   </Box>
-                  {(treatmentNameMode === "other" ||
-                    (!!formData.treatmentName && !TREATMENT_NAME_OPTIONS.includes(formData.treatmentName))) && (
-                    <StyledTextField
-                      fullWidth
-                      label="Custom Treatment Name"
-                      name="treatmentName"
-                      value={formData.treatmentName}
-                      onChange={handleChange}
-                      required
-                      size="small"
-                      placeholder="e.g., Root Canal (Session 1 of 4)"
-                      sx={{ maxWidth: { md: "70%" } }}
-                    />
-                  )}
                 </Box>
 
               <Box sx={{ flex: "1 1 100%" }}>
@@ -2016,6 +2040,67 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
           sx={{ backgroundColor: "#f59e0b", "&:hover": { backgroundColor: "#d97706" } }}
         >
           {addingPatient ? "Adding..." : "Add & Select"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+
+    {/* "Enter treatment name" popup — opens when admin selects "Other" from
+        the Treatment Name dropdown.  On Save the custom name is stored in
+        both customTreatmentName (for renderValue display) and
+        formData.treatmentName (for the API payload).  On Cancel the dropdown
+        reverts to previousTreatment (whatever was selected before "Other"). */}
+    <Dialog
+      open={otherTreatmentDialogOpen}
+      onClose={() => {
+        // Cancel: revert dropdown to the value it had before "Other" was clicked
+        setFormData((prev) => ({ ...prev, treatmentName: previousTreatment }));
+        setOtherTreatmentInput("");
+        setOtherTreatmentDialogOpen(false);
+      }}
+      maxWidth="xs"
+      fullWidth
+    >
+      <DialogTitle>Enter treatment name</DialogTitle>
+      <DialogContent sx={{ pt: 2 }}>
+        <TextField
+          autoFocus
+          label="Treatment name"
+          size="small"
+          fullWidth
+          value={otherTreatmentInput}
+          onChange={(e) => setOtherTreatmentInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && otherTreatmentInput.trim()) {
+              setCustomTreatmentName(otherTreatmentInput.trim());
+              setFormData((prev) => ({ ...prev, treatmentName: otherTreatmentInput.trim() }));
+              setOtherTreatmentDialogOpen(false);
+            }
+          }}
+          placeholder="e.g., Root planing"
+          sx={{ mt: 0.5 }}
+        />
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button
+          color="inherit"
+          onClick={() => {
+            setFormData((prev) => ({ ...prev, treatmentName: previousTreatment }));
+            setOtherTreatmentInput("");
+            setOtherTreatmentDialogOpen(false);
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          disabled={!otherTreatmentInput.trim()}
+          onClick={() => {
+            setCustomTreatmentName(otherTreatmentInput.trim());
+            setFormData((prev) => ({ ...prev, treatmentName: otherTreatmentInput.trim() }));
+            setOtherTreatmentDialogOpen(false);
+          }}
+        >
+          Save
         </Button>
       </DialogActions>
     </Dialog>
