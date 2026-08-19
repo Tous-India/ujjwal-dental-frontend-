@@ -15,8 +15,6 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
   IconButton,
   Tooltip,
   Dialog,
@@ -31,20 +29,16 @@ import {
   InputLabel,
   FormControlLabel,
   Switch,
-  Skeleton,
   Chip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import StyledTextField from "../../components/admin/shared/StyledTextField";
 import DataTable from "../../components/common/DataTable";
 import {
   useExternalIncomes,
-  useExternalIncomeStats,
   useExternalIncomeStaff,
   useCreateExternalIncome,
   useUpdateExternalIncome,
@@ -69,41 +63,6 @@ const fmtDate = (val) =>
         year: "numeric",
       })
     : "—";
-
-// ── StatsCard ──────────────────────────────────────────────────────────────────
-
-const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading }) => (
-  <Card elevation={0} sx={{ height: "100%", border: "1px solid #e5e7eb", borderRadius: 3 }}>
-    <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, p: "20px !important" }}>
-      <Box
-        sx={{
-          width: 44,
-          height: 44,
-          borderRadius: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          bgcolor: iconBg,
-        }}
-      >
-        <Icon sx={{ color: iconColor, fontSize: 22 }} />
-      </Box>
-      <Box>
-        <Typography variant="body2" sx={{ color: "#6b7280", mb: 0.5, fontSize: 13, fontWeight: 500 }}>
-          {title}
-        </Typography>
-        {loading ? (
-          <Skeleton width={70} height={32} />
-        ) : (
-          <Typography variant="h5" sx={{ fontWeight: 700, color: "#003366", fontSize: 26 }}>
-            {value}
-          </Typography>
-        )}
-      </Box>
-    </CardContent>
-  </Card>
-);
 
 // ── Record Income Dialog ───────────────────────────────────────────────────────
 
@@ -418,18 +377,11 @@ const ExternalIncomeTab = ({ fromDate = "", toDate = "" }) => {
     [fromDate, toDate, showVoided, page, limit]
   );
 
-  const statsParams = useMemo(
-    () => ({ from: fromDate || undefined, to: toDate || undefined }),
-    [fromDate, toDate]
-  );
-
   const { data: listData, isLoading } = useExternalIncomes(queryParams);
-  const { data: statsData, isLoading: statsLoading } = useExternalIncomeStats(statsParams);
   const { data: staffData } = useExternalIncomeStaff();
 
   const records = listData?.data || [];
   const pagination = listData?.pagination || { total: 0 };
-  const stats = statsData?.data || {};
   const staffList = staffData?.data?.users || [];
 
   const getDoctorLabel = (row) => {
@@ -536,35 +488,11 @@ const ExternalIncomeTab = ({ fromDate = "", toDate = "" }) => {
 
   return (
     <Box>
-      {/* Stats cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <StatsCard
-            title="Total External Income"
-            value={INR(stats.totalAmount)}
-            icon={AccountBalanceWalletIcon}
-            iconBg="#dcfce7"
-            iconColor="#16a34a"
-            loading={statsLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <StatsCard
-            title="Records"
-            value={stats.count ?? "—"}
-            icon={ReceiptLongIcon}
-            iconBg="#ede9fe"
-            iconColor="#7c3aed"
-            loading={statsLoading}
-          />
-        </Grid>
-      </Grid>
-
       {/* Header row: title + controls */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2, mb: 2 }}>
         <Box>
           <Typography variant="subtitle1" fontWeight={700} color="#1f2937">
-            External Income Records
+            External Income Records ({pagination.total})
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Non-patient revenue from other clinics or hospitals
