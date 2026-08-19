@@ -42,6 +42,7 @@ import {
   isPastSlotForDate,
 } from "../../../utils/dateInput";
 import { generateTimeSlots } from "../../../utils/timeSlots";
+import StyledTextField from "../shared/StyledTextField";
 
 // Admin/clinic_manager may edit an appointment's date up to this many days
 // into the past (backend enforces the same window, gated to those roles).
@@ -786,7 +787,7 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
     >
       <DialogTitle>Enter treatment name</DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
-        <TextField
+        <StyledTextField
           autoFocus
           label="Treatment name"
           size="small"

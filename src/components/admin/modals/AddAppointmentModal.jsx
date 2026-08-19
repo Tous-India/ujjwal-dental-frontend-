@@ -2062,7 +2062,7 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
     >
       <DialogTitle>Enter treatment name</DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
-        <TextField
+        <StyledTextField
           autoFocus
           label="Treatment name"
           size="small"
