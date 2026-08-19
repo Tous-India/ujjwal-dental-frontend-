@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogTitle, IconButton, Chip, Box, Typography }
 import CloseIcon from "@mui/icons-material/Close";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import BlogFaqSection from "../../public/BlogFaqSection";
 
 const formatDate = (date) =>
   date
@@ -123,6 +124,9 @@ export default function BlogPreviewModal({ open, onClose, formData, status }) {
                 [&_img]:rounded-xl [&_img]:my-6 [&_img]:w-full"
               dangerouslySetInnerHTML={{ __html: previewBlog.content }}
             />
+
+            {/* FAQ Accordion — mirrors the published BlogDetailPage layout */}
+            <BlogFaqSection faqs={formData.faqs} />
           </div>
         </section>
       </DialogContent>

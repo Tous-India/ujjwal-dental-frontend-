@@ -1,15 +1,9 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
   Chip,
   CircularProgress,
-  Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonIcon from "@mui/icons-material/Person";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -18,6 +12,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { getPublicBlogBySlug } from "../../api/blogs.api";
 import { useRelatedBlogs } from "../../hooks/public/useBlogs";
 import BlogCard from "../../components/public/BlogCard";
+import BlogFaqSection from "../../components/public/BlogFaqSection";
 import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
 
 const fireBookAppointmentConversion = () => {
@@ -288,42 +283,7 @@ const BlogDetailPage = () => {
           </Link>
 
           {/* FAQ Accordion — rendered when the blog has FAQs */}
-          {blog.faqs?.length > 0 && (
-            <Box sx={{ mt: 6 }}>
-              <Typography
-                variant="h5"
-                fontWeight={700}
-                color="#003366"
-                sx={{ mb: 3 }}
-              >
-                Frequently Asked Questions
-              </Typography>
-              {blog.faqs.map((faq, i) => (
-                <Accordion
-                  key={i}
-                  sx={{
-                    mb: 1,
-                    borderRadius: "8px !important",
-                    "&:before": { display: "none" },
-                    border: "1px solid",
-                    borderColor: "grey.200",
-                  }}
-                >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography fontWeight={600} fontSize="0.95rem">
-                      {faq.question}
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <div
-                      className="text-gray-700 text-sm leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_a]:text-accent [&_a]:underline [&_strong]:font-semibold"
-                      dangerouslySetInnerHTML={{ __html: faq.answer }}
-                    />
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-            </Box>
-          )}
+          <BlogFaqSection faqs={blog.faqs} />
 
           {/* Related Articles */}
           {relatedPosts.length > 0 && (
