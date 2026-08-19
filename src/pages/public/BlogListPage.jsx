@@ -114,7 +114,7 @@ const BlogListPage = () => {
                       {blog.coverImage ? (
                         <img
                           src={blog.coverImage}
-                          alt={blog.title}
+                          alt={blog.coverImageAlt || blog.title}
                           loading="lazy"
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />

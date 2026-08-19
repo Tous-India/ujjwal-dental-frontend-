@@ -29,8 +29,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import ImageIcon from "@mui/icons-material/Image";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PreviewIcon from "@mui/icons-material/Visibility";
 import { toast } from "react-toastify";
 import RichTextEditor from "../../components/admin/blog/RichTextEditor";
+import BlogPreviewModal from "../../components/admin/blog/BlogPreviewModal";
 import { useBlog, useBlogMutations } from "../../hooks/admin/useBlogs";
 import { uploadBlogImage } from "../../api/admin/blogs.api";
 
@@ -71,10 +73,15 @@ const getInitialFormState = () => ({
   slug: "",
   excerpt: "",
   coverImage: "",
+  coverImageAlt: "",
   content: "",
   tags: "",
   seoTitle: "",
   seoDescription: "",
+  canonicalUrl: "",
+  ogImage: "",
+  ogTitle: "",
+  ogDescription: "",
   category: "General",
   scheduledPublishAt: "",
 });
@@ -84,6 +91,7 @@ const BlogEditor = () => {
   const isEditMode = !!id;
   const navigate = useNavigate();
   const coverInputRef = useRef(null);
+  const ogImageInputRef = useRef(null);
 
   const { data, isLoading } = useBlog(id);
   const {
@@ -97,7 +105,9 @@ const BlogEditor = () => {
   const [status, setStatus] = useState("draft");
   const [slugTouched, setSlugTouched] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [errors, setErrors] = useState({});
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const blogViews = data?.data?.blog?.views || 0;
 
@@ -110,10 +120,15 @@ const BlogEditor = () => {
         slug: blog.slug || "",
         excerpt: blog.excerpt || "",
         coverImage: blog.coverImage || "",
+        coverImageAlt: blog.coverImageAlt || "",
         content: blog.content || "",
         tags: (blog.tags || []).join(", "),
         seoTitle: blog.seoTitle || "",
         seoDescription: blog.seoDescription || "",
+        canonicalUrl: blog.canonicalUrl || "",
+        ogImage: blog.ogImage || "",
+        ogTitle: blog.ogTitle || "",
+        ogDescription: blog.ogDescription || "",
         category: blog.category || "General",
         scheduledPublishAt: toLocalInputValue(blog.scheduledPublishAt),
       });
@@ -155,6 +170,24 @@ const BlogEditor = () => {
     }
   };
 
+  const handleOgImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingOgImage(true);
+    try {
+      const result = await uploadBlogImage(file);
+      const url = result?.data?.url || result?.url;
+      if (url) {
+        setFormData((prev) => ({ ...prev, ogImage: url }));
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "OG image upload failed");
+    } finally {
+      setIsUploadingOgImage(false);
+      e.target.value = "";
+    }
+  };
+
   const validate = (targetStatus) => {
     const newErrors = {};
     if (!formData.title.trim()) newErrors.title = "Title is required";
@@ -174,6 +207,7 @@ const BlogEditor = () => {
     ...(formData.slug.trim() ? { slug: formData.slug.trim() } : {}),
     excerpt: formData.excerpt,
     coverImage: formData.coverImage || null,
+    coverImageAlt: formData.coverImageAlt,
     content: formData.content,
     tags: formData.tags
       .split(",")
@@ -181,6 +215,10 @@ const BlogEditor = () => {
       .filter(Boolean),
     seoTitle: formData.seoTitle,
     seoDescription: formData.seoDescription,
+    canonicalUrl: formData.canonicalUrl,
+    ogImage: formData.ogImage,
+    ogTitle: formData.ogTitle,
+    ogDescription: formData.ogDescription,
     category: formData.category,
     scheduledPublishAt:
       targetStatus === "scheduled" && formData.scheduledPublishAt
@@ -228,8 +266,20 @@ const BlogEditor = () => {
     );
   }
 
+  // Count images missing alt text for the SEO nudge
+  const allImgTags = formData.content.match(/<img[^>]*>/g) || [];
+  const missingAltCount = allImgTags.filter((tag) => !/alt="[^"]+"/i.test(tag)).length;
+
   return (
     <Box>
+      {/* Preview Modal */}
+      <BlogPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        formData={formData}
+        status={status}
+      />
+
       {/* Header */}
       <Box className="flex items-center justify-between mb-6">
         <Box className="flex items-center gap-3">
@@ -392,6 +442,17 @@ const BlogEditor = () => {
               hidden
               onChange={handleCoverUpload}
             />
+            <TextField
+              fullWidth
+              label="Cover Image Alt Text"
+              value={formData.coverImageAlt}
+              onChange={handleChange("coverImageAlt")}
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
+              placeholder="Describe the image for screen readers"
+              helperText="Describe the image for accessibility and Google Images."
+              sx={{ mt: 2 }}
+            />
           </Paper>
 
           {/* Organise — Category then Tags */}
@@ -542,10 +603,96 @@ const BlogEditor = () => {
                     },
                   }}
                 />
-                {/* Upcoming fields append here inside this Box:
-                    Focus keyword + density, Canonical URL,
-                    OG image / OG title / OG description,
-                    Table of contents, Related blogs */}
+
+                <TextField
+                  fullWidth
+                  label="Canonical URL"
+                  value={formData.canonicalUrl}
+                  onChange={handleChange("canonicalUrl")}
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  placeholder="https://ujjwaldentalplanet.com/blog/your-slug"
+                  helperText="Leave blank unless this content is published elsewhere first."
+                />
+
+                {/* Alt-text nudge: warn if any inline images lack meaningful alt */}
+                {missingAltCount > 0 && (
+                  <Typography variant="caption" color="warning.main" sx={{ display: "block", mb: 1 }}>
+                    {missingAltCount} image{missingAltCount > 1 ? "s" : ""} in the content{" "}
+                    {missingAltCount > 1 ? "are" : "is"} missing alt text.
+                  </Typography>
+                )}
+
+                {/* Open Graph (Social Sharing) subsection */}
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mb: 1.5, fontWeight: 600 }}
+                  >
+                    Open Graph (Social Sharing)
+                  </Typography>
+
+                  {formData.ogImage ? (
+                    <Box sx={{ mb: 1.5 }}>
+                      <img
+                        src={formData.ogImage}
+                        alt="OG preview"
+                        className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                      />
+                      <Button
+                        size="small"
+                        startIcon={<CloseIcon fontSize="small" />}
+                        onClick={() => setFormData((prev) => ({ ...prev, ogImage: "" }))}
+                        sx={{ mt: 0.5, color: "error.main" }}
+                      >
+                        Remove
+                      </Button>
+                    </Box>
+                  ) : null}
+
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    onClick={() => ogImageInputRef.current?.click()}
+                    startIcon={isUploadingOgImage ? <CircularProgress size={14} /> : <ImageIcon />}
+                    disabled={isUploadingOgImage}
+                    sx={{ mb: 2 }}
+                  >
+                    {isUploadingOgImage ? "Uploading..." : "Upload OG Image"}
+                  </Button>
+                  <input
+                    ref={ogImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleOgImageUpload}
+                  />
+
+                  <TextField
+                    fullWidth
+                    label="OG Title"
+                    value={formData.ogTitle}
+                    onChange={handleChange("ogTitle")}
+                    size="small"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    helperText="Falls back to SEO title → post title. ~60 chars."
+                    sx={{ mb: 2 }}
+                  />
+
+                  <TextField
+                    fullWidth
+                    label="OG Description"
+                    multiline
+                    rows={2}
+                    value={formData.ogDescription}
+                    onChange={handleChange("ogDescription")}
+                    size="small"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    helperText="Falls back to SEO description → excerpt. ~160 chars."
+                  />
+                </Box>
               </Box>
             </AccordionDetails>
           </Accordion>
@@ -557,6 +704,15 @@ const BlogEditor = () => {
       <Box className="flex items-center justify-end gap-3 py-5">
         <Button onClick={() => navigate("/admin/blogs")} color="inherit" disabled={isSaving}>
           Cancel
+        </Button>
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={() => setPreviewOpen(true)}
+          startIcon={<PreviewIcon />}
+          disabled={isSaving}
+        >
+          Preview
         </Button>
         <Button
           variant="outlined"

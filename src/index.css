@@ -11,6 +11,7 @@
   box-sizing: border-box;
 }
 html {
+  scroll-behavior: smooth;
   overflow-x: hidden;
   /* Explicit overflow-y: auto makes <html> the vertical scroll container.
      This is also what overflow-x:hidden computes to per the CSS spec

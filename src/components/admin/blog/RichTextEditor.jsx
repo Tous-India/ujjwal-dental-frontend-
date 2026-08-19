@@ -108,7 +108,8 @@ export default function RichTextEditor({ content, onChange, placeholder = "Write
       const result = await uploadBlogImage(file);
       const imageUrl = result?.data?.url || result?.url;
       if (imageUrl) {
-        editor.chain().focus().setImage({ src: imageUrl }).run();
+        const altText = window.prompt("Add alt text for this image (leave blank for decorative images):", "");
+        editor.chain().focus().setImage({ src: imageUrl, alt: altText || "" }).run();
       }
     } catch (err) {
       console.error("Image upload failed:", err);

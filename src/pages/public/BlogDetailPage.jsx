@@ -6,7 +6,9 @@ import PersonIcon from "@mui/icons-material/Person";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import { getPublicBlogBySlug, getPublicBlogs } from "../../api/blogs.api";
+import { getPublicBlogBySlug } from "../../api/blogs.api";
+import { useRelatedBlogs } from "../../hooks/public/useBlogs";
+import BlogCard from "../../components/public/BlogCard";
 import { GTAG_CONVERSIONS } from "../../utils/gtagConversions";
 
 const fireBookAppointmentConversion = () => {
@@ -20,6 +22,38 @@ const formatDate = (date) =>
     ? new Date(date).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
     : "";
 
+/**
+ * Build a table of contents from H2 headings in the stored HTML.
+ * Returns [] when there are fewer than 3 headings (not worth a TOC).
+ * Handles duplicate slugs by appending -1, -2 … (same approach as GitHub).
+ */
+function buildToc(html) {
+  const matches = [...html.matchAll(/<h2[^>]*>(.*?)<\/h2>/gi)];
+  if (matches.length < 3) return [];
+  const seen = {};
+  return matches.map((m, i) => {
+    const text = m[1].replace(/<[^>]*>/g, "").trim();
+    const base = text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const key = base || `heading-${i}`;
+    seen[key] = (seen[key] || 0) + 1;
+    const id = seen[key] === 1 ? key : `${key}-${seen[key] - 1}`;
+    return { id, text };
+  });
+}
+
+/**
+ * Inject id attributes into H2 tags at render time.
+ * The stored HTML is never modified — ids are only added in the rendered output.
+ */
+function injectHeadingIds(html, tocItems) {
+  let i = 0;
+  return html.replace(/<h2([^>]*)>/gi, (match, attrs) => {
+    const id = tocItems[i]?.id || `heading-${i}`;
+    i++;
+    return `<h2${attrs} id="${id}">`;
+  });
+}
+
 const BlogDetailPage = () => {
   const { slug } = useParams();
 
@@ -31,16 +65,10 @@ const BlogDetailPage = () => {
 
   const blog = data?.data?.blog;
 
-  // Related posts — best-effort, non-blocking; only fetched once the main post has loaded.
-  const { data: relatedData } = useQuery({
-    queryKey: ["public", "blogs", "related", slug],
-    queryFn: () => getPublicBlogs({ page: 1, limit: 4 }),
-    enabled: !!blog,
-  });
-
-  const relatedPosts = (relatedData?.data?.blogs || [])
-    .filter((b) => b.slug !== slug)
-    .slice(0, 3);
+  // Related posts — fetched from the dedicated related endpoint, which returns
+  // same-category posts first then fills up from any category.
+  const { data: relatedData } = useRelatedBlogs(blog?._id);
+  const relatedPosts = relatedData?.data?.blogs || [];
 
   if (isLoading) {
     return (
@@ -73,7 +101,21 @@ const BlogDetailPage = () => {
 
   const metaTitle = `${blog.seoTitle || blog.title} | Ujjwal Dental Clinic`;
   const metaDescription = blog.seoDescription || blog.excerpt || blog.title;
-  const canonicalUrl = `https://ujjwaldentalplanet.com/blog/${blog.slug}`;
+
+  // Canonical URL: use the blog's own canonicalUrl field when set (syndicated
+  // content); otherwise the post's own URL on this domain.
+  const canonicalUrl = blog.canonicalUrl || `https://ujjwaldentalplanet.com/blog/${blog.slug}`;
+
+  // Open Graph resolved values (OG-specific fields take precedence)
+  const resolvedOgTitle = blog.ogTitle || blog.seoTitle || blog.title;
+  const resolvedOgDesc = blog.ogDescription || blog.seoDescription || blog.excerpt || "";
+  const resolvedOgImage = blog.ogImage || blog.coverImage || "";
+
+  // Table of contents derived from content at render time (stored HTML unchanged)
+  const toc = buildToc(blog.content || "");
+  const renderedContent = toc.length >= 3
+    ? injectHeadingIds(blog.content || "", toc)
+    : blog.content || "";
 
   return (
     <>
@@ -81,15 +123,15 @@ const BlogDetailPage = () => {
       <meta name="description" content={metaDescription} />
       <link rel="canonical" href={canonicalUrl} />
       <meta name="robots" content="index, follow" />
-      <meta property="og:title" content={metaTitle} />
-      <meta property="og:description" content={metaDescription} />
+      <meta property="og:title" content={resolvedOgTitle} />
+      <meta property="og:description" content={resolvedOgDesc} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:type" content="article" />
-      {blog.coverImage && <meta property="og:image" content={blog.coverImage} />}
+      {resolvedOgImage && <meta property="og:image" content={resolvedOgImage} />}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={metaTitle} />
-      <meta name="twitter:description" content={metaDescription} />
-      {blog.coverImage && <meta name="twitter:image" content={blog.coverImage} />}
+      <meta name="twitter:title" content={resolvedOgTitle} />
+      <meta name="twitter:description" content={resolvedOgDesc} />
+      {resolvedOgImage && <meta name="twitter:image" content={resolvedOgImage} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -120,7 +162,7 @@ const BlogDetailPage = () => {
         <div className="w-full max-h-[280px] md:max-h-[400px] lg:max-h-[480px] max-w-5xl mx-auto overflow-hidden bg-gray-100">
           <img
             src={blog.coverImage}
-            alt={blog.title}
+            alt={blog.coverImageAlt || blog.title}
             className="w-full max-h-[280px] md:max-h-[400px] lg:max-h-[480px] object-cover"
           />
         </div>
@@ -171,6 +213,22 @@ const BlogDetailPage = () => {
             </div>
           )}
 
+          {/* Table of Contents — shown only when there are 3+ H2 headings */}
+          {toc.length >= 3 && (
+            <nav className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8">
+              <p className="font-semibold text-[#003366] mb-3 text-sm">Contents</p>
+              <ol className="list-decimal pl-5 space-y-1">
+                {toc.map((item) => (
+                  <li key={item.id}>
+                    <a href={`#${item.id}`} className="text-accent text-sm hover:underline">
+                      {item.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
+
           {/* Blog content — trusted, admin-authored HTML from the CMS rich text editor */}
           <div
             className="max-w-none text-gray-700 text-base leading-[1.8]
@@ -182,7 +240,7 @@ const BlogDetailPage = () => {
               [&_a]:text-accent [&_a]:underline
               [&_strong]:font-semibold [&_strong]:text-[#003366]
               [&_img]:rounded-xl [&_img]:my-6 [&_img]:w-full"
-            dangerouslySetInnerHTML={{ __html: blog.content }}
+            dangerouslySetInnerHTML={{ __html: renderedContent }}
           />
 
           <Link
@@ -192,31 +250,13 @@ const BlogDetailPage = () => {
             ← Back to Blog
           </Link>
 
-          {/* Related posts */}
+          {/* Related Articles */}
           {relatedPosts.length > 0 && (
             <div className="mt-14 pt-8 border-t border-gray-100">
-              <h2 className="text-[#003366] font-bold text-xl mb-5">Related Posts</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <h2 className="text-[#003366] font-bold text-xl mb-5">Related Articles</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedPosts.map((post) => (
-                  <Link
-                    key={post._id}
-                    to={`/blog/${post.slug}`}
-                    className="block no-underline rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
-                  >
-                    {post.coverImage ? (
-                      <img
-                        src={post.coverImage}
-                        alt={post.title}
-                        loading="lazy"
-                        className="w-full aspect-video object-cover"
-                      />
-                    ) : (
-                      <div className="w-full aspect-video bg-[#e8f4fd]" />
-                    )}
-                    <p className="text-[#003366] text-sm font-semibold p-3 leading-snug">
-                      {post.title}
-                    </p>
-                  </Link>
+                  <BlogCard key={post._id} blog={post} variant="compact" />
                 ))}
               </div>
             </div>

@@ -10,3 +10,6 @@ export const getPublicBlogs = (params = {}) =>
 
 export const getPublicBlogBySlug = (slug) =>
   api.get(`/blogs/public/${slug}`).then((res) => res.data);
+
+export const getRelatedBlogs = (id) =>
+  api.get(`/blogs/public/${id}/related`).then((res) => res.data);
