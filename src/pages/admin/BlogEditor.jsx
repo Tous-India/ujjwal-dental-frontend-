@@ -38,6 +38,7 @@ import { useBlog, useBlogMutations } from "../../hooks/admin/useBlogs";
 import { uploadBlogImage } from "../../api/admin/blogs.api";
 import { getBlogAuthors } from "../../api/admin/users.api";
 import { useAdminStore } from "../../store/admin.store";
+import FocusKeywordAnalysis from "../../components/admin/blog/FocusKeywordAnalysis";
 
 const slugify = (title) =>
   title
@@ -88,6 +89,7 @@ const getInitialFormState = () => ({
   category: "General",
   scheduledPublishAt: "",
   author: "",
+  focusKeyword: "",
 });
 
 const BlogEditor = () => {
@@ -149,6 +151,7 @@ const BlogEditor = () => {
         // author is an ObjectId ref — API returns populated { _id, name };
         // store the _id string so it matches the <Select> values
         author: blog.author?._id || blog.author || "",
+        focusKeyword: blog.focusKeyword || "",
       });
       setStatus(blog.status || "draft");
       setSlugTouched(true);
@@ -252,6 +255,7 @@ const BlogEditor = () => {
         : null,
     status: targetStatus,
     author: formData.author || undefined,
+    focusKeyword: formData.focusKeyword,
   });
 
   const handleSave = async (targetStatus) => {
@@ -659,6 +663,24 @@ const BlogEditor = () => {
                   placeholder="https://ujjwaldentalplanet.com/blog/your-slug"
                   helperText="Leave blank unless this content is published elsewhere first."
                 />
+
+                <TextField
+                  fullWidth
+                  label="Focus Keyword"
+                  value={formData.focusKeyword}
+                  onChange={handleChange("focusKeyword")}
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  placeholder="e.g. dental implants"
+                  helperText="The main phrase this post targets."
+                />
+
+                {formData.focusKeyword.trim() && (
+                  <FocusKeywordAnalysis
+                    keyword={formData.focusKeyword}
+                    formData={formData}
+                  />
+                )}
 
                 {/* Alt-text nudge: warn if any inline images lack meaningful alt */}
                 {missingAltCount > 0 && (
