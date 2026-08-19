@@ -14,7 +14,6 @@ import {
   Button,
   Chip,
   Paper,
-  Divider,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -315,8 +314,23 @@ const BlogEditor = () => {
         status={status}
       />
 
-      {/* Header */}
-      <Box className="flex items-center justify-between mb-6">
+      {/* Header — sticky bar with title on the left and action buttons on the right */}
+      <Box
+        sx={{
+          position: "sticky",
+          top: "64px",
+          zIndex: 100,
+          backgroundColor: "background.paper",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          py: 1.5,
+          px: 3,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+        }}
+      >
         <Box className="flex items-center gap-3">
           <Button
             startIcon={<ArrowBackIcon />}
@@ -348,6 +362,49 @@ const BlogEditor = () => {
               />
             )}
           </Box>
+        </Box>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <Button onClick={() => navigate("/admin/blogs")} color="inherit" disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => setPreviewOpen(true)}
+            startIcon={<PreviewIcon />}
+            disabled={isSaving}
+          >
+            Preview
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => handleSave("draft")}
+            disabled={isSaving}
+            startIcon={isSaving ? <CircularProgress size={16} /> : null}
+          >
+            Save as Draft
+          </Button>
+          {status === "scheduled" ? (
+            <Button
+              variant="contained"
+              onClick={() => handleSave("scheduled")}
+              disabled={isSaving}
+              className="bg-accent hover:bg-accent-dark"
+              startIcon={isSaving ? <CircularProgress size={16} /> : null}
+            >
+              Schedule
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              onClick={() => handleSave("published")}
+              disabled={isSaving}
+              className="bg-accent hover:bg-accent-dark"
+              startIcon={isSaving ? <CircularProgress size={16} /> : null}
+            >
+              Publish
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -779,52 +836,6 @@ const BlogEditor = () => {
             </AccordionDetails>
           </Accordion>
         </Box>
-      </Box>
-
-      {/* Actions */}
-      <Divider className="my-6" />
-      <Box className="flex items-center justify-end gap-3 py-5">
-        <Button onClick={() => navigate("/admin/blogs")} color="inherit" disabled={isSaving}>
-          Cancel
-        </Button>
-        <Button
-          variant="outlined"
-          color="secondary"
-          onClick={() => setPreviewOpen(true)}
-          startIcon={<PreviewIcon />}
-          disabled={isSaving}
-        >
-          Preview
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={() => handleSave("draft")}
-          disabled={isSaving}
-          startIcon={isSaving ? <CircularProgress size={16} /> : null}
-        >
-          Save as Draft
-        </Button>
-        {status === "scheduled" ? (
-          <Button
-            variant="contained"
-            onClick={() => handleSave("scheduled")}
-            disabled={isSaving}
-            className="bg-accent hover:bg-accent-dark"
-            startIcon={isSaving ? <CircularProgress size={16} /> : null}
-          >
-            Schedule
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            onClick={() => handleSave("published")}
-            disabled={isSaving}
-            className="bg-accent hover:bg-accent-dark"
-            startIcon={isSaving ? <CircularProgress size={16} /> : null}
-          >
-            Publish
-          </Button>
-        )}
       </Box>
     </Box>
   );
