@@ -15,6 +15,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PublishIcon from "@mui/icons-material/Publish";
 import UnpublishedIcon from "@mui/icons-material/Unpublished";
+import ImageIcon from "@mui/icons-material/Image";
 import DataTable from "../../components/common/DataTable";
 import { useBlogs, useBlogMutations } from "../../hooks/admin/useBlogs";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
@@ -122,6 +123,44 @@ const Blogs = () => {
   };
 
   const columns = [
+    {
+      field: "coverImage",
+      headerName: "",
+      minWidth: 80,
+      render: (value, row) => {
+        if (!value) {
+          return (
+            <Box
+              sx={{
+                width: 64,
+                height: 40,
+                bgcolor: "grey.200",
+                borderRadius: "4px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <ImageIcon sx={{ color: "grey.400", fontSize: 20 }} />
+            </Box>
+          );
+        }
+        return (
+          <img
+            src={value}
+            alt={row.coverImageAlt || row.title}
+            loading="lazy"
+            style={{
+              width: 64,
+              height: 40,
+              objectFit: "cover",
+              borderRadius: "4px",
+              display: "block",
+            }}
+          />
+        );
+      },
+    },
     {
       field: "title",
       headerName: "Title",
