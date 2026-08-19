@@ -51,6 +51,7 @@ const MODULE_LABELS = {
   payments: "Payment History",
   billing: "Billing",
   expenses: "Expenses",
+  external_income: "External Income",
   reports: "Reports",
   memberships: "Memberships",
   blogs: "Blogs",

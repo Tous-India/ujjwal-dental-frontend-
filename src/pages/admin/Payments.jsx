@@ -50,6 +50,7 @@ import PaymentDetailModal from "../../components/admin/modals/PaymentDetailModal
 import InvoiceDetailModal from "../../components/admin/modals/InvoiceDetailModal";
 import PatientDetailModal from "../../components/admin/modals/PatientDetailModal";
 import { usePayments, useAdminPaymentMutations, usePatientUnpaidInvoices, usePaymentSummaryStats } from "../../hooks/admin/usePayments";
+import ExternalIncomeTab from "./ExternalIncomeTab";
 import { searchPatients } from "../../api/admin/patients.api";
 import AddPaymentModal from "../../components/admin/modals/AddPaymentModal";
 import { downloadInvoicePDF } from "../../utils/downloadInvoicePDF";
@@ -199,7 +200,7 @@ const Payments = () => {
   const [invoiceForModal, setInvoiceForModal] = useState(null);
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
 
-  // ── Active tab: 0 = Paid, 1 = Refunded ───────────────────────────────────
+  // ── Active tab: 0 = Paid, 1 = Refunded & Voided, 2 = Another Source ─────
   const [activeTab, setActiveTab] = useState(0);
   const [exporting, setExporting] = useState(false);
 
@@ -946,6 +947,7 @@ const Payments = () => {
         >
           <Tab label="Paid" />
           <Tab label="Refunded & Voided" />
+          <Tab label="Another Source" />
         </Tabs>
         <Button
           size="small"
@@ -967,46 +969,53 @@ const Payments = () => {
         </Button>
       </Box>
 
-      <CompactFilterBar
-        dateFilterSlot={
-          <QuickDateRangeFilter
-            value={{ from: fromDate, to: toDate }}
-            onChange={({ from, to }) => {
-              setFromDate(from);
-              setToDate(to);
-              setPage(1);
-            }}
+      {/* Tab 2: Another Source — ExternalIncomeTab handles its own list/stats */}
+      {activeTab === 2 ? (
+        <ExternalIncomeTab fromDate={fromDate} toDate={toDate} />
+      ) : (
+        <>
+          <CompactFilterBar
+            dateFilterSlot={
+              <QuickDateRangeFilter
+                value={{ from: fromDate, to: toDate }}
+                onChange={({ from, to }) => {
+                  setFromDate(from);
+                  setToDate(to);
+                  setPage(1);
+                }}
+              />
+            }
+            search={search}
+            onSearchChange={handleSearch}
+            searchPlaceholder="Search by payment number or patient…"
+            filters={filterOptions}
+            filterValues={filters}
+            onFilterChange={handleFilterChange}
+            onRefresh={handleReset}
           />
-        }
-        search={search}
-        onSearchChange={handleSearch}
-        searchPlaceholder="Search by payment number or patient…"
-        filters={filterOptions}
-        filterValues={filters}
-        onFilterChange={handleFilterChange}
-        onRefresh={handleReset}
-      />
 
-      <DataTable
-        columns={columns}
-        data={payments}
-        loading={isLoading}
-        getRowStyle={(row) =>
-          row.reversed || row.status === "reversed" ? { opacity: 0.55 } : undefined
-        }
-        pagination={{
-          page,
-          limit,
-          total: pagination.total,
-          onPageChange: setPage,
-          onLimitChange: (newLimit) => {
-            setLimit(newLimit);
-            setPage(1);
-          },
-        }}
-        onRowClick={handleRowClick}
-        emptyMessage={activeTab === 0 ? "No paid payments found" : "No refunded or voided payments found"}
-      />
+          <DataTable
+            columns={columns}
+            data={payments}
+            loading={isLoading}
+            getRowStyle={(row) =>
+              row.reversed || row.status === "reversed" ? { opacity: 0.55 } : undefined
+            }
+            pagination={{
+              page,
+              limit,
+              total: pagination.total,
+              onPageChange: setPage,
+              onLimitChange: (newLimit) => {
+                setLimit(newLimit);
+                setPage(1);
+              },
+            }}
+            onRowClick={handleRowClick}
+            emptyMessage={activeTab === 0 ? "No paid payments found" : "No refunded or voided payments found"}
+          />
+        </>
+      )}
 
       {/* ── COLLECT PAYMENT MODAL ─────────────────────────────────────────── */}
       <CollectPaymentModal
