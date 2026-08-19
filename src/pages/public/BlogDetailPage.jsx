@@ -1,6 +1,15 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Chip, CircularProgress } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Chip,
+  CircularProgress,
+  Typography,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonIcon from "@mui/icons-material/Person";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -132,6 +141,34 @@ const BlogDetailPage = () => {
       <meta name="twitter:title" content={resolvedOgTitle} />
       <meta name="twitter:description" content={resolvedOgDesc} />
       {resolvedOgImage && <meta name="twitter:image" content={resolvedOgImage} />}
+      {blog.faqs?.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: blog.faqs.map((faq) => ({
+                "@type": "Question",
+                name: faq.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: faq.answer
+                    .replace(/<[^>]*>/g, " ")
+                    .replace(/&amp;/g, "&")
+                    .replace(/&lt;/g, "<")
+                    .replace(/&gt;/g, ">")
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#39;/g, "'")
+                    .replace(/&nbsp;/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim(),
+                },
+              })),
+            }),
+          }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -249,6 +286,44 @@ const BlogDetailPage = () => {
           >
             ← Back to Blog
           </Link>
+
+          {/* FAQ Accordion — rendered when the blog has FAQs */}
+          {blog.faqs?.length > 0 && (
+            <Box sx={{ mt: 6 }}>
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                color="#003366"
+                sx={{ mb: 3 }}
+              >
+                Frequently Asked Questions
+              </Typography>
+              {blog.faqs.map((faq, i) => (
+                <Accordion
+                  key={i}
+                  sx={{
+                    mb: 1,
+                    borderRadius: "8px !important",
+                    "&:before": { display: "none" },
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography fontWeight={600} fontSize="0.95rem">
+                      {faq.question}
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <div
+                      className="text-gray-700 text-sm leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_a]:text-accent [&_a]:underline [&_strong]:font-semibold"
+                      dangerouslySetInnerHTML={{ __html: faq.answer }}
+                    />
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
+          )}
 
           {/* Related Articles */}
           {relatedPosts.length > 0 && (

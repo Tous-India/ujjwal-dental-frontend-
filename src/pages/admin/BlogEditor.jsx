@@ -39,6 +39,7 @@ import { uploadBlogImage } from "../../api/admin/blogs.api";
 import { getBlogAuthors } from "../../api/admin/users.api";
 import { useAdminStore } from "../../store/admin.store";
 import FocusKeywordAnalysis from "../../components/admin/blog/FocusKeywordAnalysis";
+import FaqEditor from "../../components/admin/blog/FaqEditor";
 
 const slugify = (title) =>
   title
@@ -90,6 +91,7 @@ const getInitialFormState = () => ({
   scheduledPublishAt: "",
   author: "",
   focusKeyword: "",
+  faqs: [],
 });
 
 const BlogEditor = () => {
@@ -152,6 +154,7 @@ const BlogEditor = () => {
         // store the _id string so it matches the <Select> values
         author: blog.author?._id || blog.author || "",
         focusKeyword: blog.focusKeyword || "",
+        faqs: blog.faqs || [],
       });
       setStatus(blog.status || "draft");
       setSlugTouched(true);
@@ -256,6 +259,7 @@ const BlogEditor = () => {
     status: targetStatus,
     author: formData.author || undefined,
     focusKeyword: formData.focusKeyword,
+    faqs: formData.faqs,
   });
 
   const handleSave = async (targetStatus) => {
@@ -412,6 +416,17 @@ const BlogEditor = () => {
                 setFormData((prev) => ({ ...prev, content: html }));
                 if (errors.content) setErrors((prev) => ({ ...prev, content: "" }));
               }}
+            />
+          </Paper>
+
+          {/* FAQs card */}
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+              FAQs
+            </Typography>
+            <FaqEditor
+              faqs={formData.faqs}
+              onChange={(faqs) => setFormData((prev) => ({ ...prev, faqs }))}
             />
           </Paper>
         </Box>
