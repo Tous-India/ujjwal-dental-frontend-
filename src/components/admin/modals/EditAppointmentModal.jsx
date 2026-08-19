@@ -786,7 +786,11 @@ const EditAppointmentModal = ({ open, onClose, appointment, onSuccess }) => {
       fullWidth
     >
       <DialogTitle>Enter treatment name</DialogTitle>
-      <DialogContent sx={{ pt: 2 }}>
+      {/* Same pt fix as AddAppointmentModal: "&&" gives specificity 0-2-0
+          so this rule beats MUI's sibling zeroing rule at the same specificity,
+          by insertion order (Emotion sx comes after theme). Without it, pt=0
+          and the shrunk label is clipped by overflow-y:auto. */}
+      <DialogContent sx={{ "&&": { pt: 2.5 } }}>
         <StyledTextField
           autoFocus
           label="Treatment name"

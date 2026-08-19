@@ -2061,7 +2061,13 @@ const AddAppointmentModal = ({ open, onClose, onSuccess, prefillData = null, ini
       fullWidth
     >
       <DialogTitle>Enter treatment name</DialogTitle>
-      <DialogContent sx={{ pt: 2 }}>
+      {/* pt via "&&" (specificity 0-2-0) overrides MUI's sibling rule
+          .MuiDialogTitle-root + .MuiDialogContent-root { padding-top: 0 }
+          which is also 0-2-0 — with equal specificity, the sx rule wins
+          because Emotion inserts it after the theme stylesheet.
+          Without this, the effective pt is 0 and overflow-y:auto clips
+          the top ~5px of the shrunk outlined label. */}
+      <DialogContent sx={{ "&&": { pt: 2.5 } }}>
         <StyledTextField
           autoFocus
           label="Treatment name"
