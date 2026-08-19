@@ -9,7 +9,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { uploadBlogImage } from "../../../api/admin/blogs.api";
 import { Box, IconButton, Tooltip, CircularProgress, Divider } from "@mui/material";
@@ -41,6 +41,12 @@ const ToolbarButton = ({ label, active, onClick, disabled, children }) => (
 export default function RichTextEditor({ content, onChange, placeholder = "Write your blog post..." }) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
+  // Tracks whether we have loaded the initial API content into the editor yet.
+  // We only ever call setContent() once — when API data arrives after mount.
+  // Without this, the edit route always showed a blank editor: content="" at
+  // mount time (formData starts empty), then the API response updates the prop,
+  // but Tiptap v3's useEditor only reads content at initialisation.
+  const initialContentLoaded = useRef(false);
 
   // Stable extension array — .configure() returns a new object each call, so
   // memoising here prevents Tiptap v3's compareOptions from detecting a spurious
@@ -73,10 +79,26 @@ export default function RichTextEditor({ content, onChange, placeholder = "Write
     },
     editorProps: {
       attributes: {
-        class: "prose max-w-none min-h-[300px] p-4 focus:outline-none",
+        // "prose" intentionally omitted — @tailwindcss/typography is not
+        // installed, so the class generates no rules. Heading/list/bold styles
+        // come from the .ProseMirror block in index.css instead.
+        class: "min-h-[300px] p-4 focus:outline-none",
       },
     },
   });
+
+  // Load API content into the editor exactly once, after both the editor
+  // instance and the incoming content are ready. The guard on
+  // initialContentLoaded prevents this from re-firing on every keystroke
+  // (which would reset the cursor position and lose the user's edit).
+  //
+  // false as the second arg to setContent suppresses the onUpdate event so
+  // onChange isn't called redundantly (the parent already has this content).
+  useEffect(() => {
+    if (!editor || initialContentLoaded.current || !content) return;
+    editor.commands.setContent(content, false);
+    initialContentLoaded.current = true;
+  }, [editor, content]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];

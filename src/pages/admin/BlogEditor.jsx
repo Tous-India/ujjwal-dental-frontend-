@@ -158,7 +158,10 @@ const BlogEditor = () => {
   const validate = (targetStatus) => {
     const newErrors = {};
     if (!formData.title.trim()) newErrors.title = "Title is required";
-    if (!formData.content.trim()) newErrors.content = "Content is required";
+    // Strip HTML tags before the empty check — Tiptap emits "<p></p>" for a
+    // blank editor, which is non-empty as a string but has no real content.
+    if (!(formData.content || "").replace(/<[^>]*>/g, "").trim())
+      newErrors.content = "Content is required";
     if (targetStatus === "scheduled" && !formData.scheduledPublishAt) {
       newErrors.scheduledPublishAt = "Scheduled date/time is required";
     }
@@ -393,7 +396,7 @@ const BlogEditor = () => {
 
           {/* Organise — Category then Tags */}
           <Paper variant="outlined" className="p-4 rounded-xl">
-            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3">
+            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3!">
               Organise
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -405,6 +408,7 @@ const BlogEditor = () => {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, category: e.target.value }))
                   }
+                  className="text-[12px]!"
                 >
                   {BLOG_CATEGORIES.map((cat) => (
                     <MenuItem key={cat} value={cat}>
@@ -427,7 +431,7 @@ const BlogEditor = () => {
 
           {/* Publishing */}
           <Paper variant="outlined" className="p-4 rounded-xl">
-            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3">
+            <Typography variant="subtitle2" className="font-semibold text-gray-700 mb-3!">
               Publishing
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -437,6 +441,7 @@ const BlogEditor = () => {
                   label="Status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
+                  className="text-[12px]!"
                 >
                   <MenuItem value="draft">Draft</MenuItem>
                   <MenuItem value="published">Published</MenuItem>
