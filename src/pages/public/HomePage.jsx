@@ -649,7 +649,19 @@ const HomePage = () => {
                         controls
                         playsInline
                         preload="metadata"
+                        style={{ background: "#000" }}
                         className="absolute inset-0 w-full h-full object-cover"
+                        onLoadedMetadata={(e) => {
+                          try {
+                            const video = e.currentTarget;
+                            const seekTo = Math.min(2, video.duration * 0.9);
+                            if (seekTo > 0 && isFinite(seekTo)) {
+                              video.currentTime = seekTo;
+                            }
+                          } catch (_) {
+                            // seek failed — leave at frame 0
+                          }
+                        }}
                       />
                     </div>
 
@@ -764,7 +776,7 @@ const HomePage = () => {
               }}
               breakpoints={{
                 768: { slidesPerView: 2.5 },
-                1024: { slidesPerView: 4 },
+                1024: { slidesPerView: 4.5 },
               }}
               className="px-1 pt-2 pb-4 !items-stretch"
             >
