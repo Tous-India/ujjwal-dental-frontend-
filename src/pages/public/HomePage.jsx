@@ -444,22 +444,22 @@ const HomePage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Painless Laser Dentistry */}
-            <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
+            <div className="rounded-[10px]! p-6 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-[#e8f4fd]">
                   <span className="text-[24px]! text-[#006694]">
                     <BoltIcon />
                   </span>
                 </div>
                 <h3
                   className="text-[#003366] mb-2"
-                  style={{ fontSize: "1.25rem", fontWeight: 700 }}
+                  style={{ fontSize: "1.1rem", fontWeight: 700 }}
                 >
                   Painless Laser Dentistry
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
-                  style={{ fontSize: "0.95rem" }}
+                  style={{ fontSize: "0.75rem" }}
                 >
                   Advanced laser treatments — no cuts, no stitches, minimal
                   bleeding. Faster recovery with precision procedures that most
@@ -469,22 +469,22 @@ const HomePage = () => {
             </div>
 
             {/* 15+ Years of Expertise */}
-            <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
+            <div className="rounded-[10px]! p-6 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-[#e8f4fd]">
                   <span className="text-[24px]! text-[#006694]">
                     <WorkspacePremiumIcon />
                   </span>
                 </div>
                 <h3
                   className="text-[#003366] mb-2"
-                  style={{ fontSize: "1.25rem", fontWeight: 700 }}
+                  style={{ fontSize: "1.1rem", fontWeight: 700 }}
                 >
                   15+ Years of Expertise
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
-                  style={{ fontSize: "0.95rem" }}
+                  style={{ fontSize: "0.75rem" }}
                 >
                   Over fifteen years of clinical experience across dental implants,
                   orthodontics, and oral surgery. Over 10,000 patients treated
@@ -530,22 +530,22 @@ const HomePage = () => {
             </div>
 
             {/* Complete Family Dental Care */}
-            <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
+            <div className="rounded-[10px]! p-6 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-[#e8f4fd]">
                   <span className="text-[24px]! text-[#006694]">
                     <FamilyRestroomIcon />
                   </span>
                 </div>
                 <h3
                   className="text-[#003366] mb-2"
-                  style={{ fontSize: "1.25rem", fontWeight: 700 }}
+                  style={{ fontSize: "1.1rem", fontWeight: 700 }}
                 >
                   Complete Family Dental Care
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
-                  style={{ fontSize: "0.95rem" }}
+                  style={{ fontSize: "0.75rem" }}
                 >
                   From kids&apos; first dental visit to senior dentures — one
                   clinic for the whole family. Preventive, cosmetic, and
@@ -555,22 +555,22 @@ const HomePage = () => {
             </div>
 
             {/* 24/7 Emergency & Online Booking */}
-            <div className="rounded-[10px]! p-8 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
+            <div className="rounded-[10px]! p-6 transition-all duration-300 bg-white border border-gray-200 hover:shadow-lg hover:-translate-y-1">
               <div>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#e8f4fd]">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-[#e8f4fd]">
                   <span className="text-[24px]! text-[#006694]">
                     <AccessTimeIcon />
                   </span>
                 </div>
                 <h3
                   className="text-[#003366] mb-2"
-                  style={{ fontSize: "1.25rem", fontWeight: 700 }}
+                  style={{ fontSize: "1.1rem", fontWeight: 700 }}
                 >
                   24/7 Emergency &amp; Online Booking
                 </h3>
                 <p
                   className="text-gray-500 leading-relaxed"
-                  style={{ fontSize: "0.95rem" }}
+                  style={{ fontSize: "0.75rem" }}
                 >
                   Dental emergencies don&apos;t wait — neither do we. Book
                   appointments online anytime, or call for same-day emergency
