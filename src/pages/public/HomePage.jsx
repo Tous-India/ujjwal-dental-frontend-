@@ -762,8 +762,8 @@ const HomePage = () => {
 
             <Swiper
               modules={[Navigation]}
-              speed={500}
-              loop={false}
+              speed={1000}
+              loop={true}
               spaceBetween={16}
               slidesPerView={1.2}
               navigation={{
