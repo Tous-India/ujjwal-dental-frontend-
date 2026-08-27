@@ -285,11 +285,7 @@ const BookAppointment = () => {
       toast.info("Please enter a valid 10-digit phone number");
       return false;
     }
-    if (!formData.email.trim()) {
-      toast.info("Please enter your email for portal access");
-      return false;
-    }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
       toast.info("Please enter a valid email address");
       return false;
     }
@@ -917,7 +913,7 @@ const BookAppointment = () => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className={labelCls}>Email *</label>
+                      <label className={labelCls}>Email</label>
                       <input
                         type="email"
                         className={fieldCls}
@@ -926,7 +922,7 @@ const BookAppointment = () => {
                         placeholder="your@email.com"
                       />
                       <p className="text-gray-400 text-[13px] mt-1">
-                        Required for login to patient portal
+                        Optional — for appointment confirmations
                       </p>
                     </div>
                     <div>
