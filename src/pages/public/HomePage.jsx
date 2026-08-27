@@ -778,7 +778,7 @@ const HomePage = () => {
                 768: { slidesPerView: 2.5 },
                 1024: { slidesPerView: 4.5 },
               }}
-              className="px-1 pt-2 pb-4 !items-stretch"
+              className="px-1 pt-2 pb-4 doctors-swiper"
             >
               {doctors.map((doc) => {
                 const CardTag = doc.to ? Link : "div";

@@ -481,6 +481,13 @@ body {
   }
 }
 
+.doctors-swiper .swiper-wrapper {
+  align-items: stretch;
+}
+.doctors-swiper .swiper-slide {
+  height: auto;
+}
+
 input::placeholder{
   font-size: 12px !important;
   font-style: italic !important;
