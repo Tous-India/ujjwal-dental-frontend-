@@ -813,11 +813,11 @@ const HomePage = () => {
                         {doc.name}
                       </p>
                       {doc.subtitle && (
-                        <p className="text-gray-500 text-[14px] mt-1 leading-snug">
+                        <p className="text-gray-500 text-[12px] mt-1 leading-snug">
                           {doc.subtitle}
                         </p>
                       )}
-                      <p className="font-numbers text-gray-500 text-sm mt-1">{doc.experience}</p>
+                      <p className="font-numbers text-gray-500 text-[12px] mt-1">{doc.experience}</p>
                     </div>
                   </CardTag>
                 </SwiperSlide>
