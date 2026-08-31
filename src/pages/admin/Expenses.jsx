@@ -594,6 +594,8 @@ const Expenses = () => {
   const labExpense   = pnlData?.data?.expenses?.lab;
   const netProfit    = pnlData?.data?.netProfit;
   const isProfitPositive = netProfit !== undefined ? netProfit >= 0 : undefined;
+  // Lab card note: show how much of labExpense came from LabOrder payments vs Expense docs
+  const labOrdersTotal = pnlData?.data?.expenses?.labOrderPayments ?? 0;
 
   const handleFilterChange = (key, value) => {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -839,7 +841,11 @@ const Expenses = () => {
               label="Lab Expenses"
               value={labExpense !== undefined ? INR(labExpense) : "—"}
               color="#f59e0b"
-              sub={statDateLabel}
+              sub={
+                labExpense !== undefined && labOrdersTotal > 0
+                  ? `incl. ${INR(labOrdersTotal)} from Lab Orders`
+                  : statDateLabel
+              }
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>

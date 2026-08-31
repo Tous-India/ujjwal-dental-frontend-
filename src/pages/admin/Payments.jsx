@@ -60,7 +60,7 @@ import { usePermissions } from "../../hooks/admin/usePermissions";
 const fmt = (n) => (n || 0).toLocaleString("en-IN");
 
 /** Stats Card — mirrors Dashboard's StatsCard visual style. */
-const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading }) => (
+const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading, sub }) => (
   <Card elevation={0} className="h-full rounded-xl! border border-gray-100 shadow-xs!">
     <CardContent className="flex items-center gap-4 p-5!">
       <Box className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${iconBg}`}>
@@ -75,6 +75,11 @@ const StatsCard = ({ title, value, icon: Icon, iconBg, iconColor, loading }) => 
         ) : (
           <Typography variant="h5" className="font-numbers font-bold text-[#003366] text-[28px]">
             {value ?? 0}
+          </Typography>
+        )}
+        {!loading && sub && (
+          <Typography variant="caption" className="text-gray-400 text-[11px]">
+            {sub}
           </Typography>
         )}
       </Box>
@@ -660,6 +665,11 @@ const Payments = () => {
             iconBg="bg-green-50"
             iconColor="text-green-500"
             loading={summaryStatsLoading}
+            sub={
+              summaryStats.externalIncome > 0
+                ? `incl. ₹${fmt(summaryStats.externalIncome)} external income`
+                : undefined
+            }
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
