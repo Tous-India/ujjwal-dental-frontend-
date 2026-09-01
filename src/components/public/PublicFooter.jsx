@@ -4,6 +4,7 @@
  * Navy footer with brand, quick links, treatments, and contact/hours.
  */
 import { Link } from "react-router-dom";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import YouTubeIcon from "@mui/icons-material/YouTube";
@@ -194,7 +195,7 @@ const PublicFooter = () => {
       <div className="border-t border-gray-700">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-gray-400 text-[13px]">
-            © 2026 Ujjwal Dental Clinic and Maxillofacial Surgery Center. All Rights Reserved.
+            © 2026 {CLINIC_NAME}. All Rights Reserved.
           </p>
           <p className="text-gray-400 text-[13px]">
             Developed by{" "}

@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -219,7 +220,7 @@ const ContactPage = () => {
                   Villa 445, A Block, Parsvnath City, Sonipat, Haryana 131001
                 </a>
                 <p className="text-gray-500 text-[13px] mt-3 pt-3 border-t border-gray-100">
-                  Operated by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
+                  Operated by {CLINIC_NAME}.
                 </p>
               </InfoCard>
 

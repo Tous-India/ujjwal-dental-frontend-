@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 import { Swiper, SwiperSlide } from "swiper/react";
 import MembershipPlansSection from "../../components/public/MembershipPlansSection";
 import {
@@ -271,7 +272,7 @@ const HomePage = () => {
                 "@type": "Organization",
                 "@id": "https://ujjwaldentalplanet.com/#organization",
                 name: "Ujjwal Dental Clinic",
-                legalName: "Ujjwal Dental Clinic and Maxillofacial Surgery Center",
+                legalName: CLINIC_NAME,
                 url: "https://ujjwaldentalplanet.com/",
                 logo: "https://ujjwaldentalplanet.com/ujjwal-dental-logo.png",
                 sameAs: [

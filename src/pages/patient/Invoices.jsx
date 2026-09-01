@@ -6,6 +6,7 @@
  * GET /patients/:id/invoices endpoint (invoices are embedded with items).
  */
 import { useState, useEffect } from "react";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 import {
   Box,
   Card,
@@ -364,7 +365,7 @@ const InvoiceDetailDialog = ({ invoice, open, onClose, onPayNow }) => {
         </Box>
 
         <Typography variant="caption" className="block text-center text-gray-500 mt-4">
-          Ujjwal Dental Clinic and Maxillofacial Surgery Center
+          {CLINIC_NAME}
         </Typography>
 
         {invoice.notes && (

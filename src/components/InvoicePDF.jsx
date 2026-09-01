@@ -6,6 +6,7 @@
  * Colors: only #000, #333, #666, #999, #e0e0e0, #f0f0f0, #fff.
  * Amounts: ₹ INR only, en-IN locale formatting.
  */
+import { CLINIC_NAME } from "../constants/clinic.js";
 
 const fmt = (val) =>
   `₹${(val ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
@@ -162,7 +163,7 @@ const InvoicePDF = ({ invoice }) => {
                 marginTop: "2px",
               }}
             >
-              Ujjwal Dental Clinic and Maxillofacial Surgery Center
+              {CLINIC_NAME}
             </div>
             <div
               style={{
@@ -447,7 +448,7 @@ const InvoicePDF = ({ invoice }) => {
             marginTop: "4px",
           }}
         >
-          Ujjwal Dental Clinic and Maxillofacial Surgery Center
+          {CLINIC_NAME}
         </div>
         <div
           style={{

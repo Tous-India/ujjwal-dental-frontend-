@@ -2,6 +2,7 @@
  * Refund & Re-treatment Policy (static)
  */
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 
 const Section = ({ title, children }) => (
   <section className="mb-8">
@@ -58,7 +59,7 @@ const RefundPolicyPage = () => {
             Last updated: June 2, 2026
           </p>
           <p className="text-gray-500 text-[14px] mb-10">
-            Ujjwal Dental Clinic is operated by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
+            Operated by {CLINIC_NAME}.
           </p>
 
           <Section title="Refund Policy">
@@ -192,7 +193,7 @@ const RefundPolicyPage = () => {
 
           <Section title="Re-treatment Policy">
             <p>
-              Ujjwal Dental Clinic and Maxillofacial Surgery Center aims to
+              {CLINIC_NAME} aims to
               ensure the best clinical practices through highly qualified and
               trained doctors. However, if the outcome of any treatment is
               not on the desired lines due to various limitations,
@@ -277,8 +278,7 @@ const RefundPolicyPage = () => {
               reject any refund or re-treatment claim based on clinical
               findings and patient history, and if the patient has not
               followed instructions. Disputes, if any, are subject to the
-              exclusive jurisdiction of Haryana courts, where Ujjwal Dental
-              Clinic and Maxillofacial Surgery Center has its registered
+              exclusive jurisdiction of Haryana courts, where {CLINIC_NAME} has its registered
               office.
             </p>
           </Section>

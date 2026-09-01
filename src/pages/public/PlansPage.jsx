@@ -9,6 +9,7 @@ import { CircularProgress } from "@mui/material";
 import { filterName, NAME_PLACEHOLDER } from "../../utils/nameInput";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
@@ -496,7 +497,7 @@ const PlansPage = () => {
                 Login details will be emailed to you after purchase.
               </p>
               <p className="text-[12px] text-gray-500 mt-1 text-center">
-                Payments processed by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
+                Payments processed by {CLINIC_NAME}.
               </p>
             </div>
 

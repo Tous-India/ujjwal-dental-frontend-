@@ -7,6 +7,7 @@
  * server-side on every order (the client amount is never trusted).
  */
 import { useState } from "react";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 import {
   Box,
   Typography,
@@ -201,7 +202,7 @@ const BookTreatment = () => {
           />
         )}
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>
-          Payments processed by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
+          Payments processed by {CLINIC_NAME}.
         </Typography>
       </Box>
 

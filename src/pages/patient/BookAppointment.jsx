@@ -6,6 +6,7 @@
  * Payment required before booking (Razorpay).
  */
 import { useState, useEffect, useRef } from "react";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 import { useAuthStore } from "../../store/auth.store";
 import {
   CircularProgress,
@@ -30,9 +31,9 @@ import { Link } from "react-router-dom";
 import { useClinics } from "../../hooks/patient/useMyAppointments";
 import {
   getFeeSettings,
-  createPaymentOrder,
   verifyPayment,
-  bookAppointmentWithPayment,
+  initiateBooking,
+  confirmBooking,
   bookAppointmentFree,
   bookAppointmentPayAtClinic,
   getAvailableSlots,
@@ -389,7 +390,11 @@ const BookAppointment = () => {
   };
 
   /**
-   * Handle Razorpay Payment
+   * Handle Razorpay Payment — pending-hold flow:
+   *   1. initiateBooking  → creates PENDING appointment + Razorpay order (slot held)
+   *   2. Razorpay modal   → patient completes payment
+   *   3. verifyPayment    → marks payment as "paid" in DB
+   *   4. confirmBooking   → flips appointment to scheduled, generates invoice
    */
   const handlePayment = async () => {
     setIsProcessing(true);
@@ -403,23 +408,27 @@ const BookAppointment = () => {
         return;
       }
 
-      const opdFee = getOpdFee();
-      const isEmergency = bookingType === "emergency";
+      const reason = appointmentReasons.find((r) => r.value === formData.reason);
 
-      // Create Razorpay order (isOnlineBooking allows creating order without patient).
-      // The server prices the order authoritatively from settings; isEmergency tells
-      // it which OPD fee to use. The amount below is informational only.
-      const orderResponse = await createPaymentOrder({
-        amount: opdFee,
+      // Step 1: Hold the slot + create the Razorpay order atomically.
+      // reCAPTCHA validated here (before Razorpay opens) so the token is fresh.
+      const initResponse = await initiateBooking({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || undefined,
         clinic: formData.clinic,
-        type: "opd_fee",
-        isEmergency,
-        isOnlineBooking: true,
+        date: formData.date,
+        timeSlot: formData.time,
+        reason: reason?.label || formData.reason,
+        type: reason?.type || "regular",
+        bookingType,
+        captchaToken: captchaToken,
       });
 
-      const { order, paymentId, key_id } = orderResponse.data;
+      const { pendingAppointmentId, paymentId, order, key_id } = initResponse.data;
+      const selectedClinic = clinics.find((c) => c._id === formData.clinic);
 
-      // Open Razorpay checkout
+      // Step 2: Open Razorpay checkout
       const options = {
         key: key_id,
         amount: order.amount,
@@ -437,7 +446,7 @@ const BookAppointment = () => {
         },
         handler: async (response) => {
           try {
-            // Verify payment
+            // Step 3: Verify payment signature → marks payment "paid" in DB
             await verifyPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -445,26 +454,10 @@ const BookAppointment = () => {
               paymentId: paymentId,
             });
 
-            // Book appointment after successful payment
-            const selectedClinic = clinics.find(
-              (c) => c._id === formData.clinic,
-            );
-            const reason = appointmentReasons.find(
-              (r) => r.value === formData.reason,
-            );
-
-            const bookingResponse = await bookAppointmentWithPayment({
-              paymentId: paymentId,
-              name: formData.name,
-              phone: formData.phone,
-              email: formData.email || undefined,
-              clinic: formData.clinic,
-              date: formData.date,
-              timeSlot: formData.time,
-              reason: reason?.label || formData.reason,
-              type: reason?.type || "regular",
-              bookingType,
-              captchaToken: captchaToken,
+            // Step 4: Confirm the pending appointment → scheduled + invoice generated
+            const bookingResponse = await confirmBooking({
+              pendingAppointmentId,
+              paymentId,
             });
 
             // Success
@@ -472,17 +465,17 @@ const BookAppointment = () => {
             setBookedAppointment({
               ...bookingResponse.data,
               clinicName: selectedClinic?.name,
-              opdFee: opdFee,
+              opdFee: order.amount / 100,
             });
             setActiveStep(3);
           } catch (err) {
             console.error(
-              "[Booking] Error:",
+              "[Booking] Error after payment:",
               err.response?.data || err.message,
             );
             toast.error(
               err.response?.data?.message ||
-                "Failed to book appointment after payment. Please contact support.",
+                "Payment received but booking failed. Please contact the clinic with your payment ID.",
             );
           } finally {
             setIsProcessing(false);
@@ -1084,7 +1077,7 @@ const BookAppointment = () => {
                           : `Pay ${formatCurrency(getOpdFee())} & Book`}
                       </button>
                       <p className="text-[12px] text-gray-500 mt-2 text-center">
-                        Payments processed by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
+                        Payments processed by {CLINIC_NAME}.
                       </p>
                     </>
                   ) : (

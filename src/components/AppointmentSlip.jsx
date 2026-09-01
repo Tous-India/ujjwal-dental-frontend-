@@ -1,4 +1,5 @@
 import React from 'react';
+import { CLINIC_NAME } from '../constants/clinic.js';
 
 const AppointmentSlip = ({ appointment }) => {
   const patient = appointment?.patient || {};
@@ -49,10 +50,10 @@ const AppointmentSlip = ({ appointment }) => {
 
           {/* Clinic Logo / Name on left */}
           <text x="30" y="60" fill="#ffffff" fontSize="22" fontWeight="700" fontFamily="Arial">
-            Ujjwal Dental Clinic
+            {CLINIC_NAME}
           </text>
           <text x="32" y="85" fill="rgba(255,255,255,0.85)" fontSize="11" fontFamily="Arial">
-            Ujjwal Dental Clinic and Maxillofacial Surgery Center
+            {CLINIC_NAME}
           </text>
         </svg>
 

@@ -2,6 +2,7 @@
  * Privacy Policy (static)
  */
 import BreadcrumbBanner from "../../components/public/BreadcrumbBanner";
+import { CLINIC_NAME } from "../../constants/clinic.js";
 
 const Section = ({ title, children }) => (
   <section className="mb-8">
@@ -58,7 +59,7 @@ const PrivacyPolicyPage = () => {
             Last updated: June 2, 2026
           </p>
           <p className="text-gray-500 text-[14px] mb-10">
-            Ujjwal Dental Clinic is operated by Ujjwal Dental Clinic and Maxillofacial Surgery Center.
+            Operated by {CLINIC_NAME}.
           </p>
 
           <p className="text-gray-700 text-[15px] leading-[1.8] mb-8">

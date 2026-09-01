@@ -5,6 +5,7 @@
  * Inline forms for recording payment and cancelling invoice.
  */
 import { useState } from "react";
+import { CLINIC_NAME } from "../../../constants/clinic.js";
 import {
   Dialog,
   DialogTitle,
@@ -571,7 +572,7 @@ const InvoiceDetailModal = ({ open, onClose, invoice, onRefresh }) => {
 
             {/* Legal company line */}
             <Typography variant="caption" className="block text-center text-gray-500 mb-4">
-              Ujjwal Dental Clinic and Maxillofacial Surgery Center
+              {CLINIC_NAME}
             </Typography>
 
             {/* Notes */}
