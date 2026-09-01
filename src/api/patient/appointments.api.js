@@ -91,6 +91,26 @@ export const bookAppointmentWithPayment = (data) =>
   api.post("/appointments/book-with-payment", data).then((res) => res.data);
 
 /**
+ * Step 1 of the pending-hold booking flow.
+ * Validates the slot, creates a PENDING appointment (invisible everywhere),
+ * and returns a Razorpay order for the patient to complete payment.
+ * @param {Object} data - { name, phone, email, clinic, date, timeSlot, reason, type, bookingType, captchaToken }
+ * @returns {Promise<{ pendingAppointmentId, paymentId, order, key_id }>}
+ */
+export const initiateBooking = (data) =>
+  api.post("/appointments/initiate-booking", data).then((res) => res.data);
+
+/**
+ * Step 2 of the pending-hold booking flow.
+ * Confirms the pending appointment after Razorpay payment succeeds.
+ * Assigns appointment number, generates invoice, sends notifications.
+ * @param {Object} data - { pendingAppointmentId, paymentId }
+ * @returns {Promise}
+ */
+export const confirmBooking = (data) =>
+  api.post("/appointments/confirm-booking", data).then((res) => res.data);
+
+/**
  * Book a free OPD appointment for a logged-in patient with an active membership.
  * Requires patient JWT (patientProtect). Server re-verifies membership server-side.
  * @param {Object} data - { clinic, date, timeSlot, reason, type, bookingType }
