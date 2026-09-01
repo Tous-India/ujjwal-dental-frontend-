@@ -48,6 +48,8 @@ import {
 } from "../../hooks/admin/useExpenses";
 import { useAdminStore } from "../../store/admin.store";
 import { usePermissions } from "../../hooks/admin/usePermissions";
+import { exportExpensesCsv, exportExpensesPdf } from "../../api/admin/expenses.api";
+import DownloadIcon from "@mui/icons-material/Download";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -553,6 +555,9 @@ const Expenses = () => {
   const [snack, setSnack] = useState({ open: false, msg: "", sev: "success" });
   const showSnack = (msg, sev = "success") => setSnack({ open: true, msg, sev });
 
+  // Export state
+  const [exporting, setExporting] = useState(false);
+
   const isVoidedView = filters.voided === "true";
 
   // Query params — stats + list share the same date/filter window
@@ -609,6 +614,53 @@ const Expenses = () => {
     setFromDate("");
     setToDate("");
     setPage(1);
+  };
+
+  const exportParams = useMemo(() => ({
+    from: fromDate || undefined,
+    to: toDate || undefined,
+    category: filters.category || undefined,
+    paymentMode: filters.paymentMode || undefined,
+    spentBy: filters.spentBy || undefined,
+    search: search || undefined,
+  }), [fromDate, toDate, filters, search]);
+
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const blob = await exportExpensesCsv(exportParams);
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `expenses-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      showSnack("CSV export failed. Please try again.", "error");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      const blob = await exportExpensesPdf(exportParams);
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `expenses-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      showSnack("PDF export failed. Please try again.", "error");
+    } finally {
+      setExporting(false);
+    }
   };
 
   // Stat date label
@@ -799,21 +851,51 @@ const Expenses = () => {
             ),
           }}
         />
-        {hasPermission("expenses", "create") && !isVoidedView && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setShowForm(true)}
-          >
-            Record Expense
-          </Button>
+        {!isVoidedView && (
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Tooltip title="Export CSV">
+              <span>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  onClick={handleExportCsv}
+                  disabled={exporting}
+                >
+                  CSV
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip title="Export PDF">
+              <span>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  onClick={handleExportPdf}
+                  disabled={exporting}
+                >
+                  PDF
+                </Button>
+              </span>
+            </Tooltip>
+            {hasPermission("expenses", "create") && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setShowForm(true)}
+              >
+                Record Expense
+              </Button>
+            )}
+          </Box>
         )}
       </Box>
 
       {/* Stats cards — four fixed cards, all from the same P&L endpoint.
-          "Other Expenses" and "Lab Expenses" are mutually exclusive subsets of total
+          "Non-Lab Expenses" and "Lab Expenses" are mutually exclusive subsets of total
           expenses — they never overlap, so readers can safely add them without
-          double-counting. Profit = Total Payment − Other Expenses − Lab Expenses.
+          double-counting. Profit = Total Payment − Non-Lab Expenses − Lab Expenses.
           Hidden in voided view (voided records don't count in any figures). */}
       {!isVoidedView && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -829,7 +911,7 @@ const Expenses = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={MoneyOffIcon}
-              label="Other Expenses"
+              label="Non-Lab Expenses"
               value={otherExpense !== undefined ? INR(otherExpense) : "—"}
               color="#ef4444"
               sub={statDateLabel}

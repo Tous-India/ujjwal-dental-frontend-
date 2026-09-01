@@ -34,3 +34,9 @@ export const getExpenseStaff = () =>
 
 export const permanentDeleteExpense = (id) =>
   api.delete(`/expenses/${id}/permanent`).then((r) => r.data);
+
+export const exportExpensesCsv = (filters = {}) =>
+  api.get("/expenses/export/csv", { params: buildParams(filters), responseType: "blob" }).then((r) => r.data);
+
+export const exportExpensesPdf = (filters = {}) =>
+  api.get("/expenses/export/pdf", { params: buildParams(filters), responseType: "blob" }).then((r) => r.data);
