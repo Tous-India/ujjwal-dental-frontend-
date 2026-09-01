@@ -22,6 +22,12 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  ListSubheader,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -34,8 +40,9 @@ import { toast } from "react-toastify";
 import RichTextEditor from "../../components/admin/blog/RichTextEditor";
 import BlogPreviewModal from "../../components/admin/blog/BlogPreviewModal";
 import { useBlog, useBlogMutations } from "../../hooks/admin/useBlogs";
-import { uploadBlogImage } from "../../api/admin/blogs.api";
+import { uploadBlogImage, getDistinctAuthorNames } from "../../api/admin/blogs.api";
 import { getBlogAuthors } from "../../api/admin/users.api";
+import StyledTextField from "../../components/admin/shared/StyledTextField";
 import { useAdminStore } from "../../store/admin.store";
 import FocusKeywordAnalysis from "../../components/admin/blog/FocusKeywordAnalysis";
 import FaqEditor from "../../components/admin/blog/FaqEditor";
@@ -89,6 +96,7 @@ const getInitialFormState = () => ({
   category: "General",
   scheduledPublishAt: "",
   author: "",
+  authorName: "",
   focusKeyword: "",
   faqs: [],
 });
@@ -119,6 +127,14 @@ const BlogEditor = () => {
   });
   const authors = authorsData?.data?.authors || [];
 
+  // Previously typed custom author names (derived from existing posts — no extra collection)
+  const { data: authorNamesData } = useQuery({
+    queryKey: ["blog-author-names"],
+    queryFn: getDistinctAuthorNames,
+    staleTime: 5 * 60 * 1000,
+  });
+  const customAuthorNames = authorNamesData?.data?.names || [];
+
   const [formData, setFormData] = useState(getInitialFormState());
   const [status, setStatus] = useState("draft");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -126,6 +142,8 @@ const BlogEditor = () => {
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [errors, setErrors] = useState({});
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [otherAuthorOpen, setOtherAuthorOpen] = useState(false);
+  const [otherAuthorInput, setOtherAuthorInput] = useState("");
 
   const blogViews = data?.data?.blog?.views || 0;
 
@@ -152,6 +170,7 @@ const BlogEditor = () => {
         // author is an ObjectId ref — API returns populated { _id, name };
         // store the _id string so it matches the <Select> values
         author: blog.author?._id || blog.author || "",
+        authorName: blog.authorName || "",
         focusKeyword: blog.focusKeyword || "",
         faqs: blog.faqs || [],
       });
@@ -181,6 +200,38 @@ const BlogEditor = () => {
   const handleSlugChange = (e) => {
     setSlugTouched(true);
     setFormData((prev) => ({ ...prev, slug: e.target.value }));
+  };
+
+  // All custom names to show: previously typed (from API) + current formData (for unsaved posts)
+  const allCustomNames = [...new Set([...customAuthorNames, formData.authorName].filter(Boolean))];
+  // Select value: custom name takes priority over staff ObjectId for display
+  const authorSelectValue = formData.authorName || formData.author || "";
+
+  const handleAuthorSelectChange = (e) => {
+    const val = e.target.value;
+    if (val === "__other__") {
+      setOtherAuthorInput(formData.authorName || "");
+      setOtherAuthorOpen(true);
+      return;
+    }
+    // 24-char hex → MongoDB ObjectId → staff user
+    if (/^[0-9a-f]{24}$/i.test(val)) {
+      setFormData((prev) => ({ ...prev, author: val, authorName: "" }));
+    } else {
+      // Previously typed custom name selected from dropdown
+      setFormData((prev) => ({ ...prev, authorName: val }));
+    }
+  };
+
+  const handleOtherAuthorSave = () => {
+    const name = otherAuthorInput.trim();
+    if (!name) return;
+    setFormData((prev) => ({ ...prev, authorName: name }));
+    setOtherAuthorOpen(false);
+  };
+
+  const handleOtherAuthorCancel = () => {
+    setOtherAuthorOpen(false);
   };
 
   const handleCoverUpload = async (e) => {
@@ -257,6 +308,7 @@ const BlogEditor = () => {
         : null,
     status: targetStatus,
     author: formData.author || undefined,
+    authorName: formData.authorName || "",
     focusKeyword: formData.focusKeyword,
     faqs: formData.faqs,
   });
@@ -617,19 +669,68 @@ const BlogEditor = () => {
                 <InputLabel shrink>Author</InputLabel>
                 <Select
                   label="Author"
-                  value={formData.author}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, author: e.target.value }))
-                  }
+                  value={authorSelectValue}
+                  onChange={handleAuthorSelectChange}
                   displayEmpty
                 >
+                  <ListSubheader>Staff</ListSubheader>
                   {authors.map((a) => (
                     <MenuItem key={a._id} value={a._id}>
                       {a.name}
                     </MenuItem>
                   ))}
+                  {allCustomNames.length > 0 && (
+                    <ListSubheader>Custom Authors</ListSubheader>
+                  )}
+                  {allCustomNames.map((name) => (
+                    <MenuItem key={name} value={name}>
+                      {name}
+                    </MenuItem>
+                  ))}
+                  <Divider />
+                  <MenuItem value="__other__">
+                    <em>Other (type a name)…</em>
+                  </MenuItem>
                 </Select>
               </FormControl>
+
+              {/* Custom author name dialog */}
+              <Dialog
+                open={otherAuthorOpen}
+                onClose={handleOtherAuthorCancel}
+                maxWidth="xs"
+                fullWidth
+              >
+                <DialogTitle>Custom Author Name</DialogTitle>
+                <DialogContent sx={{ "&&": { pt: 2.5 } }}>
+                  <StyledTextField
+                    autoFocus
+                    fullWidth
+                    size="small"
+                    label="Author Name"
+                    value={otherAuthorInput}
+                    onChange={(e) => setOtherAuthorInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && otherAuthorInput.trim()) {
+                        handleOtherAuthorSave();
+                      }
+                    }}
+                  />
+                </DialogContent>
+                <DialogActions sx={{ px: 2, pb: 2 }}>
+                  <Button onClick={handleOtherAuthorCancel} variant="outlined" size="small">
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleOtherAuthorSave}
+                    variant="contained"
+                    size="small"
+                    disabled={!otherAuthorInput.trim()}
+                  >
+                    Save
+                  </Button>
+                </DialogActions>
+              </Dialog>
               {status === "scheduled" && (
                 <TextField
                   fullWidth

@@ -84,6 +84,9 @@ export const getBlogStats = () => api.get("/blogs/stats").then((res) => res.data
  * @param {File} file - Image file
  * @returns {Promise}
  */
+export const getDistinctAuthorNames = () =>
+  api.get("/blogs/author-names").then((res) => res.data);
+
 export const uploadBlogImage = (file) => {
   const formData = new FormData();
   formData.append("image", file);

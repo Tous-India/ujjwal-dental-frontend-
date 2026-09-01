@@ -144,7 +144,7 @@ const BlogDetailPage = () => {
             ...(blog.coverImage ? { image: blog.coverImage } : {}),
             datePublished: blog.publishedAt,
             dateModified: blog.updatedAt,
-            author: { "@type": "Person", name: blog.author?.name || "Ujjwal Dental Clinic" },
+            author: { "@type": "Person", name: blog.authorName || blog.author?.name || "Ujjwal Dental Clinic" },
             publisher: {
               "@type": "Organization",
               name: "Ujjwal Dental Clinic",
@@ -187,10 +187,10 @@ const BlogDetailPage = () => {
               <CalendarTodayIcon sx={{ fontSize: 16 }} />
               {formatDate(blog.publishedAt)}
             </span>
-            {blog.author?.name && (
+            {(blog.authorName || blog.author?.name) && (
               <span className="flex items-center gap-1.5">
                 <PersonIcon sx={{ fontSize: 16 }} />
-                {blog.author.name}
+                {blog.authorName || blog.author.name}
               </span>
             )}
             <span className="flex items-center gap-1.5">
