@@ -582,7 +582,7 @@ const TreatmentPlanDetailModal = ({ open, onClose, appointment, onCloneTreatment
                     const collected = collectedBySession[s._id] || 0;
                     const isCompleted = s.status === "completed";
                     const canReschedule =
-                      canRescheduleSessions && !["cancelled", "completed"].includes(s.status);
+                      canRescheduleSessions && !["cancelled", "completed", "pending"].includes(s.status);
                     return (
                       <Box key={s._id} className="flex justify-between items-center gap-1 py-1 border-b border-gray-100 last:border-0">
                         <Typography variant="caption" className="font-semibold">

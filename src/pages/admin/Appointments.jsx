@@ -432,7 +432,7 @@ const getColumns = (onDeleteRow, onCancelRow, onPreviewSlip, onEditRow, onCollec
       // Permission gating (canEdit) layered on top of the existing
       // status-based rules -- both must allow the action.
       const canCancel = canEdit && !["cancelled", "completed", "no_show"].includes(row?.status);
-      const canReschedule = canEdit && ["scheduled", "confirmed"].includes(row?.status);
+      const canReschedule = canEdit && !["cancelled", "completed", "pending"].includes(row?.status);
       const canEditRow = canEdit && row?.status !== "completed";
       const canEditOrDelete = row?.status !== "completed";
       return (
