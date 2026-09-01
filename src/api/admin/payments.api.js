@@ -116,6 +116,9 @@ export const reverseAdminPayment = (data) =>
 export const exportPaymentsPdf = (params = {}) =>
   api.get("/payments/export/pdf", { params, responseType: "blob" }).then((res) => res.data);
 
+export const exportCombined = (params = {}) =>
+  api.get("/payments/export/combined", { params, responseType: "blob" }).then((res) => res.data);
+
 /**
  * Ask Razorpay for a payment link's REAL status and reconcile the invoice if
  * it has genuinely been paid.

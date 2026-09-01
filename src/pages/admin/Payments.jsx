@@ -29,6 +29,9 @@ import {
   Tabs,
   Tab,
   Skeleton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import UndoIcon from "@mui/icons-material/Undo";
@@ -41,6 +44,8 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ReplayCircleFilledIcon from "@mui/icons-material/ReplayCircleFilled";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ReceiptIcon from "@mui/icons-material/Receipt";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { getInvoice } from "../../api/admin/billing.api";
 import DataTable from "../../components/common/DataTable";
 import CompactFilterBar from "../../components/common/CompactFilterBar";
@@ -54,7 +59,7 @@ import ExternalIncomeTab from "./ExternalIncomeTab";
 import { searchPatients } from "../../api/admin/patients.api";
 import AddPaymentModal from "../../components/admin/modals/AddPaymentModal";
 import { downloadInvoicePDF } from "../../utils/downloadInvoicePDF";
-import { exportPaymentsPdf } from "../../api/admin/payments.api";
+import { exportPaymentsPdf, exportCombined } from "../../api/admin/payments.api";
 import { usePermissions } from "../../hooks/admin/usePermissions";
 
 const fmt = (n) => (n || 0).toLocaleString("en-IN");
@@ -208,6 +213,8 @@ const Payments = () => {
   // ── Active tab: 0 = Paid, 1 = Refunded & Voided, 2 = Another Source ─────
   const [activeTab, setActiveTab] = useState(0);
   const [exporting, setExporting] = useState(false);
+  const [exportAllAnchor, setExportAllAnchor] = useState(null);
+  const [exportingAll, setExportingAll] = useState(false);
 
   // ── PDF preview dialog state ──────────────────────────────────────────────
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
@@ -318,6 +325,42 @@ const Payments = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  const handleExportAll = async (format) => {
+    setExportAllAnchor(null);
+    setExportingAll(true);
+    try {
+      const params = {
+        format,
+        ...(fromDate && { from: fromDate }),
+        ...(toDate && { to: toDate }),
+      };
+      const blob = await exportCombined(params);
+      const today = new Date().toISOString().split("T")[0];
+      const ext = format === "csv" ? "csv" : "pdf";
+      const filename = `payment-history-all-${today}.${ext}`;
+      if (format === "pdf") {
+        const url = window.URL.createObjectURL(blob);
+        setPdfPreviewUrl(url);
+        setPdfFilename(filename);
+        setPdfPreviewOpen(true);
+      } else {
+        const url = window.URL.createObjectURL(new Blob([blob], { type: "text/csv;charset=utf-8;" }));
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error("Combined export failed:", err);
+      setSnackbar({ open: true, message: "Combined export failed. Please try again.", severity: "error" });
+    } finally {
+      setExportingAll(false);
+    }
   };
 
   const handleSearch = (value) => {
@@ -959,24 +1002,63 @@ const Payments = () => {
           <Tab label="Refunded & Voided" />
           <Tab label="Another Source" />
         </Tabs>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={exporting ? <CircularProgress size={14} /> : <DownloadIcon fontSize="small" />}
-          onClick={handleExportPdf}
-          disabled={exporting}
-          sx={{
-            mb: 0.5,
-            fontSize: "0.75rem",
-            fontWeight: 600,
-            textTransform: "none",
-            borderColor: "#d1d5db",
-            color: "#374151",
-            "&:hover": { borderColor: "#9ca3af", bgcolor: "#f9fafb" },
-          }}
-        >
-          {exporting ? "Loading Preview…" : "Export PDF"}
-        </Button>
+        <Box sx={{ display: "flex", gap: 0.75, alignItems: "center", mb: 0.5 }}>
+          {/* Per-tab export — unchanged */}
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={exporting ? <CircularProgress size={14} /> : <DownloadIcon fontSize="small" />}
+            onClick={handleExportPdf}
+            disabled={exporting || exportingAll}
+            sx={{
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textTransform: "none",
+              borderColor: "#d1d5db",
+              color: "#374151",
+              "&:hover": { borderColor: "#9ca3af", bgcolor: "#f9fafb" },
+            }}
+          >
+            {exporting ? "Loading…" : "Export PDF"}
+          </Button>
+
+          {/* Combined export — all tabs at once */}
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={exportingAll ? <CircularProgress size={14} color="inherit" /> : <TableChartIcon fontSize="small" />}
+            endIcon={<ArrowDropDownIcon fontSize="small" />}
+            onClick={(e) => setExportAllAnchor(e.currentTarget)}
+            disabled={exportingAll || exporting}
+            sx={{
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textTransform: "none",
+              bgcolor: "#1e40af",
+              "&:hover": { bgcolor: "#1d3a9e" },
+              "&:disabled": { bgcolor: "#93c5fd", color: "#fff" },
+            }}
+          >
+            {exportingAll ? "Exporting…" : "Export All"}
+          </Button>
+          <Menu
+            anchorEl={exportAllAnchor}
+            open={Boolean(exportAllAnchor)}
+            onClose={() => setExportAllAnchor(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+            PaperProps={{ sx: { minWidth: 180, mt: 0.5 } }}
+          >
+            <MenuItem dense onClick={() => handleExportAll("csv")}>
+              <ListItemIcon sx={{ minWidth: 32 }}><TableChartIcon fontSize="small" /></ListItemIcon>
+              Download CSV
+            </MenuItem>
+            <MenuItem dense onClick={() => handleExportAll("pdf")}>
+              <ListItemIcon sx={{ minWidth: 32 }}><DownloadIcon fontSize="small" /></ListItemIcon>
+              Preview &amp; Download PDF
+            </MenuItem>
+          </Menu>
+        </Box>
       </Box>
 
       {/* Tab 2: Another Source — ExternalIncomeTab handles its own list/stats */}
